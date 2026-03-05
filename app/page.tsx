@@ -375,14 +375,14 @@ export default function Home() {
           </p>
 
           <div style={{ display: "flex", gap: 16, justifyContent: "center", flexWrap: "wrap" }}>
-            <a href="tel:+998XXXXXXXXX" style={{
+            <a href="tel:+998994100910" style={{
               padding: "18px 40px", background: "#C9A84C", color: "#080C12",
               borderRadius: 8, fontSize: 16, fontWeight: 700, textDecoration: "none",
               boxShadow: "0 8px 32px rgba(201,168,76,0.3)",
             }}>
               Позвонить нам
             </a>
-            <a href="https://t.me/fonmusic" style={{
+            <a href="https://t.me/fonmusic2026" style={{
               padding: "18px 40px",
               border: "1px solid rgba(201,168,76,0.4)",
               color: "#C9A84C",
@@ -393,7 +393,7 @@ export default function Home() {
           </div>
 
           <div style={{ marginTop: 48, fontSize: 14, color: "#8BA7BE" }}>
-            fonmusic.uz · +998 XX XXX XX XX · info@fonmusic.uz
+            fonmusic.uz · +998 99 410 09 10 · info@fonmusic.uz
           </div>
         </div>
       </section>
