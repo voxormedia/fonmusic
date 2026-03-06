@@ -162,8 +162,8 @@ export default function PlayerPage() {
 
             {/* CONTROLS */}
             <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 24, marginTop: 24 }}>
-              <button onClick={playPrev} style={{
-                background: "none", border: "none", color: "#8BA7BE",
+              <button id="playBtn" onClick={togglePlay} style={{
+               width: 56, height: 56, borderRadius: "50%",
                 fontSize: 20, cursor: "pointer", padding: 8,
               }}>⏮</button>
 
