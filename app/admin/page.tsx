@@ -66,6 +66,9 @@ function LeadForm() {
 
 export default function Home() {
   const isMobile = useIsMobile();
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+    if (!mounted) return null;
   const [isScrolled, setIsScrolled] = useState(false);
   const [activeGenre, setActiveGenre] = useState(0);
 
