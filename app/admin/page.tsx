@@ -225,7 +225,7 @@ export default function Home() {
           </div>
           <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr 1fr", gap: isMobile ? 16 : 24 }}>
             {plans.map(plan => (
-              <div key={plan.name} style={{ padding: isMobile ? 28 : 40, background: plan.highlight ? "linear-gradient(135deg, #1A6B9A, #0D3D5E)" : "#0D1B2A", border: `2px solid ${plan.highlight ? "#C9A84C" : "rgba(255,255,255,0.06)"}`, borderRadius: 20, position: "relative" }}>
+              <div key={plan.name} style={{ padding: isMobile ? 28 : 40, background: plan.highlight ? "linear-gradient(135deg, #1A6B9A, #0D3D5E)" : "#0D1B2A", border: `2px solid ${plan.highlight ? "#C9A84C" : "rgba(255,255,255,0.06)"}`, borderRadius: 20, position: "relative", transform: isMobile ? "scale(1)" : plan.highlight ? "scale(1.05)" : "scale(1)" }}>
                 {plan.highlight && <div style={{ position: "absolute", top: -14, left: "50%", transform: "translateX(-50%)", background: "#C9A84C", color: "#080C12", padding: "5px 18px", borderRadius: 100, fontSize: 11, fontWeight: 700, whiteSpace: "nowrap" }}>РЕКОМЕНДУЕМ</div>}
                 <h3 style={{ fontSize: 20, fontWeight: 700, color: "#fff", marginBottom: 6 }}>{plan.name}</h3>
                 <p style={{ fontSize: 13, color: "#8BA7BE", marginBottom: 20 }}>{plan.desc}</p>
