@@ -1,17 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
 
-function useIsMobile() {
-  const [isMobile, setIsMobile] = useState(false);
-  useEffect(() => {
-    const check = () => setIsMobile(window.innerWidth < 768);
-    check();
-    window.addEventListener("resize", check);
-    return () => window.removeEventListener("resize", check);
-  }, []);
-  return isMobile;
-}
-
 const clients = [
   { id: 1, name: "Ресторан Silk Road", phone: "+998 90 123 45 67", type: "Ресторан", tariff: "Стандарт", genre: "mix", device: "device_001", status: "active", from: "2026-02-01", to: "2026-04-01" },
   { id: 2, name: "Кафе Central", phone: "+998 91 234 56 78", type: "Кафе", tariff: "Базовый", genre: "slow", device: null, status: "active", from: "2026-02-15", to: "2026-03-15" },
@@ -30,8 +19,8 @@ const statusConfig: Record<string, { label: string; color: string; bg: string }>
 };
 
 export default function AdminPage() {
-  const isMobile = useIsMobile();
   const [mounted, setMounted] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
   const [tab, setTab] = useState<"dashboard" | "clients" | "devices">("dashboard");
   const [search, setSearch] = useState("");
   const [showAdd, setShowAdd] = useState(false);
@@ -40,7 +29,14 @@ export default function AdminPage() {
   const [authed, setAuthed] = useState(false);
   const [pwError, setPwError] = useState(false);
 
-  useEffect(() => { setMounted(true); }, []);
+  useEffect(() => {
+    setMounted(true);
+    const check = () => setIsMobile(window.innerWidth < 768);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
+
   if (!mounted) return null;
 
   const m = isMobile;
@@ -65,7 +61,6 @@ export default function AdminPage() {
     }, 0),
   };
 
-  // AUTH SCREEN
   if (!authed) {
     return (
       <main style={{ minHeight: "100vh", background: "#080C12", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "Georgia, serif" }}>
@@ -89,6 +84,7 @@ export default function AdminPage() {
             Войти
           </button>
         </div>
+        <style>{`* { margin: 0; padding: 0; box-sizing: border-box; } html, body { max-width: 100vw; overflow-x: hidden; }`}</style>
       </main>
     );
   }
@@ -124,8 +120,6 @@ export default function AdminPage() {
         {tab === "dashboard" && (
           <div>
             <h1 style={{ fontSize: m ? 22 : 28, fontWeight: 700, color: "#fff", marginBottom: 24 }}>Обзор</h1>
-
-            {/* STATS */}
             <div style={{ display: "grid", gridTemplateColumns: m ? "1fr 1fr" : "1fr 1fr 1fr 1fr 1fr 1fr", gap: 12, marginBottom: 32 }}>
               {[
                 { label: "Всего клиентов", value: stats.total, icon: "👥", color: "#8BA7BE" },
@@ -143,7 +137,6 @@ export default function AdminPage() {
               ))}
             </div>
 
-            {/* EXPIRING SOON */}
             <h2 style={{ fontSize: 16, fontWeight: 700, color: "#fff", marginBottom: 16 }}>⚠️ Истекают скоро</h2>
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
               {clients.filter(c => c.status === "trial" || c.status === "expired").map(c => (
@@ -170,16 +163,14 @@ export default function AdminPage() {
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20, flexWrap: "wrap", gap: 12 }}>
               <h1 style={{ fontSize: m ? 22 : 28, fontWeight: 700, color: "#fff" }}>Клиенты</h1>
               <button onClick={() => setShowAdd(true)} style={{ padding: "10px 20px", background: "#C9A84C", border: "none", borderRadius: 8, color: "#080C12", fontSize: 13, fontWeight: 700, cursor: "pointer" }}>
-                + Добавить клиента
+                + Добавить
               </button>
             </div>
-
             <input value={search} onChange={e => setSearch(e.target.value)} placeholder="🔍 Поиск по имени или телефону..."
               style={{ width: "100%", padding: "12px 16px", background: "#0D1B2A", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, color: "#fff", fontSize: 14, outline: "none", boxSizing: "border-box", marginBottom: 16 }} />
-
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
               {filtered.map(c => (
-                <div key={c.id} onClick={() => setSelectedClient(c)} style={{ padding: m ? "16px" : "20px 24px", background: "#0D1B2A", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 14, cursor: "pointer", transition: "border-color 0.2s" }}>
+                <div key={c.id} onClick={() => setSelectedClient(c)} style={{ padding: m ? 16 : "20px 24px", background: "#0D1B2A", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 14, cursor: "pointer" }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 10 }}>
                     <div style={{ flex: 1 }}>
                       <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6, flexWrap: "wrap" }}>
@@ -188,7 +179,7 @@ export default function AdminPage() {
                           {statusConfig[c.status].label}
                         </span>
                       </div>
-                      <div style={{ fontSize: 13, color: "#8BA7BE", marginBottom: 4 }}>{c.phone} · {c.type}</div>
+                      <div style={{ fontSize: 13, color: "#8BA7BE", marginBottom: 6 }}>{c.phone} · {c.type}</div>
                       <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                         <span style={{ fontSize: 12, color: tariffColors[c.tariff], fontWeight: 600 }}>{c.tariff}</span>
                         <span style={{ fontSize: 12, color: "#8BA7BE" }}>🎵 {genreNames[c.genre]}</span>
@@ -196,7 +187,7 @@ export default function AdminPage() {
                       </div>
                     </div>
                     <div style={{ textAlign: "right" }}>
-                      <div style={{ fontSize: 12, color: "#8BA7BE" }}>Действует до</div>
+                      <div style={{ fontSize: 11, color: "#8BA7BE" }}>Действует до</div>
                       <div style={{ fontSize: 14, fontWeight: 700, color: c.status === "expired" ? "#EF4444" : "#fff" }}>{c.to}</div>
                     </div>
                   </div>
@@ -243,7 +234,7 @@ export default function AdminPage() {
         )}
       </div>
 
-      {/* CLIENT DETAIL MODAL */}
+      {/* CLIENT MODAL */}
       {selectedClient && (
         <div onClick={() => setSelectedClient(null)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
           <div onClick={e => e.stopPropagation()} style={{ background: "#0D1B2A", border: "1px solid rgba(201,168,76,0.3)", borderRadius: 20, padding: 32, width: "100%", maxWidth: 500 }}>
@@ -251,10 +242,10 @@ export default function AdminPage() {
               <h2 style={{ fontSize: 20, fontWeight: 700, color: "#fff" }}>{selectedClient.name}</h2>
               <button onClick={() => setSelectedClient(null)} style={{ background: "none", border: "none", color: "#8BA7BE", fontSize: 20, cursor: "pointer" }}>✕</button>
             </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
               {[
                 { label: "Телефон", value: selectedClient.phone },
-                { label: "Тип заведения", value: selectedClient.type },
+                { label: "Тип", value: selectedClient.type },
                 { label: "Тариф", value: selectedClient.tariff },
                 { label: "Жанр", value: genreNames[selectedClient.genre] },
                 { label: "Устройство", value: selectedClient.device || "Нет (веб-плеер)" },
@@ -262,17 +253,17 @@ export default function AdminPage() {
                 { label: "Подключён с", value: selectedClient.from },
                 { label: "Действует до", value: selectedClient.to },
               ].map(item => (
-                <div key={item.label} style={{ display: "flex", justifyContent: "space-between", padding: "10px 0", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+                <div key={item.label} style={{ display: "flex", justifyContent: "space-between", padding: "12px 0", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
                   <span style={{ fontSize: 13, color: "#8BA7BE" }}>{item.label}</span>
                   <span style={{ fontSize: 13, fontWeight: 700, color: "#fff" }}>{item.value}</span>
                 </div>
               ))}
             </div>
             <div style={{ display: "flex", gap: 10, marginTop: 24 }}>
-              <a href={`tel:${selectedClient.phone}`} style={{ flex: 1, padding: "12px", background: "#C9A84C", borderRadius: 8, color: "#080C12", fontSize: 14, fontWeight: 700, textDecoration: "none", textAlign: "center" }}>
+              <a href={`tel:${selectedClient.phone}`} style={{ flex: 1, padding: 12, background: "#C9A84C", borderRadius: 8, color: "#080C12", fontSize: 14, fontWeight: 700, textDecoration: "none", textAlign: "center" }}>
                 📞 Позвонить
               </a>
-              <a href={`https://t.me/fonmusic2026`} style={{ flex: 1, padding: "12px", background: "rgba(201,168,76,0.1)", border: "1px solid rgba(201,168,76,0.3)", borderRadius: 8, color: "#C9A84C", fontSize: 14, fontWeight: 700, textDecoration: "none", textAlign: "center" }}>
+              <a href="https://t.me/fonmusic2026" style={{ flex: 1, padding: 12, background: "rgba(201,168,76,0.1)", border: "1px solid rgba(201,168,76,0.3)", borderRadius: 8, color: "#C9A84C", fontSize: 14, fontWeight: 700, textDecoration: "none", textAlign: "center" }}>
                 ✉️ Telegram
               </a>
             </div>
@@ -280,7 +271,7 @@ export default function AdminPage() {
         </div>
       )}
 
-      {/* ADD CLIENT MODAL */}
+      {/* ADD MODAL */}
       {showAdd && (
         <div onClick={() => setShowAdd(false)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
           <div onClick={e => e.stopPropagation()} style={{ background: "#0D1B2A", border: "1px solid rgba(201,168,76,0.3)", borderRadius: 20, padding: 32, width: "100%", maxWidth: 480 }}>
@@ -291,10 +282,10 @@ export default function AdminPage() {
             <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
               {["Название заведения", "Телефон", "Тариф", "Жанр", "ID устройства (если есть)", "Дата начала", "Дата окончания"].map(placeholder => (
                 <input key={placeholder} placeholder={placeholder}
-                  style={{ padding: "12px 16px", background: "#162435", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, color: "#fff", fontSize: 14, outline: "none" }} />
+                  style={{ padding: "12px 16px", background: "#162435", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, color: "#fff", fontSize: 14, outline: "none", width: "100%", boxSizing: "border-box" }} />
               ))}
             </div>
-            <button style={{ width: "100%", marginTop: 20, padding: "14px", background: "#C9A84C", border: "none", borderRadius: 8, color: "#080C12", fontSize: 15, fontWeight: 700, cursor: "pointer" }}>
+            <button style={{ width: "100%", marginTop: 20, padding: 14, background: "#C9A84C", border: "none", borderRadius: 8, color: "#080C12", fontSize: 15, fontWeight: 700, cursor: "pointer" }}>
               Сохранить
             </button>
           </div>
