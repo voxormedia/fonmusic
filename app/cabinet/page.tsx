@@ -74,6 +74,7 @@ export default function CabinetPage() {
 
   const changeStation = async (stationKey: string) => {
     if (!client || saving) return;
+    console.log("DEBUG client:", client); // ← сюда
     setSaving(true);
     setSuccess("");
 
