@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 
 const BASE_URL = "https://pub-b2c1411547b247808cb42732bb122560.r2.dev";
@@ -101,7 +101,7 @@ function LeadModal({ onClose, onSuccess }: { onClose: () => void; onSuccess: () 
   );
 }
 
-export default function DemoPage() {
+export default function DemoPlayer() {
   const searchParams = useSearchParams();
   const typeParam = searchParams.get("type") || "cafe";
 
@@ -380,5 +380,12 @@ export default function DemoPage() {
         html, body { max-width: 100vw; overflow-x: hidden; }
       `}</style>
     </main>
+  );
+}
+export default function DemoPage() {
+  return (
+    <Suspense fallback={null}>
+      <DemoPlayer />
+    </Suspense>
   );
 }
