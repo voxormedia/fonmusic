@@ -335,12 +335,20 @@ export default function DashboardPage() {
             <div style={{ fontSize: 14, color: "#8BA7BE", marginBottom: 16 }}>⏳ Загрузка данных устройства...</div>
           )}
 
-          <button onClick={nextTrack} disabled={saving} style={{
-            padding: "12px 24px", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)",
-            borderRadius: 10, color: "#fff", fontSize: 14, cursor: "pointer", fontFamily: "Georgia, serif",
-          }}>
-            ⏭ Следующий трек
-          </button>
+          <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+            <button onClick={nextTrack} disabled={saving} style={{
+              padding: "12px 24px", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)",
+              borderRadius: 10, color: "#fff", fontSize: 14, cursor: "pointer", fontFamily: "Georgia, serif",
+            }}>
+              ⏭ Следующий трек
+            </button>
+            <a href="/player" style={{
+              padding: "12px 24px", background: "rgba(201,168,76,0.1)", border: "1px solid rgba(201,168,76,0.3)",
+              borderRadius: 10, color: "#C9A84C", fontSize: 14, fontWeight: 700, textDecoration: "none", display: "inline-block",
+            }}>
+              🎵 Открыть веб-плеер
+            </a>
+          </div>
         </div>
 
         {/* УСТРОЙСТВО */}
