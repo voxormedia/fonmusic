@@ -187,7 +187,8 @@ export default function DashboardPage() {
   };
 
   const handleLogin = (clientData: any) => {
-    setClient(clientData);
+  console.log("CLIENT DATA:", clientData);
+  setClient(clientData);
     const status = clientData.subscription_status;
     const expiresAt = clientData.demo_expires_at;
     if (status === "active") { setScreen("dashboard"); return; }
