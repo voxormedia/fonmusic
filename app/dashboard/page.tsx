@@ -26,6 +26,19 @@ const MODES = [
   { key: "busy", label: "Busy", icon: "⚡", desc: "Энергично" },
 ];
 
+const STATION_NAMES: Record<string, string> = {
+  cozy_coffee: "☕ Coffee Mood",
+  cocktail_dinner: "🍽️ Dinner & Lounge",
+  cool_calm: "🎵 Calm Atmosphere",
+  lounge: "🏨 Lounge Flow",
+  luxury: "✨ Premium Mood",
+  shopping_vibes: "🛍️ Retail Energy",
+  spa_garden: "💆 Spa Relax",
+  workout: "💪 Active Energy",
+  on_the_rocks: "🎸 Bar Mood",
+  best_of_radio: "📻 Mixed Selection",
+};
+
 function getDaysLeft(expiresAt: string): number {
   const now = new Date();
   const expires = new Date(expiresAt);
@@ -33,35 +46,41 @@ function getDaysLeft(expiresAt: string): number {
   return Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)));
 }
 
-// PAYWALL SCREEN
+function getTrackName(track: string): string {
+  return track
+    .replace(".mp3", "")
+    .replace(/_/g, " ")
+    .split("-")
+    .slice(1)
+    .join(" ")
+    .trim() || track.replace(".mp3", "");
+}
+
+function isDeviceOnline(updatedAt: string): boolean {
+  const updated = new Date(updatedAt);
+  const now = new Date();
+  const diffMin = (now.getTime() - updated.getTime()) / (1000 * 60);
+  return diffMin < 5;
+}
+
 function PaywallScreen() {
   return (
     <main style={{ minHeight: "100vh", background: "#080C12", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "Georgia, serif", padding: 20 }}>
       <div style={{ width: "100%", maxWidth: 420, textAlign: "center" }}>
         <div style={{ fontSize: 64, marginBottom: 24 }}>⏰</div>
-        <h1 style={{ fontSize: 28, fontWeight: 700, color: "#fff", marginBottom: 12 }}>
-          Тестовый период завершён
-        </h1>
+        <h1 style={{ fontSize: 28, fontWeight: 700, color: "#fff", marginBottom: 12 }}>Тестовый период завершён</h1>
         <p style={{ fontSize: 15, color: "#8BA7BE", lineHeight: 1.7, marginBottom: 32 }}>
           Чтобы музыка продолжала играть в вашем заведении, подключите подписку FonMusic
         </p>
-
         <div style={{ background: "#0D1B2A", border: "1px solid rgba(201,168,76,0.2)", borderRadius: 20, padding: 28, marginBottom: 24 }}>
           <div style={{ fontSize: 13, color: "#8BA7BE", marginBottom: 16 }}>Что входит в подписку:</div>
-          {[
-            "10 музыкальных станций Jamendo",
-            "Автоматическое расписание",
-            "Android TV приставка",
-            "Официальный сертификат",
-            "Личный кабинет",
-          ].map(f => (
+          {["10 музыкальных станций Jamendo", "Автоматическое расписание", "Android TV приставка", "Официальный сертификат", "Личный кабинет"].map(f => (
             <div key={f} style={{ display: "flex", gap: 10, alignItems: "center", marginBottom: 10 }}>
               <span style={{ color: "#C9A84C" }}>✓</span>
               <span style={{ fontSize: 14, color: "#E8EFF5" }}>{f}</span>
             </div>
           ))}
         </div>
-
         <a href="/#trial" style={{ display: "block", padding: "18px", background: "#C9A84C", color: "#080C12", borderRadius: 14, fontSize: 16, fontWeight: 700, textDecoration: "none", marginBottom: 16, boxShadow: "0 8px 32px rgba(201,168,76,0.3)" }}>
           Оформить подписку →
         </a>
@@ -73,7 +92,6 @@ function PaywallScreen() {
   );
 }
 
-// LOGIN SCREEN
 function LoginScreen({ onLogin }: { onLogin: (client: any) => void }) {
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
@@ -128,6 +146,7 @@ function LoginScreen({ onLogin }: { onLogin: (client: any) => void }) {
 export default function DashboardPage() {
   const [screen, setScreen] = useState<"login" | "dashboard" | "paywall">("login");
   const [client, setClient] = useState<any>(null);
+  const [deviceStatus, setDeviceStatus] = useState<any>(null);
   const [stations, setStations] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
   const [stationCategories, setStationCategories] = useState<any[]>([]);
@@ -137,8 +156,18 @@ export default function DashboardPage() {
   const [daysLeft, setDaysLeft] = useState<number | null>(null);
 
   useEffect(() => {
-    if (screen === "dashboard") loadData();
+    if (screen === "dashboard") {
+      loadData();
+      const interval = setInterval(() => loadDeviceStatus(), 30000);
+      return () => clearInterval(interval);
+    }
   }, [screen]);
+
+  useEffect(() => {
+    if (client?.device_id && screen === "dashboard") {
+      loadDeviceStatus();
+    }
+  }, [client]);
 
   const loadData = async () => {
     const [s, c, sc] = await Promise.all([
@@ -151,60 +180,52 @@ export default function DashboardPage() {
     if (sc) setStationCategories(sc);
   };
 
+  const loadDeviceStatus = async () => {
+    if (!client?.device_id) return;
+    const data = await sb(`device_status?device_id=eq.${client.device_id}&select=*`);
+    if (data && data.length > 0) setDeviceStatus(data[0]);
+  };
+
   const handleLogin = (clientData: any) => {
     setClient(clientData);
-
-    // Проверяем статус подписки
     const status = clientData.subscription_status;
     const expiresAt = clientData.demo_expires_at;
-
-    if (status === "active") {
-      setScreen("dashboard");
-      return;
-    }
-
-    if (status === "expired") {
-      setScreen("paywall");
-      return;
-    }
-
+    if (status === "active") { setScreen("dashboard"); return; }
+    if (status === "expired") { setScreen("paywall"); return; }
     if (status === "demo" && expiresAt) {
       const days = getDaysLeft(expiresAt);
       setDaysLeft(days);
       if (days <= 0) {
-        // Обновляем статус на expired
-        sb(`clients?id=eq.${clientData.id}`, {
-          method: "PATCH",
-          body: JSON.stringify({ subscription_status: "expired" }),
-        });
+        sb(`clients?id=eq.${clientData.id}`, { method: "PATCH", body: JSON.stringify({ subscription_status: "expired" }) });
         setScreen("paywall");
       } else {
         setScreen("dashboard");
       }
       return;
     }
-
     setScreen("dashboard");
+  };
+
+  const sendCommand = async (command: string, extra?: object) => {
+    await sb("commands", {
+      method: "POST",
+      body: JSON.stringify({
+        device_id: client.device_id,
+        command,
+        genre: client.station_key,
+        mode: client.mode || "normal",
+        executed: false,
+        ...extra,
+      }),
+    });
   };
 
   const changeStation = async (stationKey: string) => {
     if (!client || saving) return;
     setSaving(true);
     setSuccess("");
-    await sb(`clients?id=eq.${client.id}`, {
-      method: "PATCH",
-      body: JSON.stringify({ station_key: stationKey }),
-    });
-    await sb("commands", {
-      method: "POST",
-      body: JSON.stringify({
-        device_id: client.device_id,
-        command: "change_station",
-        genre: stationKey,
-        mode: client.mode || "normal",
-        executed: false,
-      }),
-    });
+    await sb(`clients?id=eq.${client.id}`, { method: "PATCH", body: JSON.stringify({ station_key: stationKey }) });
+    await sendCommand("change_station", { genre: stationKey });
     setClient({ ...client, station_key: stationKey });
     setSaving(false);
     setSuccess("Станция изменена!");
@@ -214,36 +235,34 @@ export default function DashboardPage() {
   const changeMode = async (mode: string) => {
     if (!client || saving) return;
     setSaving(true);
-    await sb(`clients?id=eq.${client.id}`, {
-      method: "PATCH",
-      body: JSON.stringify({ mode }),
-    });
-    await sb("commands", {
-      method: "POST",
-      body: JSON.stringify({
-        device_id: client.device_id,
-        command: "change_mode",
-        genre: client.station_key,
-        mode,
-        executed: false,
-      }),
-    });
+    await sb(`clients?id=eq.${client.id}`, { method: "PATCH", body: JSON.stringify({ mode }) });
+    await sendCommand("change_mode", { mode });
     setClient({ ...client, mode });
     setSaving(false);
     setSuccess("Атмосфера изменена!");
     setTimeout(() => setSuccess(""), 3000);
   };
 
+  const nextTrack = async () => {
+    if (!client || saving) return;
+    setSaving(true);
+    await sendCommand("next_track");
+    setSaving(false);
+    setSuccess("Переключаем трек...");
+    setTimeout(() => {
+      setSuccess("");
+      loadDeviceStatus();
+    }, 5000);
+  };
+
   const getStationsForCategory = (categoryKey: string) => {
     const category = categories.find(c => c.category_key === categoryKey);
     if (!category) return stations;
-    const stationIds = stationCategories
-      .filter(sc => sc.category_id === category.id)
-      .map(sc => sc.station_id);
+    const stationIds = stationCategories.filter(sc => sc.category_id === category.id).map(sc => sc.station_id);
     return stations.filter(s => stationIds.includes(s.id));
   };
 
-  const currentStation = stations.find(s => s.station_key === client?.station_key);
+  const online = deviceStatus ? isDeviceOnline(deviceStatus.updated_at) : false;
 
   if (screen === "login") return <LoginScreen onLogin={handleLogin} />;
   if (screen === "paywall") return <PaywallScreen />;
@@ -251,7 +270,6 @@ export default function DashboardPage() {
   return (
     <main style={{ minHeight: "100vh", background: "#080C12", fontFamily: "Georgia, serif", color: "#E8EFF5" }}>
 
-      {/* NAV */}
       <nav style={{ padding: "18px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: "1px solid rgba(201,168,76,0.15)" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <div style={{ width: 5, height: 22, background: "#C9A84C", borderRadius: 2 }} />
@@ -264,7 +282,7 @@ export default function DashboardPage() {
             </div>
           )}
           <div style={{ fontSize: 13, color: "#8BA7BE" }}>👤 {client?.name}</div>
-          <button onClick={() => { setScreen("login"); setClient(null); }} style={{ padding: "7px 14px", background: "transparent", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 6, color: "#8BA7BE", fontSize: 12, cursor: "pointer", fontFamily: "Georgia, serif" }}>
+          <button onClick={() => { setScreen("login"); setClient(null); setDeviceStatus(null); }} style={{ padding: "7px 14px", background: "transparent", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 6, color: "#8BA7BE", fontSize: 12, cursor: "pointer", fontFamily: "Georgia, serif" }}>
             Выйти
           </button>
         </div>
@@ -272,39 +290,63 @@ export default function DashboardPage() {
 
       <div style={{ maxWidth: 860, margin: "0 auto", padding: "32px 20px" }}>
 
-        {/* SUCCESS */}
         {success && (
           <div style={{ padding: "12px 20px", background: "rgba(34,197,94,0.1)", border: "1px solid rgba(34,197,94,0.3)", borderRadius: 10, fontSize: 14, color: "#22C55E", marginBottom: 20 }}>
             ✓ {success}
           </div>
         )}
 
-        {/* DEMO BANNER */}
         {daysLeft !== null && daysLeft > 0 && (
           <div style={{ padding: "16px 20px", background: "rgba(201,168,76,0.08)", border: "1px solid rgba(201,168,76,0.2)", borderRadius: 14, marginBottom: 20, display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
-            <div style={{ fontSize: 14, color: "#C9A84C" }}>
-              🕐 Тестовый период: осталось <strong>{daysLeft} дней</strong>
-            </div>
-            <a href="/#trial" style={{ fontSize: 13, color: "#080C12", background: "#C9A84C", padding: "7px 16px", borderRadius: 8, textDecoration: "none", fontWeight: 700 }}>
-              Подключить →
-            </a>
+            <div style={{ fontSize: 14, color: "#C9A84C" }}>🕐 Тестовый период: осталось <strong>{daysLeft} дней</strong></div>
+            <a href="/#trial" style={{ fontSize: 13, color: "#080C12", background: "#C9A84C", padding: "7px 16px", borderRadius: 8, textDecoration: "none", fontWeight: 700 }}>Подключить →</a>
           </div>
         )}
 
-        {/* STATUS */}
-        <div style={{ background: "#0D1B2A", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 16, padding: "24px", marginBottom: 20 }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
-            <h2 style={{ fontSize: 17, fontWeight: 700, color: "#fff", margin: 0 }}>Статус устройства</h2>
-            <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "5px 12px", background: "rgba(34,197,94,0.1)", border: "1px solid rgba(34,197,94,0.3)", borderRadius: 100 }}>
-              <div style={{ width: 7, height: 7, borderRadius: "50%", background: "#22C55E" }} />
-              <span style={{ fontSize: 12, color: "#22C55E" }}>Онлайн</span>
+        {/* СЕЙЧАС ИГРАЕТ */}
+        <div style={{ background: "#0D1B2A", border: "1px solid rgba(201,168,76,0.2)", borderRadius: 16, padding: "24px", marginBottom: 20 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+            <div style={{ fontSize: 11, color: "#C9A84C", letterSpacing: 2 }}>▶ СЕЙЧАС ИГРАЕТ</div>
+            <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "4px 12px", background: online ? "rgba(34,197,94,0.1)" : "rgba(239,68,68,0.1)", border: `1px solid ${online ? "rgba(34,197,94,0.3)" : "rgba(239,68,68,0.3)"}`, borderRadius: 100 }}>
+              <div style={{ width: 7, height: 7, borderRadius: "50%", background: online ? "#22C55E" : "#EF4444" }} />
+              <span style={{ fontSize: 12, color: online ? "#22C55E" : "#EF4444" }}>{online ? "Онлайн" : "Офлайн"}</span>
             </div>
           </div>
+
+          {deviceStatus ? (
+            <>
+              <div style={{ fontSize: 20, fontWeight: 700, color: "#fff", marginBottom: 6 }}>
+                {STATION_NAMES[deviceStatus.current_station] || deviceStatus.current_station || "—"}
+              </div>
+              <div style={{ fontSize: 14, color: "#8BA7BE", marginBottom: 16, fontStyle: "italic" }}>
+                🎵 {deviceStatus.current_track ? getTrackName(deviceStatus.current_track) : "—"}
+              </div>
+              <div style={{ display: "flex", gap: 16, fontSize: 12, color: "#4a5a6a", marginBottom: 16, flexWrap: "wrap" }}>
+                <span>💾 Кэш: {deviceStatus.cache_size_mb || 0}MB</span>
+                <span>💿 Свободно: {Math.round((deviceStatus.free_storage_mb || 0) / 1024)}GB</span>
+                <span>📱 v{deviceStatus.app_version || "—"}</span>
+              </div>
+            </>
+          ) : (
+            <div style={{ fontSize: 14, color: "#8BA7BE", marginBottom: 16 }}>⏳ Загрузка данных устройства...</div>
+          )}
+
+          <button onClick={nextTrack} disabled={saving} style={{
+            padding: "12px 24px", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)",
+            borderRadius: 10, color: "#fff", fontSize: 14, cursor: "pointer", fontFamily: "Georgia, serif",
+          }}>
+            ⏭ Следующий трек
+          </button>
+        </div>
+
+        {/* УСТРОЙСТВО */}
+        <div style={{ background: "#0D1B2A", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 16, padding: "24px", marginBottom: 20 }}>
+          <h2 style={{ fontSize: 17, fontWeight: 700, color: "#fff", margin: "0 0 16px 0" }}>Устройство</h2>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12 }}>
             {[
               { label: "Заведение", value: client?.name },
               { label: "Тариф", value: client?.tariff },
-              { label: "Устройство", value: client?.device_id },
+              { label: "ID устройства", value: client?.device_id },
             ].map(item => (
               <div key={item.label} style={{ background: "#162435", borderRadius: 10, padding: "14px" }}>
                 <div style={{ fontSize: 10, color: "#8BA7BE", marginBottom: 4 }}>{item.label}</div>
@@ -314,16 +356,7 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* CURRENT PLAYING */}
-        <div style={{ background: "#0D1B2A", border: "1px solid rgba(201,168,76,0.2)", borderRadius: 16, padding: "24px", marginBottom: 20 }}>
-          <div style={{ fontSize: 11, color: "#C9A84C", letterSpacing: 2, marginBottom: 6 }}>▶ СЕЙЧАС ИГРАЕТ</div>
-          <div style={{ fontSize: 24, fontWeight: 700, color: "#fff", marginBottom: 4 }}>
-            {currentStation ? `${currentStation.icon} ${currentStation.display_name}` : "—"}
-          </div>
-          <div style={{ fontSize: 13, color: "#8BA7BE" }}>{currentStation?.description}</div>
-        </div>
-
-        {/* ATMOSPHERE */}
+        {/* АТМОСФЕРА */}
         <div style={{ background: "#0D1B2A", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 16, padding: "24px", marginBottom: 20 }}>
           <h2 style={{ fontSize: 16, fontWeight: 700, color: "#fff", marginBottom: 4 }}>🌡️ Атмосфера</h2>
           <p style={{ fontSize: 13, color: "#8BA7BE", marginBottom: 16 }}>Подстройте энергетику музыки</p>
@@ -342,12 +375,10 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* STATION SELECTOR */}
+        {/* ВЫБОР СТАНЦИИ */}
         <div style={{ background: "#0D1B2A", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 16, padding: "24px", marginBottom: 20 }}>
           <h2 style={{ fontSize: 16, fontWeight: 700, color: "#fff", marginBottom: 4 }}>🎵 Выбор станции</h2>
           <p style={{ fontSize: 13, color: "#8BA7BE", marginBottom: 16 }}>Выберите музыку для вашего заведения</p>
-
-          {/* Category filter */}
           <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 20 }}>
             <button onClick={() => setSelectedCategory(null)} style={{
               padding: "6px 14px", borderRadius: 20, fontSize: 12, cursor: "pointer", fontFamily: "Georgia, serif",
@@ -365,8 +396,6 @@ export default function DashboardPage() {
               }}>{c.icon} {c.name}</button>
             ))}
           </div>
-
-          {/* Stations */}
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
             {(selectedCategory ? getStationsForCategory(selectedCategory) : stations).map(s => (
               <button key={s.station_key} onClick={() => changeStation(s.station_key)} disabled={saving} style={{
@@ -389,7 +418,7 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* CERTIFICATE */}
+        {/* СЕРТИФИКАТ */}
         <div style={{ background: "#0D1B2A", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 16, padding: "24px" }}>
           <h2 style={{ fontSize: 16, fontWeight: 700, color: "#fff", marginBottom: 6 }}>📄 Сертификат</h2>
           <p style={{ fontSize: 13, color: "#8BA7BE", marginBottom: 16 }}>Официальный сертификат JAMENDO Licensing</p>
