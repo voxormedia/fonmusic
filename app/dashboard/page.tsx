@@ -102,7 +102,9 @@ function LoginScreen({ onLogin }: { onLogin: (client: any) => void }) {
     if (!phone || !password) return;
     setLoading(true);
     setError("");
+    console.log("LOGIN ATTEMPT:", phone, password);
     const data = await sb(`clients?phone=eq.${encodeURIComponent(phone)}&password=eq.${password}&select=*`);
+    console.log("LOGIN RESULT:", data);
     setLoading(false);
     if (data && data.length > 0) {
       onLogin(data[0]);
