@@ -366,27 +366,6 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* 3. АТМОСФЕРА */}
-        <div style={{ background: "#0D1B2A", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 16, padding: "24px", marginBottom: 20 }}>
-          <h2 style={{ fontSize: 16, fontWeight: 700, color: "#fff", marginBottom: 4 }}>🌡️ Атмосфера</h2>
-          <p style={{ fontSize: 13, color: "#8BA7BE", marginBottom: 16 }}>Настройте энергичность музыки под загруженность заведения</p>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10 }}>
-            {MODES.map(m => (
-              <button key={m.key} onClick={() => changeMode(m.key)} disabled={saving} style={{
-                padding: "14px 10px", borderRadius: 12, cursor: "pointer", textAlign: "center", fontFamily: "Georgia, serif",
-                background: client?.mode === m.key ? "rgba(201,168,76,0.15)" : "rgba(255,255,255,0.03)",
-                border: `${client?.mode === m.key ? "2px" : "1px"} solid ${client?.mode === m.key ? "rgba(201,168,76,0.5)" : "rgba(255,255,255,0.08)"}`,
-                boxShadow: client?.mode === m.key ? "0 0 12px rgba(201,168,76,0.1)" : "none",
-                transition: "all 0.2s",
-              }}>
-                <div style={{ fontSize: 22, marginBottom: 4 }}>{m.icon}</div>
-                <div style={{ fontSize: 13, fontWeight: 700, color: client?.mode === m.key ? "#C9A84C" : "#fff" }}>{m.label}</div>
-                <div style={{ fontSize: 11, color: "#8BA7BE" }}>{m.desc}</div>
-              </button>
-            ))}
-          </div>
-        </div>
-
         {/* 4. СЕЙЧАС ИГРАЕТ */}
         <div style={{ background: "#0D1B2A", border: "1px solid rgba(201,168,76,0.2)", borderRadius: 16, padding: "24px", marginBottom: 20 }}>
           <div style={{ fontSize: 11, color: "#C9A84C", letterSpacing: 2, marginBottom: 12 }}>▶ СЕЙЧАС ИГРАЕТ</div>
