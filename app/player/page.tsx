@@ -1,270 +1,337 @@
 "use client";
-import { useState, useRef, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
-const BASE_URL = "https://pub-64201f50168741fda74f8a768be60cbe.r2.dev";
+const SUPABASE_URL = "https://ovafknvfckdmatrnlecr.supabase.co";
+const SUPABASE_KEY = "sb_publishable_sMrkdTU705Zgw9-Sc12-Ww_XDrl1ASP";
+const BASE_URL = "https://pub-b2c1411547b247808cb42732bb122560.r2.dev";
 
-const tracks: Record<string, { title: string; file: string }[]> = {
-  fast: [
-    { title: "Slow Glow", file: "fast/Slow%20Glow.mp3" },
-    { title: "Warm Air", file: "fast/Warm%20Air.mp3" },
-  ],
-  medium: [
-    { title: "Soft Horizon", file: "medium/Soft%20Horizon.mp3" },
-    { title: "Soft Lights", file: "medium/Soft%20Lights.mp3" },
-  ],
-  slow: [
-    { title: "Warm Air", file: "slow/Warm%20Air.mp3" },
-  ],
-  night: [
-    { title: "Warm Air", file: "night/Warm%20Air.mp3" },
-    { title: "Warm Echo", file: "night/Warm%20Echo.mp3" },
-  ],
-
-  mix: [
-    { title: "Mira - Deep Wave", file: "mix/Mira%20-%20Deep%20Wave.mp3" },
-    { title: "New Deep", file: "mix/New%20Deep.mp3" },
-    { title: "Obscura", file: "mix/Obscura.mp3" },
-    { title: "Oriental Echo", file: "mix/Oriental%20Echo.mp3" },
-    { title: "Silence", file: "mix/Silence.mp3" },
-    { title: "Silent Goodbye", file: "mix/Silent%20Goodbye.mp3" },
-  ],
+const STATION_FOLDERS: Record<string, string> = {
+  cozy_coffee: "Cozy Coffee",
+  cocktail_dinner: "Cocktail and Dinner Groove",
+  cool_calm: "Cool and Calm",
+  lounge: "Lounge",
+  luxury: "Luxury",
+  shopping_vibes: "Shopping Vibes",
+  spa_garden: "Spa Garden",
+  workout: "Workout",
+  on_the_rocks: "The Rocks",
+  best_of_radio: "Best Of Radio",
 };
 
-const filters = ["ALL", "FAST", "MEDIUM", "SLOW", "NIGHT", "MIX"];
+const STATION_NAMES: Record<string, string> = {
+  cozy_coffee: "☕ Coffee Mood",
+  cocktail_dinner: "🍽️ Dinner & Lounge",
+  cool_calm: "🎵 Calm Atmosphere",
+  lounge: "🏨 Lounge Flow",
+  luxury: "✨ Premium Mood",
+  shopping_vibes: "🛍️ Retail Energy",
+  spa_garden: "💆 Spa Relax",
+  workout: "💪 Active Energy",
+  on_the_rocks: "🎸 Bar Mood",
+  best_of_radio: "📻 Mixed Selection",
+};
+
+async function sb(path: string, options?: RequestInit) {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
+    ...options,
+    headers: {
+      "apikey": SUPABASE_KEY,
+      "Authorization": `Bearer ${SUPABASE_KEY}`,
+      "Content-Type": "application/json",
+      "Prefer": "return=representation",
+      ...(options?.headers || {}),
+    },
+  });
+  if (!res.ok) return null;
+  const text = await res.text();
+  return text ? JSON.parse(text) : null;
+}
+
+function getTrackName(track: string): string {
+  return track
+    .replace(".mp3", "")
+    .replace(/_/g, " ")
+    .split("-")
+    .slice(1)
+    .join(" ")
+    .trim() || track.replace(".mp3", "");
+}
 
 export default function PlayerPage() {
-  const [activeFilter, setActiveFilter] = useState("ALL");
-  const [currentTrack, setCurrentTrack] = useState(tracks.mix[0]);
+  const [client, setClient] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [playlist, setPlaylist] = useState<string[]>([]);
+  const [currentTrack, setCurrentTrack] = useState("");
+  const [trackIndex, setTrackIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [progress, setProgress] = useState(0);
-  const [duration, setDuration] = useState(0);
-  const [currentTime, setCurrentTime] = useState(0);
+  const [isLoadingTrack, setIsLoadingTrack] = useState(false);
+  const [currentStation, setCurrentStation] = useState("cozy_coffee");
   const [volume, setVolume] = useState(1.0);
-  const audioRef = useRef<HTMLAudioElement>(null);
-
-  const allTracks = Object.entries(tracks).flatMap(([cat, list]) =>
-    list.map(t => ({ ...t, category: cat }))
-  );
-
-  const filteredTracks = activeFilter === "ALL"
-    ? allTracks
-    : allTracks.filter(t => t.category === activeFilter.toLowerCase());
-
-  // Автозапуск
-  useEffect(() => {
-    const audio = audioRef.current;
-    if (!audio) return;
-
-    const tryPlay = () => {
-      audio.play().then(() => {
-        setIsPlaying(true);
-      }).catch(() => {});
-    };
-
-    audio.addEventListener("canplaythrough", tryPlay, { once: true });
-    tryPlay();
-
-    return () => {
-      audio.removeEventListener("canplaythrough", tryPlay);
-    };
-  }, [currentTrack]);
+  const [showStations, setShowStations] = useState(false);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
-    const audio = audioRef.current;
-    if (!audio) return;
-    const update = () => {
-      setCurrentTime(audio.currentTime);
-      setProgress(audio.duration ? (audio.currentTime / audio.duration) * 100 : 0);
-    };
-    const onLoaded = () => setDuration(audio.duration);
-    const onEnded = () => playNext();
-    audio.addEventListener("timeupdate", update);
-    audio.addEventListener("loadedmetadata", onLoaded);
-    audio.addEventListener("ended", onEnded);
-    return () => {
-      audio.removeEventListener("timeupdate", update);
-      audio.removeEventListener("loadedmetadata", onLoaded);
-      audio.removeEventListener("ended", onEnded);
-    };
-  }, [currentTrack]);
+    const clientId = localStorage.getItem("fonmusic_client_id");
+    if (!clientId) {
+      window.location.href = "/dashboard";
+      return;
+    }
+    loadClient(clientId);
+  }, []);
 
-  const playTrack = (track: { title: string; file: string }) => {
+  const loadClient = async (clientId: string) => {
+    const data = await sb(`clients?id=eq.${clientId}&select=*`);
+    if (!data || data.length === 0) {
+      window.location.href = "/dashboard";
+      return;
+    }
+    const c = data[0];
+    if (c.subscription_status === "expired") {
+      window.location.href = "/dashboard";
+      return;
+    }
+    setClient(c);
+    setCurrentStation(c.station_key || "cozy_coffee");
+    setLoading(false);
+    loadPlaylist(c.station_key || "cozy_coffee");
+  };
+
+  const loadPlaylist = async (stationKey: string) => {
+    setIsLoadingTrack(true);
+    const folder = STATION_FOLDERS[stationKey] || "Cozy Coffee";
+    try {
+      const encodedFolder = folder.replace(/ /g, "%20");
+      const res = await fetch(`${BASE_URL}/${encodedFolder}/playlist.json`);
+      const tracks: string[] = await res.json();
+      const shuffled = tracks.sort(() => Math.random() - 0.5);
+      setPlaylist(shuffled);
+      setTrackIndex(0);
+      setCurrentTrack(shuffled[0] || "");
+      setIsLoadingTrack(false);
+    } catch (e) {
+      setIsLoadingTrack(false);
+    }
+  };
+
+  const playTrack = (index: number, tracks?: string[], stationKey?: string) => {
+    const list = tracks || playlist;
+    const station = stationKey || currentStation;
+    if (!list.length) return;
+    const track = list[index % list.length];
+    const folder = STATION_FOLDERS[station] || "Cozy Coffee";
+    const encodedFolder = folder.replace(/ /g, "%20");
+    const encodedTrack = encodeURIComponent(track);
+    const url = `${BASE_URL}/${encodedFolder}/${encodedTrack}`;
+
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.src = url;
+      audioRef.current.load();
+      audioRef.current.play().catch(() => {});
+    }
     setCurrentTrack(track);
     setIsPlaying(true);
-    setTimeout(() => audioRef.current?.play(), 100);
+    setTrackIndex(index % list.length);
   };
 
   const togglePlay = () => {
     if (!audioRef.current) return;
-    if (isPlaying) { audioRef.current.pause(); setIsPlaying(false); }
-    else { audioRef.current.play(); setIsPlaying(true); }
-  };
-
-  const playNext = () => {
-    const idx = allTracks.findIndex(t => t.file === currentTrack.file);
-    const next = allTracks[(idx + 1) % allTracks.length];
-    playTrack(next);
-  };
-
-  const playPrev = () => {
-    const idx = allTracks.findIndex(t => t.file === currentTrack.file);
-    const prev = allTracks[(idx - 1 + allTracks.length) % allTracks.length];
-    playTrack(prev);
-  };
-
-  const seek = (e: React.MouseEvent<HTMLDivElement>) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    const ratio = (e.clientX - rect.left) / rect.width;
-    if (audioRef.current) {
-      audioRef.current.currentTime = ratio * audioRef.current.duration;
+    if (isPlaying) {
+      audioRef.current.pause();
+      setIsPlaying(false);
+    } else {
+      if (!currentTrack) {
+        playTrack(0);
+      } else {
+        audioRef.current.play().catch(() => {});
+        setIsPlaying(true);
+      }
     }
   };
 
-  const fmt = (s: number) => {
-    const m = Math.floor(s / 60);
-    const sec = Math.floor(s % 60);
-    return `${m}:${sec.toString().padStart(2, "0")}`;
+  const nextTrack = () => {
+    const next = (trackIndex + 1) % playlist.length;
+    playTrack(next);
   };
 
+  const prevTrack = () => {
+    const prev = (trackIndex - 1 + playlist.length) % playlist.length;
+    playTrack(prev);
+  };
+
+  const switchStation = async (stationKey: string) => {
+    if (audioRef.current) audioRef.current.pause();
+    setCurrentStation(stationKey);
+    setIsPlaying(false);
+    setShowStations(false);
+    setIsLoadingTrack(true);
+
+    await sb(`clients?id=eq.${client.id}`, {
+      method: "PATCH",
+      body: JSON.stringify({ station_key: stationKey }),
+    });
+
+    const folder = STATION_FOLDERS[stationKey] || "Cozy Coffee";
+    try {
+      const encodedFolder = folder.replace(/ /g, "%20");
+      const res = await fetch(`${BASE_URL}/${encodedFolder}/playlist.json`);
+      const tracks: string[] = await res.json();
+      const shuffled = tracks.sort(() => Math.random() - 0.5);
+      setPlaylist(shuffled);
+      setTrackIndex(0);
+      setCurrentTrack(shuffled[0] || "");
+      setIsLoadingTrack(false);
+      setTimeout(() => playTrack(0, shuffled, stationKey), 100);
+    } catch (e) {
+      setIsLoadingTrack(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <main style={{ minHeight: "100vh", background: "#080C12", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "Georgia, serif" }}>
+        <div style={{ fontSize: 16, color: "#8BA7BE" }}>⏳ Загрузка...</div>
+      </main>
+    );
+  }
+
   return (
-    <main style={{ minHeight: "100vh", background: "#080C12", color: "#E8EFF5", fontFamily: "Georgia, serif", display: "flex", flexDirection: "column" }}>
+    <main style={{ minHeight: "100vh", background: "#080C12", fontFamily: "Georgia, serif", color: "#E8EFF5" }}>
+      <audio
+        ref={audioRef}
+        onEnded={() => { const next = (trackIndex + 1) % playlist.length; playTrack(next); }}
+        onError={() => { const next = (trackIndex + 1) % playlist.length; setTimeout(() => playTrack(next), 2000); }}
+      />
 
-      <nav style={{
-        padding: "20px 48px", display: "flex", alignItems: "center", justifyContent: "space-between",
-        borderBottom: "1px solid rgba(201,168,76,0.15)",
-      }}>
-        <a href="/" style={{ display: "flex", alignItems: "center", gap: 10, textDecoration: "none" }}>
-          <div style={{ width: 6, height: 24, background: "#C9A84C", borderRadius: 2 }} />
-          <span style={{ fontSize: 20, fontWeight: 700, color: "#fff" }}>FonMusic</span>
-        </a>
-        <div style={{ fontSize: 13, color: "#8BA7BE" }}>Веб-плеер</div>
-      </nav>
+      {/* HEADER */}
+      <header style={{ padding: "20px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: "1px solid rgba(201,168,76,0.15)" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <div style={{ width: 5, height: 20, background: "#C9A84C", borderRadius: 2 }} />
+          <span style={{ fontSize: 17, fontWeight: 700, color: "#fff" }}>FonMusic</span>
+          <span style={{ fontSize: 11, color: "#8BA7BE", padding: "2px 8px", background: "rgba(255,255,255,0.06)", borderRadius: 100 }}>Веб-плеер</span>
+        </div>
+        <a href="/dashboard" style={{ fontSize: 13, color: "#8BA7BE", textDecoration: "none" }}>← Кабинет</a>
+      </header>
 
-      <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", padding: "48px 24px" }}>
-        <div style={{
-          width: "100%", maxWidth: 640,
-          background: "#0D1B2A", border: "1px solid rgba(201,168,76,0.2)",
-          borderRadius: 24, overflow: "hidden",
-          boxShadow: "0 40px 80px rgba(0,0,0,0.5)",
-        }}>
-          <div style={{ padding: "32px 32px 24px", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-            <div style={{ fontSize: 11, color: "#C9A84C", letterSpacing: "0.1em", marginBottom: 12, fontFamily: "monospace" }}>
-              {isPlaying ? "▶ СЕЙЧАС ИГРАЕТ" : "⏸ ПАУЗА"}
-            </div>
-            <div style={{ fontSize: 28, fontWeight: 700, color: "#fff", marginBottom: 4, fontStyle: "italic" }}>
-              {currentTrack.title}
-            </div>
-            <div style={{ fontSize: 13, color: "#8BA7BE" }}>FonMusic · Лицензионная музыка</div>
+      <div style={{ maxWidth: 520, margin: "0 auto", padding: "32px 20px" }}>
 
-            <div style={{ marginTop: 24 }}>
-              <div onClick={seek} style={{
-                height: 4, background: "rgba(255,255,255,0.1)", borderRadius: 2,
-                cursor: "pointer", position: "relative", marginBottom: 8,
-              }}>
-                <div style={{
-                  position: "absolute", left: 0, top: 0, height: "100%",
-                  width: `${progress}%`, background: "#C9A84C", borderRadius: 2,
-                  transition: "width 0.1s linear",
-                }} />
-              </div>
-              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, color: "#8BA7BE" }}>
-                <span>{fmt(currentTime)}</span>
-                <span>{fmt(duration)}</span>
-              </div>
-            </div>
+        {/* LOCATION INFO */}
+        <div style={{ marginBottom: 24, padding: "14px 18px", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 12 }}>
+          <div style={{ fontSize: 11, color: "#8BA7BE", marginBottom: 4 }}>ВАША ТОЧКА</div>
+          <div style={{ fontSize: 15, fontWeight: 700, color: "#fff" }}>{client?.name}</div>
+          <div style={{ fontSize: 12, color: "#C9A84C", marginTop: 2 }}>Режим: Веб-плеер</div>
+        </div>
 
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 24, marginTop: 24 }}>
-              <button onClick={playPrev} style={{
-                background: "none", border: "none", color: "#8BA7BE",
-                fontSize: 20, cursor: "pointer", padding: 8,
-              }}>⏮</button>
-
-              <button id="playBtn" onClick={togglePlay} style={{
-                width: 64, height: 64, borderRadius: "50%",
-                background: "#C9A84C", border: "none", cursor: "pointer",
-                fontSize: 24, color: "#080C12", fontWeight: 700,
-                display: "flex", alignItems: "center", justifyContent: "center",
-                boxShadow: "0 4px 16px rgba(201,168,76,0.4)",
-              }}>
-                {isPlaying ? "⏸" : "▶"}
-              </button>
-
-              <button onClick={playNext} style={{
-                background: "none", border: "none", color: "#8BA7BE",
-                fontSize: 20, cursor: "pointer", padding: 8,
-              }}>⏭</button>
-            </div>
-
-            <div style={{ display: "flex", alignItems: "center", gap: 12, marginTop: 20 }}>
-              <span style={{ fontSize: 14, color: "#8BA7BE" }}>🔉</span>
-              <input
-                type="range" min={0} max={1} step={0.01} value={volume}
-                onChange={e => {
-                  const v = parseFloat(e.target.value);
-                  setVolume(v);
-                  if (audioRef.current) audioRef.current.volume = v;
-                }}
-                style={{ flex: 1, accentColor: "#C9A84C" }}
-              />
-              <span style={{ fontSize: 14, color: "#8BA7BE" }}>🔊</span>
-            </div>
+        {/* PLAYER CARD */}
+        <div style={{ background: "linear-gradient(135deg, #0D1B2A, #162435)", border: "1px solid rgba(201,168,76,0.2)", borderRadius: 24, padding: "32px 24px", marginBottom: 20, textAlign: "center" }}>
+          <div style={{ fontSize: 36, marginBottom: 8 }}>
+            {STATION_NAMES[currentStation]?.split(" ")[0] || "🎵"}
+          </div>
+          <div style={{ fontSize: 20, fontWeight: 700, color: "#fff", marginBottom: 4 }}>
+            {STATION_NAMES[currentStation]?.split(" ").slice(1).join(" ") || currentStation}
           </div>
 
-          <div style={{ padding: "16px 32px", display: "flex", gap: 8, borderBottom: "1px solid rgba(255,255,255,0.06)", flexWrap: "wrap" }}>
-            {filters.map(f => (
-              <button key={f} onClick={() => setActiveFilter(f)} style={{
-                padding: "6px 16px", borderRadius: 100, fontSize: 12, cursor: "pointer",
-                background: activeFilter === f ? "#C9A84C" : "rgba(255,255,255,0.05)",
-                border: activeFilter === f ? "none" : "1px solid rgba(255,255,255,0.1)",
-                color: activeFilter === f ? "#080C12" : "#8BA7BE",
-                fontWeight: activeFilter === f ? 700 : 400,
-              }}>{f}</button>
-            ))}
+          <div style={{ background: "rgba(255,255,255,0.04)", borderRadius: 12, padding: "12px 16px", marginBottom: 24, minHeight: 46, marginTop: 16 }}>
+            {isLoadingTrack ? (
+              <div style={{ fontSize: 13, color: "#8BA7BE" }}>⏳ Загрузка...</div>
+            ) : currentTrack ? (
+              <>
+                <div style={{ fontSize: 10, color: "#C9A84C", letterSpacing: "0.1em", marginBottom: 3 }}>
+                  {isPlaying ? "▶ СЕЙЧАС ИГРАЕТ" : "⏸ ПАУЗА"}
+                </div>
+                <div style={{ fontSize: 13, color: "#E8EFF5", fontStyle: "italic" }}>{getTrackName(currentTrack)}</div>
+              </>
+            ) : (
+              <div style={{ fontSize: 13, color: "#8BA7BE" }}>Нажмите Play</div>
+            )}
           </div>
 
-          <div style={{ maxHeight: 320, overflowY: "auto" }}>
-            {filteredTracks.map((track, i) => (
-              <div
-                key={track.file}
-                onClick={() => playTrack(track)}
-                style={{
-                  display: "flex", alignItems: "center", gap: 16,
-                  padding: "14px 32px", cursor: "pointer",
-                  background: currentTrack.file === track.file ? "rgba(201,168,76,0.08)" : "transparent",
-                  borderBottom: "1px solid rgba(255,255,255,0.04)",
-                  borderLeft: currentTrack.file === track.file ? "3px solid #C9A84C" : "3px solid transparent",
-                  transition: "background 0.2s",
-                }}
-              >
-                <div style={{ fontSize: 13, color: "#8BA7BE", width: 24 }}>
-                  {currentTrack.file === track.file && isPlaying ? "♪" : `${String(i + 1).padStart(2, "0")}`}
-                </div>
-                <div style={{ flex: 1, fontSize: 14, color: currentTrack.file === track.file ? "#fff" : "#E8EFF5" }}>
-                  {track.title}
-                </div>
-                <div style={{
-                  fontSize: 11, padding: "2px 8px", borderRadius: 100,
-                  background: "rgba(26,107,154,0.2)", color: "#8BA7BE",
-                  border: "1px solid rgba(26,107,154,0.3)",
-                  textTransform: "uppercase",
-                }}>
-                  {track.category}
-                </div>
-                <div style={{
-                  width: 8, height: 8, borderRadius: "50%",
-                  background: currentTrack.file === track.file && isPlaying ? "#C9A84C" : "rgba(255,255,255,0.2)",
-                }} />
-              </div>
-            ))}
+          {isPlaying && (
+            <div style={{ display: "flex", gap: 3, alignItems: "flex-end", height: 28, justifyContent: "center", marginBottom: 20 }}>
+              {[...Array(14)].map((_, i) => (
+                <div key={i} style={{ width: 4, borderRadius: 2, background: i % 3 === 0 ? "#C9A84C" : "#1A6B9A", animation: `wave ${0.7 + i * 0.1}s ease-in-out infinite alternate`, opacity: 0.8 }} />
+              ))}
+            </div>
+          )}
+
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 20, marginBottom: 20 }}>
+            <button onClick={prevTrack} style={{ background: "none", border: "none", color: "#8BA7BE", fontSize: 22, cursor: "pointer", padding: 8 }}>⏮</button>
+            <button onClick={togglePlay} disabled={isLoadingTrack} style={{
+              width: 72, height: 72, borderRadius: "50%",
+              background: isLoadingTrack ? "rgba(201,168,76,0.3)" : "#C9A84C",
+              border: "none", cursor: "pointer", fontSize: 24,
+              display: "flex", alignItems: "center", justifyContent: "center",
+              margin: "0 auto", boxShadow: "0 8px 32px rgba(201,168,76,0.4)",
+            }}>
+              {isLoadingTrack ? "⏳" : isPlaying ? "⏸" : "▶"}
+            </button>
+            <button onClick={nextTrack} style={{ background: "none", border: "none", color: "#8BA7BE", fontSize: 22, cursor: "pointer", padding: 8 }}>⏭</button>
+          </div>
+
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <span style={{ fontSize: 14, color: "#8BA7BE" }}>🔉</span>
+            <input type="range" min={0} max={1} step={0.01} value={volume}
+              onChange={e => {
+                const v = parseFloat(e.target.value);
+                setVolume(v);
+                if (audioRef.current) audioRef.current.volume = v;
+              }}
+              style={{ flex: 1, accentColor: "#C9A84C" }}
+            />
+            <span style={{ fontSize: 14, color: "#8BA7BE" }}>🔊</span>
           </div>
         </div>
 
-        <p style={{ marginTop: 24, fontSize: 12, color: "#8BA7BE", textAlign: "center" }}>
-          Лицензионная музыка · JAMENDO Licensing · fonmusic.uz
-        </p>
+        {/* STATION SELECTOR */}
+        <div style={{ marginBottom: 20 }}>
+          <button onClick={() => setShowStations(!showStations)} style={{
+            width: "100%", padding: "14px 20px", background: "#0D1B2A",
+            border: "1px solid rgba(255,255,255,0.08)", borderRadius: 12,
+            color: "#fff", fontSize: 14, cursor: "pointer", fontFamily: "Georgia, serif",
+            display: "flex", alignItems: "center", justifyContent: "space-between",
+          }}>
+            <span>🎵 Сменить станцию</span>
+            <span style={{ color: "#8BA7BE" }}>{showStations ? "▲" : "▼"}</span>
+          </button>
+
+          {showStations && (
+            <div style={{ marginTop: 8, display: "flex", flexDirection: "column", gap: 8 }}>
+              {Object.entries(STATION_NAMES).map(([key, name]) => (
+                <button key={key} onClick={() => switchStation(key)} style={{
+                  padding: "14px 16px", borderRadius: 12, cursor: "pointer", textAlign: "left",
+                  fontFamily: "Georgia, serif",
+                  background: currentStation === key ? "rgba(201,168,76,0.12)" : "rgba(255,255,255,0.03)",
+                  border: `1px solid ${currentStation === key ? "rgba(201,168,76,0.4)" : "rgba(255,255,255,0.07)"}`,
+                  color: currentStation === key ? "#C9A84C" : "#fff",
+                  fontSize: 14, fontWeight: currentStation === key ? 700 : 400,
+                  width: "100%",
+                }}>
+                  {name}
+                  {currentStation === key && <span style={{ marginLeft: 8, fontSize: 10 }}>▶ ИГРАЕТ</span>}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* UPSELL */}
+        <div style={{ background: "#0D1B2A", border: "1px solid rgba(201,168,76,0.15)", borderRadius: 16, padding: "20px" }}>
+          <div style={{ fontSize: 14, fontWeight: 700, color: "#fff", marginBottom: 6 }}>🎵 Подключите FonMusic Box</div>
+          <div style={{ fontSize: 13, color: "#8BA7BE", lineHeight: 1.6, marginBottom: 14 }}>
+            Музыка будет играть автоматически 24/7 без браузера и компьютера
+          </div>
+          <a href="/#trial" style={{ display: "inline-block", padding: "10px 20px", background: "#C9A84C", color: "#080C12", borderRadius: 8, fontSize: 13, fontWeight: 700, textDecoration: "none" }}>
+            Узнать подробнее →
+          </a>
+        </div>
+
       </div>
 
-      <audio ref={audioRef} src={`${BASE_URL}/${currentTrack.file}`} preload="auto" />
+      <style>{`
+        @keyframes wave { from { height: 15%; } to { height: 85%; } }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { max-width: 100vw; overflow-x: hidden; }
+      `}</style>
     </main>
   );
 }

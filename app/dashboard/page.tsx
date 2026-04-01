@@ -190,6 +190,7 @@ export default function DashboardPage() {
 
   const handleLogin = (clientData: any) => {
   console.log("CLIENT DATA:", clientData);
+  localStorage.setItem("fonmusic_client_id", clientData.id);
   setClient(clientData);
     const status = clientData.subscription_status;
     const expiresAt = clientData.demo_expires_at;
