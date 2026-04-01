@@ -47,20 +47,13 @@ function getDaysLeft(expiresAt: string): number {
 }
 
 function getTrackName(track: string): string {
-  return track
-    .replace(".mp3", "")
-    .replace(/_/g, " ")
-    .split("-")
-    .slice(1)
-    .join(" ")
-    .trim() || track.replace(".mp3", "");
+  return track.replace(".mp3", "").replace(/_/g, " ").split("-").slice(1).join(" ").trim() || track.replace(".mp3", "");
 }
 
 function isDeviceOnline(updatedAt: string): boolean {
   const updated = new Date(updatedAt);
   const now = new Date();
-  const diffMin = (now.getTime() - updated.getTime()) / (1000 * 60);
-  return diffMin < 5;
+  return (now.getTime() - updated.getTime()) / (1000 * 60) < 5;
 }
 
 function PaywallScreen() {
@@ -102,9 +95,7 @@ function LoginScreen({ onLogin }: { onLogin: (client: any) => void }) {
     if (!phone || !password) return;
     setLoading(true);
     setError("");
-    console.log("LOGIN ATTEMPT:", phone, password);
     const data = await sb(`clients?phone=eq.${encodeURIComponent(phone)}&password=eq.${password}&select=*`);
-    console.log("LOGIN RESULT:", data);
     setLoading(false);
     if (data && data.length > 0) {
       onLogin(data[0]);
@@ -166,9 +157,7 @@ export default function DashboardPage() {
   }, [screen]);
 
   useEffect(() => {
-    if (client?.device_id && screen === "dashboard") {
-      loadDeviceStatus();
-    }
+    if (client?.device_id && screen === "dashboard") loadDeviceStatus();
   }, [client]);
 
   const loadData = async () => {
@@ -189,9 +178,8 @@ export default function DashboardPage() {
   };
 
   const handleLogin = (clientData: any) => {
-  console.log("CLIENT DATA:", clientData);
-  localStorage.setItem("fonmusic_client_id", clientData.id);
-  setClient(clientData);
+    localStorage.setItem("fonmusic_client_id", clientData.id);
+    setClient(clientData);
     const status = clientData.subscription_status;
     const expiresAt = clientData.demo_expires_at;
     if (status === "active") { setScreen("dashboard"); return; }
@@ -253,10 +241,7 @@ export default function DashboardPage() {
     await sendCommand("next_track");
     setSaving(false);
     setSuccess("Переключаем трек...");
-    setTimeout(() => {
-      setSuccess("");
-      loadDeviceStatus();
-    }, 5000);
+    setTimeout(() => { setSuccess(""); loadDeviceStatus(); }, 5000);
   };
 
   const getStationsForCategory = (categoryKey: string) => {
@@ -267,6 +252,7 @@ export default function DashboardPage() {
   };
 
   const online = deviceStatus ? isDeviceOnline(deviceStatus.updated_at) : false;
+  const currentStationObj = stations.find(s => s.station_key === client?.station_key);
 
   if (screen === "login") return <LoginScreen onLogin={handleLogin} />;
   if (screen === "paywall") return <PaywallScreen />;
@@ -274,6 +260,7 @@ export default function DashboardPage() {
   return (
     <main style={{ minHeight: "100vh", background: "#080C12", fontFamily: "Georgia, serif", color: "#E8EFF5" }}>
 
+      {/* NAV */}
       <nav style={{ padding: "18px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: "1px solid rgba(201,168,76,0.15)" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <div style={{ width: 5, height: 22, background: "#C9A84C", borderRadius: 2 }} />
@@ -294,12 +281,14 @@ export default function DashboardPage() {
 
       <div style={{ maxWidth: 860, margin: "0 auto", padding: "32px 20px" }}>
 
+        {/* SUCCESS */}
         {success && (
           <div style={{ padding: "12px 20px", background: "rgba(34,197,94,0.1)", border: "1px solid rgba(34,197,94,0.3)", borderRadius: 10, fontSize: 14, color: "#22C55E", marginBottom: 20 }}>
             ✓ {success}
           </div>
         )}
 
+        {/* DEMO BANNER */}
         {daysLeft !== null && daysLeft > 0 && (
           <div style={{ padding: "16px 20px", background: "rgba(201,168,76,0.08)", border: "1px solid rgba(201,168,76,0.2)", borderRadius: 14, marginBottom: 20, display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
             <div style={{ fontSize: 14, color: "#C9A84C" }}>🕐 Тестовый период: осталось <strong>{daysLeft} дней</strong></div>
@@ -307,28 +296,107 @@ export default function DashboardPage() {
           </div>
         )}
 
-        {/* СЕЙЧАС ИГРАЕТ */}
-        <div style={{ background: "#0D1B2A", border: "1px solid rgba(201,168,76,0.2)", borderRadius: 16, padding: "24px", marginBottom: 20 }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-            <div style={{ fontSize: 11, color: "#C9A84C", letterSpacing: 2 }}>▶ СЕЙЧАС ИГРАЕТ</div>
-            <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "4px 12px", background: online ? "rgba(34,197,94,0.1)" : "rgba(239,68,68,0.1)", border: `1px solid ${online ? "rgba(34,197,94,0.3)" : "rgba(239,68,68,0.3)"}`, borderRadius: 100 }}>
+        {/* 1. СТАТУС УСТРОЙСТВА */}
+        <div style={{ background: "#0D1B2A", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 16, padding: "20px 24px", marginBottom: 20 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <div style={{ display: "flex", gap: 16, fontSize: 13, color: "#8BA7BE", flexWrap: "wrap" }}>
+              <span>👤 {client?.name}</span>
+              <span>📱 {client?.device_id}</span>
+              <span>💾 {deviceStatus?.cache_size_mb || 0}MB кэш</span>
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "4px 12px", background: online ? "rgba(34,197,94,0.1)" : "rgba(239,68,68,0.1)", border: `1px solid ${online ? "rgba(34,197,94,0.3)" : "rgba(239,68,68,0.3)"}`, borderRadius: 100, flexShrink: 0 }}>
               <div style={{ width: 7, height: 7, borderRadius: "50%", background: online ? "#22C55E" : "#EF4444" }} />
               <span style={{ fontSize: 12, color: online ? "#22C55E" : "#EF4444" }}>{online ? "Онлайн" : "Офлайн"}</span>
             </div>
           </div>
+        </div>
 
+        {/* 2. ВЫБОР СТАНЦИИ */}
+        <div style={{ background: "#0D1B2A", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 16, padding: "24px", marginBottom: 20 }}>
+          <h2 style={{ fontSize: 16, fontWeight: 700, color: "#fff", marginBottom: 4 }}>🎵 Выбор станции</h2>
+          <p style={{ fontSize: 13, color: "#8BA7BE", marginBottom: 16 }}>Выберите музыку для вашего заведения</p>
+
+          {/* Category filter */}
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 20 }}>
+            <button onClick={() => setSelectedCategory(null)} style={{
+              padding: "7px 16px", borderRadius: 20, fontSize: 12, cursor: "pointer", fontFamily: "Georgia, serif",
+              background: !selectedCategory ? "#C9A84C" : "rgba(255,255,255,0.05)",
+              border: !selectedCategory ? "none" : "1px solid rgba(255,255,255,0.1)",
+              color: !selectedCategory ? "#080C12" : "#E8EFF5", fontWeight: !selectedCategory ? 700 : 400,
+            }}>Все</button>
+            {categories.map(c => (
+              <button key={c.category_key} onClick={() => setSelectedCategory(c.category_key)} style={{
+                padding: "7px 16px", borderRadius: 20, fontSize: 12, cursor: "pointer", fontFamily: "Georgia, serif",
+                background: selectedCategory === c.category_key ? "#C9A84C" : "rgba(255,255,255,0.05)",
+                border: selectedCategory === c.category_key ? "none" : "1px solid rgba(255,255,255,0.1)",
+                color: selectedCategory === c.category_key ? "#080C12" : "#E8EFF5",
+                fontWeight: selectedCategory === c.category_key ? 700 : 400,
+              }}>{c.icon} {c.name}</button>
+            ))}
+          </div>
+
+          {/* Stations grid */}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+            {(selectedCategory ? getStationsForCategory(selectedCategory) : stations).map(s => {
+              const isActive = client?.station_key === s.station_key;
+              return (
+                <button key={s.station_key} onClick={() => changeStation(s.station_key)} disabled={saving} style={{
+                  padding: "18px", borderRadius: 12, cursor: "pointer", textAlign: "left", fontFamily: "Georgia, serif",
+                  background: isActive ? "rgba(201,168,76,0.12)" : "rgba(255,255,255,0.03)",
+                  border: `${isActive ? "2px" : "1px"} solid ${isActive ? "rgba(201,168,76,0.5)" : "rgba(255,255,255,0.08)"}`,
+                  boxShadow: isActive ? "0 0 16px rgba(201,168,76,0.15)" : "none",
+                  transition: "all 0.2s",
+                }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+                    <span style={{ fontSize: 20 }}>{s.icon}</span>
+                    <span style={{ fontSize: 13, fontWeight: 700, color: isActive ? "#C9A84C" : "#fff" }}>
+                      {s.display_name}
+                    </span>
+                  </div>
+                  <div style={{ fontSize: 11, color: "#8BA7BE", lineHeight: 1.4 }}>{s.description}</div>
+                  {isActive && (
+                    <div style={{ marginTop: 8, fontSize: 10, color: "#C9A84C", display: "flex", alignItems: "center", gap: 4 }}>
+                      <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#C9A84C", display: "inline-block" }} />
+                      СЕЙЧАС ИГРАЕТ
+                    </div>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* 3. АТМОСФЕРА */}
+        <div style={{ background: "#0D1B2A", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 16, padding: "24px", marginBottom: 20 }}>
+          <h2 style={{ fontSize: 16, fontWeight: 700, color: "#fff", marginBottom: 4 }}>🌡️ Атмосфера</h2>
+          <p style={{ fontSize: 13, color: "#8BA7BE", marginBottom: 16 }}>Настройте энергичность музыки под загруженность заведения</p>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10 }}>
+            {MODES.map(m => (
+              <button key={m.key} onClick={() => changeMode(m.key)} disabled={saving} style={{
+                padding: "14px 10px", borderRadius: 12, cursor: "pointer", textAlign: "center", fontFamily: "Georgia, serif",
+                background: client?.mode === m.key ? "rgba(201,168,76,0.15)" : "rgba(255,255,255,0.03)",
+                border: `${client?.mode === m.key ? "2px" : "1px"} solid ${client?.mode === m.key ? "rgba(201,168,76,0.5)" : "rgba(255,255,255,0.08)"}`,
+                boxShadow: client?.mode === m.key ? "0 0 12px rgba(201,168,76,0.1)" : "none",
+                transition: "all 0.2s",
+              }}>
+                <div style={{ fontSize: 22, marginBottom: 4 }}>{m.icon}</div>
+                <div style={{ fontSize: 13, fontWeight: 700, color: client?.mode === m.key ? "#C9A84C" : "#fff" }}>{m.label}</div>
+                <div style={{ fontSize: 11, color: "#8BA7BE" }}>{m.desc}</div>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* 4. СЕЙЧАС ИГРАЕТ */}
+        <div style={{ background: "#0D1B2A", border: "1px solid rgba(201,168,76,0.2)", borderRadius: 16, padding: "24px", marginBottom: 20 }}>
+          <div style={{ fontSize: 11, color: "#C9A84C", letterSpacing: 2, marginBottom: 12 }}>▶ СЕЙЧАС ИГРАЕТ</div>
           {deviceStatus ? (
             <>
-              <div style={{ fontSize: 20, fontWeight: 700, color: "#fff", marginBottom: 6 }}>
+              <div style={{ fontSize: 20, fontWeight: 700, color: "#fff", marginBottom: 4 }}>
                 {STATION_NAMES[deviceStatus.current_station] || deviceStatus.current_station || "—"}
               </div>
               <div style={{ fontSize: 14, color: "#8BA7BE", marginBottom: 16, fontStyle: "italic" }}>
                 🎵 {deviceStatus.current_track ? getTrackName(deviceStatus.current_track) : "—"}
-              </div>
-              <div style={{ display: "flex", gap: 16, fontSize: 12, color: "#4a5a6a", marginBottom: 16, flexWrap: "wrap" }}>
-                <span>💾 Кэш: {deviceStatus.cache_size_mb || 0}MB</span>
-                <span>💿 Свободно: {Math.round((deviceStatus.free_storage_mb || 0) / 1024)}GB</span>
-                <span>📱 v{deviceStatus.app_version || "—"}</span>
               </div>
             </>
           ) : (
@@ -351,86 +419,7 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* УСТРОЙСТВО */}
-        <div style={{ background: "#0D1B2A", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 16, padding: "24px", marginBottom: 20 }}>
-          <h2 style={{ fontSize: 17, fontWeight: 700, color: "#fff", margin: "0 0 16px 0" }}>Устройство</h2>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12 }}>
-            {[
-              { label: "Заведение", value: client?.name },
-              { label: "Тариф", value: client?.tariff },
-              { label: "ID устройства", value: client?.device_id },
-            ].map(item => (
-              <div key={item.label} style={{ background: "#162435", borderRadius: 10, padding: "14px" }}>
-                <div style={{ fontSize: 10, color: "#8BA7BE", marginBottom: 4 }}>{item.label}</div>
-                <div style={{ fontSize: 13, fontWeight: 700, color: "#fff" }}>{item.value || "—"}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* АТМОСФЕРА */}
-        <div style={{ background: "#0D1B2A", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 16, padding: "24px", marginBottom: 20 }}>
-          <h2 style={{ fontSize: 16, fontWeight: 700, color: "#fff", marginBottom: 4 }}>🌡️ Атмосфера</h2>
-          <p style={{ fontSize: 13, color: "#8BA7BE", marginBottom: 16 }}>Подстройте энергетику музыки</p>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10 }}>
-            {MODES.map(m => (
-              <button key={m.key} onClick={() => changeMode(m.key)} disabled={saving} style={{
-                padding: "14px 10px", borderRadius: 12, cursor: "pointer", textAlign: "center", fontFamily: "Georgia, serif",
-                background: client?.mode === m.key ? "rgba(201,168,76,0.15)" : "rgba(255,255,255,0.03)",
-                border: `1px solid ${client?.mode === m.key ? "rgba(201,168,76,0.5)" : "rgba(255,255,255,0.08)"}`,
-              }}>
-                <div style={{ fontSize: 22, marginBottom: 4 }}>{m.icon}</div>
-                <div style={{ fontSize: 13, fontWeight: 700, color: client?.mode === m.key ? "#C9A84C" : "#fff" }}>{m.label}</div>
-                <div style={{ fontSize: 11, color: "#8BA7BE" }}>{m.desc}</div>
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* ВЫБОР СТАНЦИИ */}
-        <div style={{ background: "#0D1B2A", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 16, padding: "24px", marginBottom: 20 }}>
-          <h2 style={{ fontSize: 16, fontWeight: 700, color: "#fff", marginBottom: 4 }}>🎵 Выбор станции</h2>
-          <p style={{ fontSize: 13, color: "#8BA7BE", marginBottom: 16 }}>Выберите музыку для вашего заведения</p>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 20 }}>
-            <button onClick={() => setSelectedCategory(null)} style={{
-              padding: "6px 14px", borderRadius: 20, fontSize: 12, cursor: "pointer", fontFamily: "Georgia, serif",
-              background: !selectedCategory ? "#C9A84C" : "rgba(255,255,255,0.05)",
-              border: !selectedCategory ? "none" : "1px solid rgba(255,255,255,0.1)",
-              color: !selectedCategory ? "#080C12" : "#E8EFF5", fontWeight: !selectedCategory ? 700 : 400,
-            }}>Все</button>
-            {categories.map(c => (
-              <button key={c.category_key} onClick={() => setSelectedCategory(c.category_key)} style={{
-                padding: "6px 14px", borderRadius: 20, fontSize: 12, cursor: "pointer", fontFamily: "Georgia, serif",
-                background: selectedCategory === c.category_key ? "#C9A84C" : "rgba(255,255,255,0.05)",
-                border: selectedCategory === c.category_key ? "none" : "1px solid rgba(255,255,255,0.1)",
-                color: selectedCategory === c.category_key ? "#080C12" : "#E8EFF5",
-                fontWeight: selectedCategory === c.category_key ? 700 : 400,
-              }}>{c.icon} {c.name}</button>
-            ))}
-          </div>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-            {(selectedCategory ? getStationsForCategory(selectedCategory) : stations).map(s => (
-              <button key={s.station_key} onClick={() => changeStation(s.station_key)} disabled={saving} style={{
-                padding: "18px", borderRadius: 12, cursor: "pointer", textAlign: "left", fontFamily: "Georgia, serif",
-                background: client?.station_key === s.station_key ? "rgba(201,168,76,0.12)" : "rgba(255,255,255,0.03)",
-                border: `1px solid ${client?.station_key === s.station_key ? "rgba(201,168,76,0.4)" : "rgba(255,255,255,0.08)"}`,
-              }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-                  <span style={{ fontSize: 20 }}>{s.icon}</span>
-                  <span style={{ fontSize: 13, fontWeight: 700, color: client?.station_key === s.station_key ? "#C9A84C" : "#fff" }}>
-                    {s.display_name}
-                  </span>
-                </div>
-                <div style={{ fontSize: 11, color: "#8BA7BE", lineHeight: 1.4 }}>{s.description}</div>
-                {client?.station_key === s.station_key && (
-                  <div style={{ marginTop: 8, fontSize: 10, color: "#C9A84C" }}>▶ ИГРАЕТ</div>
-                )}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* СЕРТИФИКАТ */}
+        {/* 5. СЕРТИФИКАТ */}
         <div style={{ background: "#0D1B2A", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 16, padding: "24px" }}>
           <h2 style={{ fontSize: 16, fontWeight: 700, color: "#fff", marginBottom: 6 }}>📄 Сертификат</h2>
           <p style={{ fontSize: 13, color: "#8BA7BE", marginBottom: 16 }}>Официальный сертификат JAMENDO Licensing</p>
