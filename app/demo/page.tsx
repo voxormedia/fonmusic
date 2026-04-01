@@ -34,6 +34,16 @@ const TYPE_TITLES: Record<string, string> = {
   hotel: "Музыка для отелей",
 };
 
+const BUSINESS_TYPES = [
+  { icon: "☕", label: "Кафе / кофейня", type: "cafe" },
+  { icon: "🍽️", label: "Ресторан", type: "restaurant" },
+  { icon: "🛍️", label: "Магазин / бутик", type: "shop" },
+  { icon: "💆", label: "Салон красоты / SPA", type: "spa" },
+  { icon: "💪", label: "Фитнес", type: "fitness" },
+  { icon: "🏨", label: "Отель / лобби", type: "hotel" },
+  { icon: "🎸", label: "Бар", type: "bar" },
+];
+
 function LeadModal({ onClose, onSuccess }: { onClose: () => void; onSuccess: () => void }) {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
@@ -52,10 +62,7 @@ function LeadModal({ onClose, onSuccess }: { onClose: () => void; onSuccess: () 
     });
     setLoading(false);
     setSent(true);
-    setTimeout(() => {
-      onSuccess();
-      onClose();
-    }, 2000);
+    setTimeout(() => { onSuccess(); onClose(); }, 2000);
   };
 
   return (
@@ -88,7 +95,7 @@ function LeadModal({ onClose, onSuccess }: { onClose: () => void; onSuccess: () 
                 ))}
               </select>
             </div>
-            <button onClick={send} disabled={loading} style={{ width: "100%", padding: "18px", background: "#C9A84C", color: "#080C12", border: "none", borderRadius: 12, fontSize: 16, fontWeight: 700, cursor: "pointer", boxShadow: "0 8px 32px rgba(201,168,76,0.3)" }}>
+            <button onClick={send} disabled={loading} style={{ width: "100%", padding: "18px", background: "#C9A84C", color: "#080C12", border: "none", borderRadius: 12, fontSize: 16, fontWeight: 700, cursor: "pointer" }}>
               {loading ? "Отправляем..." : "Получить 7 дней бесплатно →"}
             </button>
             <button onClick={onClose} style={{ width: "100%", padding: "12px", background: "transparent", border: "none", color: "#8BA7BE", fontSize: 13, cursor: "pointer", marginTop: 8 }}>
@@ -101,15 +108,12 @@ function LeadModal({ onClose, onSuccess }: { onClose: () => void; onSuccess: () 
   );
 }
 
-  function DemoPlayer() {
+function DemoPlayer() {
   const searchParams = useSearchParams();
-  const typeParam = searchParams.get("type") || "cafe";
+  const typeParam = searchParams.get("type");
 
-  const getInitialStation = () => {
-    const stationKey = TYPE_MAP[typeParam] || "cozy_coffee";
-    return DEMO_STATIONS.find(s => s.key === stationKey) || DEMO_STATIONS[0];
-  };
-
+  const [businessSelected, setBusinessSelected] = useState(!!typeParam);
+  const [selectedType, setSelectedType] = useState(typeParam || "");
   const [mounted, setMounted] = useState(false);
   const [currentStation, setCurrentStation] = useState<typeof DEMO_STATIONS[0]>(DEMO_STATIONS[0]);
   const [playlist, setPlaylist] = useState<string[]>([]);
@@ -122,19 +126,19 @@ function LeadModal({ onClose, onSuccess }: { onClose: () => void; onSuccess: () 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
-  const pageTitle = TYPE_TITLES[typeParam] || "Демо FonMusic";
+  const pageTitle = TYPE_TITLES[selectedType] || "Демо FonMusic";
 
   useEffect(() => { setMounted(true); }, []);
 
   useEffect(() => {
-    if (mounted) {
-      const initial = getInitialStation();
+    if (mounted && businessSelected && selectedType) {
+      const stationKey = TYPE_MAP[selectedType] || "cozy_coffee";
+      const initial = DEMO_STATIONS.find(s => s.key === stationKey) || DEMO_STATIONS[0];
       setCurrentStation(initial);
       loadPlaylist(initial);
     }
-  }, [mounted]);
+  }, [mounted, businessSelected, selectedType]);
 
-  // Таймер 90 сек → показать форму
   useEffect(() => {
     if (isPlaying && !modalShown) {
       timerRef.current = setTimeout(() => {
@@ -147,6 +151,12 @@ function LeadModal({ onClose, onSuccess }: { onClose: () => void; onSuccess: () 
     };
   }, [isPlaying, modalShown]);
 
+  const handleBusinessSelect = (type: string) => {
+    setSelectedType(type);
+    setBusinessSelected(true);
+    window.history.replaceState({}, "", `/demo?type=${type}`);
+  };
+
   const loadPlaylist = async (station: typeof DEMO_STATIONS[0]) => {
     setIsLoading(true);
     setIsPlaying(false);
@@ -158,6 +168,11 @@ function LeadModal({ onClose, onSuccess }: { onClose: () => void; onSuccess: () 
       setPlaylist(shuffled);
       setTrackIndex(0);
       setCurrentTrack(shuffled[0] || "");
+      if (audioRef.current && shuffled[0]) {
+        const encodedTrack = encodeURIComponent(shuffled[0]);
+        audioRef.current.src = `${BASE_URL}/${encodedFolder}/${encodedTrack}`;
+        audioRef.current.load();
+      }
     } catch (e) {
       console.error(e);
     }
@@ -172,7 +187,6 @@ function LeadModal({ onClose, onSuccess }: { onClose: () => void; onSuccess: () 
     const encodedFolder = st.folder.replace(/ /g, "%20");
     const encodedTrack = encodeURIComponent(track);
     const url = `${BASE_URL}/${encodedFolder}/${encodedTrack}`;
-
     if (audioRef.current) {
       audioRef.current.pause();
       audioRef.current.src = url;
@@ -220,42 +234,60 @@ function LeadModal({ onClose, onSuccess }: { onClose: () => void; onSuccess: () 
   };
 
   const getTrackName = (track: string) => {
-    return track
-      .replace(".mp3", "")
-      .replace(/_/g, " ")
-      .split("-")
-      .slice(1)
-      .join(" ")
-      .trim() || track.replace(".mp3", "");
+    return track.replace(".mp3", "").replace(/_/g, " ").split("-").slice(1).join(" ").trim() || track.replace(".mp3", "");
   };
 
   if (!mounted) return null;
 
+  // ЭКРАН ВЫБОРА БИЗНЕСА
+  if (!businessSelected) {
+    return (
+      <main style={{ minHeight: "100vh", background: "#080C12", fontFamily: "Georgia, serif", color: "#E8EFF5", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "40px 20px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
+          <div style={{ width: 5, height: 20, background: "#C9A84C", borderRadius: 2 }} />
+          <span style={{ fontSize: 17, fontWeight: 700, color: "#fff" }}>FonMusic</span>
+          <span style={{ fontSize: 11, color: "#8BA7BE", padding: "2px 8px", background: "rgba(255,255,255,0.06)", borderRadius: 100 }}>Демо</span>
+        </div>
+        <h1 style={{ fontSize: 26, fontWeight: 700, color: "#fff", textAlign: "center", marginBottom: 8, marginTop: 28 }}>
+          Где будет играть музыка?
+        </h1>
+        <p style={{ fontSize: 14, color: "#8BA7BE", marginBottom: 32, textAlign: "center", maxWidth: 360 }}>
+          Мы автоматически подберём идеальную атмосферу для вашего бизнеса
+        </p>
+        <div style={{ display: "flex", flexDirection: "column", gap: 10, width: "100%", maxWidth: 400 }}>
+          {BUSINESS_TYPES.map(b => (
+            <button key={b.type} onClick={() => handleBusinessSelect(b.type)} style={{
+              display: "flex", alignItems: "center", gap: 16,
+              padding: "18px 20px", background: "#0D1B2A",
+              border: "1px solid rgba(255,255,255,0.08)", borderRadius: 14,
+              cursor: "pointer", textAlign: "left", width: "100%",
+              fontFamily: "Georgia, serif", transition: "border-color 0.2s",
+            }}>
+              <span style={{ fontSize: 28 }}>{b.icon}</span>
+              <span style={{ fontSize: 16, fontWeight: 600, color: "#fff", flex: 1 }}>{b.label}</span>
+              <span style={{ color: "#C9A84C", fontSize: 18 }}>→</span>
+            </button>
+          ))}
+        </div>
+        <a href="/" style={{ marginTop: 28, fontSize: 13, color: "#8BA7BE", textDecoration: "none" }}>← На главную</a>
+      </main>
+    );
+  }
+
+  // ДЕМО ПЛЕЕР
   return (
     <main style={{ minHeight: "100vh", background: "#080C12", fontFamily: "Georgia, serif", color: "#E8EFF5" }}>
       <audio
         ref={audioRef}
-        onEnded={() => {
-          const next = (trackIndex + 1) % playlist.length;
-          playTrack(next);
-        }}
-        onError={() => {
-          const next = (trackIndex + 1) % playlist.length;
-          setTimeout(() => playTrack(next), 2000);
-        }}
+        onEnded={() => { const next = (trackIndex + 1) % playlist.length; playTrack(next); }}
+        onError={() => { const next = (trackIndex + 1) % playlist.length; setTimeout(() => playTrack(next), 2000); }}
       />
 
-      {/* MODAL */}
-      {showModal && (
-        <LeadModal
-          onClose={() => setShowModal(false)}
-          onSuccess={() => setShowModal(false)}
-        />
-      )}
+      {showModal && <LeadModal onClose={() => setShowModal(false)} onSuccess={() => setShowModal(false)} />}
 
-      {/* HEADER */}
       <header style={{ padding: "20px 20px 0", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <button onClick={() => setBusinessSelected(false)} style={{ background: "none", border: "none", color: "#8BA7BE", fontSize: 18, cursor: "pointer", padding: "0 8px 0 0" }}>←</button>
           <div style={{ width: 5, height: 20, background: "#C9A84C", borderRadius: 2 }} />
           <span style={{ fontSize: 17, fontWeight: 700, color: "#fff" }}>FonMusic</span>
           <span style={{ fontSize: 11, color: "#8BA7BE", padding: "2px 8px", background: "rgba(255,255,255,0.06)", borderRadius: 100 }}>Демо</span>
@@ -266,18 +298,17 @@ function LeadModal({ onClose, onSuccess }: { onClose: () => void; onSuccess: () 
       </header>
 
       <div style={{ maxWidth: 480, margin: "0 auto", padding: "20px 20px 40px" }}>
-
-        {/* PAGE TITLE */}
         <h1 style={{ fontSize: 22, fontWeight: 700, color: "#fff", marginBottom: 4, marginTop: 16 }}>{pageTitle}</h1>
-        <p style={{ fontSize: 13, color: "#8BA7BE", marginBottom: 24 }}>Слушайте демо — переключайте станции</p>
+        <p style={{ fontSize: 13, color: "#8BA7BE", marginBottom: 24 }}>
+          Музыка автоматически подобрана для вашего типа бизнеса
+        </p>
 
-        {/* CURRENT STATION CARD */}
+        {/* PLAYER CARD */}
         <div style={{ background: "linear-gradient(135deg, #0D1B2A, #162435)", border: "1px solid rgba(201,168,76,0.2)", borderRadius: 24, padding: "28px 24px", marginBottom: 20, textAlign: "center" }}>
           <div style={{ fontSize: 52, marginBottom: 10 }}>{currentStation.icon}</div>
           <div style={{ fontSize: 22, fontWeight: 700, color: "#fff", marginBottom: 4 }}>{currentStation.name}</div>
           <div style={{ fontSize: 13, color: "#8BA7BE", marginBottom: 20 }}>{currentStation.desc}</div>
 
-          {/* Now playing */}
           <div style={{ background: "rgba(255,255,255,0.04)", borderRadius: 12, padding: "12px 16px", marginBottom: 24, minHeight: 46 }}>
             {isLoading ? (
               <div style={{ fontSize: 13, color: "#8BA7BE" }}>⏳ Загрузка...</div>
@@ -293,21 +324,14 @@ function LeadModal({ onClose, onSuccess }: { onClose: () => void; onSuccess: () 
             )}
           </div>
 
-          {/* Waveform */}
           {isPlaying && (
             <div style={{ display: "flex", gap: 3, alignItems: "flex-end", height: 28, justifyContent: "center", marginBottom: 20 }}>
               {[...Array(14)].map((_, i) => (
-                <div key={i} style={{
-                  width: 4, borderRadius: 2,
-                  background: i % 3 === 0 ? "#C9A84C" : "#1A6B9A",
-                  animation: `wave ${0.7 + i * 0.1}s ease-in-out infinite alternate`,
-                  opacity: 0.8,
-                }} />
+                <div key={i} style={{ width: 4, borderRadius: 2, background: i % 3 === 0 ? "#C9A84C" : "#1A6B9A", animation: `wave ${0.7 + i * 0.1}s ease-in-out infinite alternate`, opacity: 0.8 }} />
               ))}
             </div>
           )}
 
-          {/* PLAY BUTTON */}
           <button onClick={togglePlay} disabled={isLoading} style={{
             width: 76, height: 76, borderRadius: "50%",
             background: isLoading ? "rgba(201,168,76,0.3)" : "#C9A84C",
@@ -319,9 +343,9 @@ function LeadModal({ onClose, onSuccess }: { onClose: () => void; onSuccess: () 
           </button>
         </div>
 
-        {/* STATIONS LIST */}
+        {/* STATIONS */}
         <div style={{ marginBottom: 20 }}>
-          <div style={{ fontSize: 11, color: "#8BA7BE", marginBottom: 10, letterSpacing: "0.05em" }}>ДОСТУПНЫЕ СТАНЦИИ</div>
+          <div style={{ fontSize: 11, color: "#8BA7BE", marginBottom: 10, letterSpacing: "0.05em" }}>ДРУГИЕ СТАНЦИИ</div>
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             {DEMO_STATIONS.map(station => (
               <button key={station.key} onClick={() => switchStation(station)} style={{
@@ -333,15 +357,11 @@ function LeadModal({ onClose, onSuccess }: { onClose: () => void; onSuccess: () 
               }}>
                 <span style={{ fontSize: 22 }}>{station.icon}</span>
                 <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: 14, fontWeight: 700, color: currentStation.key === station.key ? "#C9A84C" : "#fff" }}>
-                    {station.name}
-                  </div>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: currentStation.key === station.key ? "#C9A84C" : "#fff" }}>{station.name}</div>
                   <div style={{ fontSize: 12, color: "#8BA7BE" }}>{station.desc}</div>
                 </div>
                 {currentStation.key === station.key && isPlaying && (
-                  <div style={{ fontSize: 10, color: "#C9A84C", background: "rgba(201,168,76,0.1)", padding: "3px 8px", borderRadius: 100 }}>
-                    ИГРАЕТ
-                  </div>
+                  <div style={{ fontSize: 10, color: "#C9A84C", background: "rgba(201,168,76,0.1)", padding: "3px 8px", borderRadius: 100 }}>ИГРАЕТ</div>
                 )}
               </button>
             ))}
@@ -350,10 +370,8 @@ function LeadModal({ onClose, onSuccess }: { onClose: () => void; onSuccess: () 
 
         {/* INFO */}
         <div style={{ background: "#0D1B2A", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 16, padding: "18px", marginBottom: 16 }}>
-          <div style={{ fontSize: 13, color: "#8BA7BE", lineHeight: 1.7, marginBottom: 12 }}>
-            Полный доступ включает:
-          </div>
-          {["10 станций Jamendo", "Автоматическое расписание", "Android TV приставка", "Официальный сертификат"].map(f => (
+          <div style={{ fontSize: 13, color: "#8BA7BE", lineHeight: 1.7, marginBottom: 12 }}>Полный доступ включает:</div>
+          {["30+ музыкальных атмосфер", "Автоматическое расписание", "Android TV приставка", "Официальный сертификат"].map(f => (
             <div key={f} style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 8 }}>
               <span style={{ color: "#C9A84C", fontSize: 12 }}>✓</span>
               <span style={{ fontSize: 13, color: "#8BA7BE" }}>{f}</span>
@@ -361,27 +379,21 @@ function LeadModal({ onClose, onSuccess }: { onClose: () => void; onSuccess: () 
           ))}
         </div>
 
-        {/* CTA */}
-        <button onClick={() => setShowModal(true)} style={{ display: "block", width: "100%", padding: "18px", background: "#C9A84C", color: "#080C12", borderRadius: 14, fontSize: 16, fontWeight: 700, textDecoration: "none", textAlign: "center", boxShadow: "0 8px 32px rgba(201,168,76,0.3)", border: "none", cursor: "pointer", fontFamily: "Georgia, serif", marginBottom: 12 }}>
+        <button onClick={() => setShowModal(true)} style={{ display: "block", width: "100%", padding: "18px", background: "#C9A84C", color: "#080C12", borderRadius: 14, fontSize: 16, fontWeight: 700, border: "none", cursor: "pointer", fontFamily: "Georgia, serif", marginBottom: 12, boxShadow: "0 8px 32px rgba(201,168,76,0.3)" }}>
           Подключить FonMusic →
         </button>
-
-        <a href="/" style={{ display: "block", textAlign: "center", fontSize: 13, color: "#8BA7BE", textDecoration: "none" }}>
-          ← На главную
-        </a>
+        <a href="/" style={{ display: "block", textAlign: "center", fontSize: 13, color: "#8BA7BE", textDecoration: "none" }}>← На главную</a>
       </div>
 
       <style>{`
-        @keyframes wave {
-          from { height: 15%; }
-          to { height: 85%; }
-        }
+        @keyframes wave { from { height: 15%; } to { height: 85%; } }
         * { margin: 0; padding: 0; box-sizing: border-box; }
         html, body { max-width: 100vw; overflow-x: hidden; }
       `}</style>
     </main>
   );
 }
+
 export default function DemoPage() {
   return (
     <Suspense fallback={null}>
