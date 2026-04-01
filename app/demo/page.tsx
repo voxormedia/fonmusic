@@ -101,7 +101,7 @@ function LeadModal({ onClose, onSuccess }: { onClose: () => void; onSuccess: () 
   );
 }
 
-export default function DemoPlayer() {
+  function DemoPlayer() {
   const searchParams = useSearchParams();
   const typeParam = searchParams.get("type") || "cafe";
 
