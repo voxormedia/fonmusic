@@ -108,6 +108,12 @@ export default function PlayerPage() {
       setTrackIndex(0);
       setCurrentTrack(shuffled[0] || "");
       setIsLoadingTrack(false);
+      // Подготавливаем audio src заранее
+      if (audioRef.current && shuffled[0]) {
+        const encodedTrack = encodeURIComponent(shuffled[0]);
+        audioRef.current.src = `${BASE_URL}/${encodedFolder}/${encodedTrack}`;
+        audioRef.current.load();
+      }
     } catch (e) {
       setIsLoadingTrack(false);
     }
