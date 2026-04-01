@@ -50,10 +50,17 @@ function getTrackName(track: string): string {
   return track.replace(".mp3", "").replace(/_/g, " ").split("-").slice(1).join(" ").trim() || track.replace(".mp3", "");
 }
 
-function isDeviceOnline(updatedAt: string): boolean {
+function getDeviceStatus(updatedAt: string): { level: "online" | "noconn" | "unavailable", label: string, color: string, bg: string, border: string, timeAgo: string } {
   const updated = new Date(updatedAt);
   const now = new Date();
-  return (now.getTime() - updated.getTime()) / (1000 * 60) < 5;
+  const diffSec = Math.floor((now.getTime() - updated.getTime()) / 1000);
+  const diffMin = Math.floor(diffSec / 60);
+
+  const timeAgo = diffSec < 60 ? `${diffSec} сек назад` : `${diffMin} мин назад`;
+
+  if (diffMin < 2) return { level: "online", label: "Онлайн", color: "#22C55E", bg: "rgba(34,197,94,0.1)", border: "rgba(34,197,94,0.3)", timeAgo };
+  if (diffMin < 10) return { level: "noconn", label: "Нет связи", color: "#F59E0B", bg: "rgba(245,158,11,0.1)", border: "rgba(245,158,11,0.3)", timeAgo };
+  return { level: "unavailable", label: "Недоступно", color: "#EF4444", bg: "rgba(239,68,68,0.1)", border: "rgba(239,68,68,0.3)", timeAgo };
 }
 
 function PaywallScreen() {
@@ -251,8 +258,7 @@ export default function DashboardPage() {
     return stations.filter(s => stationIds.includes(s.id));
   };
 
-  const online = deviceStatus ? isDeviceOnline(deviceStatus.updated_at) : false;
-  const currentStationObj = stations.find(s => s.station_key === client?.station_key);
+    const currentStationObj = stations.find(s => s.station_key === client?.station_key);
 
   if (screen === "login") return <LoginScreen onLogin={handleLogin} />;
   if (screen === "paywall") return <PaywallScreen />;
@@ -297,19 +303,32 @@ export default function DashboardPage() {
         )}
 
         {/* 1. СТАТУС УСТРОЙСТВА */}
-        <div style={{ background: "#0D1B2A", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 16, padding: "20px 24px", marginBottom: 20 }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <div style={{ display: "flex", gap: 16, fontSize: 13, color: "#8BA7BE", flexWrap: "wrap" }}>
-              <span>👤 {client?.name}</span>
-              <span>📱 {client?.device_id}</span>
-              <span>💾 {deviceStatus?.cache_size_mb || 0}MB кэш</span>
-            </div>
-            <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "4px 12px", background: online ? "rgba(34,197,94,0.1)" : "rgba(239,68,68,0.1)", border: `1px solid ${online ? "rgba(34,197,94,0.3)" : "rgba(239,68,68,0.3)"}`, borderRadius: 100, flexShrink: 0 }}>
-              <div style={{ width: 7, height: 7, borderRadius: "50%", background: online ? "#22C55E" : "#EF4444" }} />
-              <span style={{ fontSize: 12, color: online ? "#22C55E" : "#EF4444" }}>{online ? "Онлайн" : "Офлайн"}</span>
-            </div>
+<div style={{ background: "#0D1B2A", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 16, padding: "20px 24px", marginBottom: 20 }}>
+  {deviceStatus ? (() => {
+    const status = getDeviceStatus(deviceStatus.updated_at);
+    return (
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 12 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+            <div style={{ width: 8, height: 8, borderRadius: "50%", background: status.color }} />
+            <span style={{ fontSize: 14, fontWeight: 700, color: status.color }}>{status.label}</span>
+            <span style={{ fontSize: 12, color: "#8BA7BE" }}>· {status.timeAgo}</span>
+          </div>
+          <div style={{ display: "flex", gap: 16, fontSize: 12, color: "#8BA7BE", flexWrap: "wrap" }}>
+            <span>📱 {client?.device_id}</span>
+            {deviceStatus.current_station && <span>🎵 {STATION_NAMES[deviceStatus.current_station] || deviceStatus.current_station}</span>}
+            {deviceStatus.cache_size_mb > 0 && <span>💾 {deviceStatus.cache_size_mb}MB кэш</span>}
           </div>
         </div>
+        <div style={{ padding: "4px 12px", background: status.bg, border: `1px solid ${status.border}`, borderRadius: 100 }}>
+          <span style={{ fontSize: 12, color: status.color }}>{status.level === "online" ? "🟢" : status.level === "noconn" ? "🟡" : "🔴"} {status.label}</span>
+        </div>
+      </div>
+    );
+  })() : (
+    <div style={{ fontSize: 13, color: "#8BA7BE" }}>⏳ Загрузка статуса устройства...</div>
+  )}
+</div>
 
         {/* 2. ВЫБОР СТАНЦИИ */}
         <div style={{ background: "#0D1B2A", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 16, padding: "24px", marginBottom: 20 }}>
@@ -366,6 +385,7 @@ export default function DashboardPage() {
           </div>
         </div>
 
+        
         {/* 4. СЕЙЧАС ИГРАЕТ */}
         <div style={{ background: "#0D1B2A", border: "1px solid rgba(201,168,76,0.2)", borderRadius: 16, padding: "24px", marginBottom: 20 }}>
           <div style={{ fontSize: 11, color: "#C9A84C", letterSpacing: 2, marginBottom: 12 }}>▶ СЕЙЧАС ИГРАЕТ</div>
