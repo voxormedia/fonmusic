@@ -68,6 +68,7 @@ export default function PlayerPage() {
   const [currentStation, setCurrentStation] = useState("cozy_coffee");
   const [volume, setVolume] = useState(1.0);
   const [showStations, setShowStations] = useState(false);
+  const [showBox, setShowBox] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
@@ -320,18 +321,58 @@ export default function PlayerPage() {
           )}
         </div>
 
-        {/* UPSELL */}
-        <div style={{ background: "#0D1B2A", border: "1px solid rgba(201,168,76,0.15)", borderRadius: 16, padding: "20px" }}>
-          <div style={{ fontSize: 14, fontWeight: 700, color: "#fff", marginBottom: 6 }}>🎵 Подключите FonMusic Box</div>
-          <div style={{ fontSize: 13, color: "#8BA7BE", lineHeight: 1.6, marginBottom: 14 }}>
-            Музыка будет играть автоматически 24/7 без браузера и компьютера
-          </div>
-          <a href="/#trial" style={{ display: "inline-block", padding: "10px 20px", background: "#C9A84C", color: "#080C12", borderRadius: 8, fontSize: 13, fontWeight: 700, textDecoration: "none" }}>
-            Узнать подробнее →
-          </a>
-        </div>
-
+    {/* UPSELL */}
+<div style={{ background: "#0D1B2A", border: "1px solid rgba(201,168,76,0.15)", borderRadius: 16, overflow: "hidden" }}>
+  <button onClick={() => setShowBox(!showBox)} style={{
+    width: "100%", padding: "20px", background: "transparent", border: "none",
+    cursor: "pointer", fontFamily: "Georgia, serif", display: "flex", alignItems: "center", justifyContent: "space-between",
+  }}>
+    <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+      <span style={{ fontSize: 24 }}>🎵</span>
+      <div style={{ textAlign: "left" }}>
+        <div style={{ fontSize: 14, fontWeight: 700, color: "#fff" }}>Подключите FonMusic Box</div>
+        <div style={{ fontSize: 12, color: "#8BA7BE" }}>Музыка 24/7 без браузера</div>
       </div>
+    </div>
+    <span style={{ color: "#C9A84C", fontSize: 18 }}>{showBox ? "▲" : "▼"}</span>
+  </button>
+
+  {showBox && (
+    <div style={{ padding: "0 20px 24px", borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+      <h3 style={{ fontSize: 16, fontWeight: 700, color: "#fff", margin: "20px 0 10px" }}>
+        FonMusic Box — автоматическая музыка для бизнеса
+      </h3>
+      <p style={{ fontSize: 13, color: "#8BA7BE", lineHeight: 1.7, marginBottom: 16 }}>
+        FonMusic Box — это небольшая приставка, которая подключается к интернету и аудиосистеме. Она автоматически воспроизводит лицензионную музыку 24/7 без браузера или компьютера.
+      </p>
+      <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 20 }}>
+        {["✅ Работает 24/7", "✅ Автоматический запуск", "✅ Не нужен компьютер", "✅ Стабильное соединение", "✅ Удалённое управление из кабинета"].map(f => (
+          <div key={f} style={{ fontSize: 13, color: "#E8EFF5" }}>{f}</div>
+        ))}
+      </div>
+      <div style={{ background: "rgba(255,255,255,0.03)", borderRadius: 10, padding: "14px", marginBottom: 20 }}>
+        <div style={{ fontSize: 12, color: "#C9A84C", marginBottom: 10, fontWeight: 700 }}>КАК ЭТО РАБОТАЕТ</div>
+        {["1️⃣ Подключите приставку к интернету", "2️⃣ Подключите к колонкам", "3️⃣ Музыка начинает играть автоматически"].map(s => (
+          <div key={s} style={{ fontSize: 13, color: "#8BA7BE", marginBottom: 6 }}>{s}</div>
+        ))}
+      </div>
+      <div style={{ marginBottom: 16 }}>
+        <div style={{ fontSize: 28, fontWeight: 700, color: "#C9A84C" }}>$70</div>
+        <div style={{ fontSize: 12, color: "#8BA7BE" }}>единоразовая покупка</div>
+      </div>
+      <a href="/#trial" style={{
+        display: "block", textAlign: "center", padding: "14px",
+        background: "#C9A84C", color: "#080C12", borderRadius: 10,
+        fontSize: 14, fontWeight: 700, textDecoration: "none",
+        boxShadow: "0 4px 16px rgba(201,168,76,0.3)",
+      }}>
+        Заказать FonMusic Box →
+      </a>
+    </div>
+  )}
+</div>
+
+</div>
 
       <style>{`
         @keyframes wave { from { height: 15%; } to { height: 85%; } }
