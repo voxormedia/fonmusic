@@ -51,8 +51,7 @@ function getTrackName(track: string): string {
 }
 
 function getDeviceStatus(updatedAt: string): { level: "online" | "noconn" | "unavailable", label: string, color: string, bg: string, border: string, timeAgo: string } {
-  const updated = new Date(updatedAt);
-  const updated = new Date(updatedAt);
+  const updated = new Date(updatedAt + "Z");
   const now = new Date();
   const diffSec = Math.floor((now.getTime() - updated.getTime()) / 1000);
   const diffMin = Math.floor(diffSec / 60);
