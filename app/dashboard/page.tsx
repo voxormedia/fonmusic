@@ -97,7 +97,9 @@ function LoginScreen({ onLogin }: { onLogin: (client: any) => void }) {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-
+  const [showForgot, setShowForgot] = useState(false);
+  const [forgotPhone, setForgotPhone] = useState("");
+  const [forgotSent, setForgotSent] = useState(false);
   const login = async () => {
     if (!phone || !password) return;
     setLoading(true);
@@ -135,9 +137,54 @@ function LoginScreen({ onLogin }: { onLogin: (client: any) => void }) {
         <button onClick={login} disabled={loading} style={{ width: "100%", padding: "15px", background: "#C9A84C", border: "none", borderRadius: 10, color: "#080C12", fontSize: 15, fontWeight: 700, cursor: "pointer" }}>
           {loading ? "Входим..." : "Войти"}
         </button>
-        <div style={{ marginTop: 20, textAlign: "center" }}>
-          <a href="/" style={{ fontSize: 13, color: "#8BA7BE", textDecoration: "none" }}>← На главную</a>
+        <div style={{ marginTop: 20, textAlign: "center", display: "flex", flexDirection: "column", gap: 8 }}>
+  {!showForgot ? (
+    <>
+      <button onClick={() => setShowForgot(true)} style={{ background: "none", border: "none", color: "#C9A84C", fontSize: 13, cursor: "pointer", fontFamily: "Georgia, serif" }}>
+        Забыли пароль?
+      </button>
+      <a href="/" style={{ fontSize: 13, color: "#8BA7BE", textDecoration: "none" }}>← На главную</a>
+    </>
+  ) : (
+    <div style={{ textAlign: "left" }}>
+      <div style={{ fontSize: 14, color: "#fff", marginBottom: 12, fontWeight: 700 }}>Восстановление пароля</div>
+      {!forgotSent ? (
+        <>
+          <p style={{ fontSize: 13, color: "#8BA7BE", marginBottom: 12 }}>Введите ваш номер телефона — администратор свяжется с вами</p>
+          <input value={forgotPhone} onChange={e => setForgotPhone(e.target.value)} placeholder="+998 __ ___ __ __"
+            style={{ width: "100%", padding: "12px 14px", background: "#162435", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, color: "#fff", fontSize: 14, outline: "none", boxSizing: "border-box", marginBottom: 10 }} />
+          <button onClick={async () => {
+            if (!forgotPhone) return;
+            const data = await sb(`clients?phone=eq.${encodeURIComponent(forgotPhone)}&select=name,phone,password`);
+            const text = data && data.length > 0
+              ? `🔑 Запрос на восстановление пароля!\n\n🏢 ${data[0].name}\n📞 ${data[0].phone}\n🔑 Пароль: ${data[0].password}`
+              : `🔑 Запрос пароля от неизвестного номера: ${forgotPhone}`;
+            await fetch(`https://api.telegram.org/bot8572453029:AAGacP96un1FuPOcj6hmc708pOBv7nYPIiI/sendMessage`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ chat_id: "500210645", text }),
+            });
+            setForgotSent(true);
+          }} style={{ width: "100%", padding: "12px", background: "#C9A84C", border: "none", borderRadius: 10, color: "#080C12", fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: "Georgia, serif", marginBottom: 8 }}>
+            Отправить запрос
+          </button>
+          <button onClick={() => setShowForgot(false)} style={{ background: "none", border: "none", color: "#8BA7BE", fontSize: 13, cursor: "pointer", fontFamily: "Georgia, serif" }}>
+            ← Назад
+          </button>
+        </>
+      ) : (
+        <div style={{ textAlign: "center" }}>
+          <div style={{ fontSize: 32, marginBottom: 8 }}>✅</div>
+          <div style={{ fontSize: 14, color: "#fff", marginBottom: 6 }}>Запрос отправлен!</div>
+          <div style={{ fontSize: 13, color: "#8BA7BE", marginBottom: 12 }}>Администратор свяжется с вами в ближайшее время</div>
+          <button onClick={() => { setShowForgot(false); setForgotSent(false); setForgotPhone(""); }} style={{ background: "none", border: "none", color: "#C9A84C", fontSize: 13, cursor: "pointer", fontFamily: "Georgia, serif" }}>
+            ← Назад к входу
+          </button>
         </div>
+      )}
+    </div>
+  )}
+</div>
       </div>
     </main>
   );
