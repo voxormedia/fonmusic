@@ -154,7 +154,11 @@ export default function DashboardPage() {
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState("");
   const [daysLeft, setDaysLeft] = useState<number | null>(null);
-
+  const [showChangePassword, setShowChangePassword] = useState(false);
+  const [oldPassword, setOldPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [passwordError, setPasswordError] = useState("");
+  const [passwordSuccess, setPasswordSuccess] = useState("");
   useEffect(() => {
     if (screen === "dashboard") {
       loadData();
@@ -249,6 +253,33 @@ export default function DashboardPage() {
     setSaving(false);
     setSuccess("Переключаем трек...");
     setTimeout(() => { setSuccess(""); loadDeviceStatus(); }, 5000);
+  };
+
+  const changePassword = async () => {
+  if (!oldPassword || !newPassword) return;
+  setPasswordError("");
+  if (oldPassword !== client.password) {
+    setPasswordError("Неверный текущий пароль");
+    return;
+  }
+  if (newPassword.length < 4) {
+    setPasswordError("Пароль должен быть не менее 4 символов");
+    return;
+  }
+  setSaving(true);
+  await sb(`clients?id=eq.${client.id}`, {
+    method: "PATCH",
+    body: JSON.stringify({ password: newPassword }),
+  });
+  setClient({ ...client, password: newPassword });
+  setSaving(false);
+  setPasswordSuccess("Пароль успешно изменён!");
+  setOldPassword("");
+  setNewPassword("");
+  setTimeout(() => {
+    setPasswordSuccess("");
+    setShowChangePassword(false);
+  }, 2000);
   };
 
   const getStationsForCategory = (categoryKey: string) => {
@@ -418,6 +449,29 @@ export default function DashboardPage() {
           </div>
         </div>
 
+        {/* СМЕНА ПАРОЛЯ */}
+<div style={{ background: "#0D1B2A", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 16, padding: "24px", marginBottom: 20 }}>
+  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: showChangePassword ? 16 : 0 }}>
+    <h2 style={{ fontSize: 16, fontWeight: 700, color: "#fff" }}>🔑 Пароль</h2>
+    <button onClick={() => { setShowChangePassword(!showChangePassword); setPasswordError(""); }} style={{ padding: "7px 14px", background: "transparent", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, color: "#8BA7BE", fontSize: 12, cursor: "pointer", fontFamily: "Georgia, serif" }}>
+      {showChangePassword ? "Отмена" : "Изменить пароль"}
+    </button>
+  </div>
+  {showChangePassword && (
+    <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+      <input type="password" value={oldPassword} onChange={e => setOldPassword(e.target.value)} placeholder="Текущий пароль"
+        style={{ padding: "12px 14px", background: "#162435", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, color: "#fff", fontSize: 14, outline: "none" }} />
+      <input type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} placeholder="Новый пароль"
+        style={{ padding: "12px 14px", background: "#162435", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, color: "#fff", fontSize: 14, outline: "none" }} />
+      {passwordError && <div style={{ fontSize: 13, color: "#EF4444" }}>{passwordError}</div>}
+      {passwordSuccess && <div style={{ fontSize: 13, color: "#22C55E" }}>{passwordSuccess}</div>}
+      <button onClick={changePassword} disabled={saving} style={{ padding: "12px", background: "#C9A84C", border: "none", borderRadius: 10, color: "#080C12", fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: "Georgia, serif" }}>
+        Сохранить пароль
+      </button>
+    </div>
+  )}
+</div>
+        
         {/* 5. СЕРТИФИКАТ */}
         <div style={{ background: "#0D1B2A", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 16, padding: "24px" }}>
           <h2 style={{ fontSize: 16, fontWeight: 700, color: "#fff", marginBottom: 6 }}>📄 Сертификат</h2>
