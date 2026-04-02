@@ -52,18 +52,59 @@ function LeadModal({ onClose, onSuccess }: { onClose: () => void; onSuccess: () 
   const [sent, setSent] = useState(false);
 
   const send = async () => {
-    if (!name || !phone) return;
-    setLoading(true);
-    const text = `🎵 Новая заявка FonMusic (Демо)!\n\n🏢 Заведение: ${name}\n📞 Телефон: ${phone}\n🍽 Тип: ${type}`;
-    await fetch(`https://api.telegram.org/bot8572453029:AAGacP96un1FuPOcj6hmc708pOBv7nYPIiI/sendMessage`, {
+  if (!name || !phone) return;
+  setLoading(true);
+
+  // Пароль = последние 4 цифры телефона
+  const digits = phone.replace(/\D/g, "");
+  const password = digits.slice(-4);
+
+  // Проверяем не существует ли уже клиент с таким телефоном
+  const existing = await fetch(`https://ovafknvfckdmatrnlecr.supabase.co/rest/v1/clients?phone=eq.${encodeURIComponent(phone)}&select=id`, {
+    headers: {
+      "apikey": "sb_publishable_sMrkdTU705Zgw9-Sc12-Ww_XDrl1ASP",
+      "Authorization": "Bearer sb_publishable_sMrkdTU705Zgw9-Sc12-Ww_XDrl1ASP",
+    },
+  });
+  const existingData = await existing.json();
+
+  if (!existingData || existingData.length === 0) {
+    // Создаём аккаунт
+    const demoExpires = new Date();
+    demoExpires.setDate(demoExpires.getDate() + 7);
+
+    await fetch(`https://ovafknvfckdmatrnlecr.supabase.co/rest/v1/clients`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ chat_id: "500210645", text }),
+      headers: {
+        "apikey": "sb_publishable_sMrkdTU705Zgw9-Sc12-Ww_XDrl1ASP",
+        "Authorization": "Bearer sb_publishable_sMrkdTU705Zgw9-Sc12-Ww_XDrl1ASP",
+        "Content-Type": "application/json",
+        "Prefer": "return=representation",
+      },
+      body: JSON.stringify({
+        name,
+        phone,
+        password,
+        business_type: type,
+        subscription_status: "demo",
+        demo_expires_at: demoExpires.toISOString(),
+        station_key: "cozy_coffee",
+      }),
     });
-    setLoading(false);
-    setSent(true);
-    setTimeout(() => { onSuccess(); onClose(); }, 2000);
-  };
+  }
+
+  // Telegram уведомление
+  const text = `🎵 Новая заявка FonMusic (Демо)!\n\n🏢 Заведение: ${name}\n📞 Телефон: ${phone}\n🍽 Тип: ${type}\n🔑 Пароль: ${password}\n\n${existingData?.length > 0 ? "⚠️ Клиент уже существует" : "✅ Аккаунт создан автоматически"}`;
+  await fetch(`https://api.telegram.org/bot8572453029:AAGacP96un1FuPOcj6hmc708pOBv7nYPIiI/sendMessage`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ chat_id: "500210645", text }),
+  });
+
+  setLoading(false);
+  setSent(true);
+  setTimeout(() => { onSuccess(); onClose(); }, 2000);
+};
 
   return (
     <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)", zIndex: 100, display: "flex", alignItems: "flex-end", justifyContent: "center" }}>
