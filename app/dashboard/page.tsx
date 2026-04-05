@@ -20,12 +20,6 @@ async function sb(path: string, options?: RequestInit) {
   return text ? JSON.parse(text) : null;
 }
 
-const MODES = [
-  { key: "calm", label: "Calm", icon: "🌿", desc: "Спокойно" },
-  { key: "normal", label: "Normal", icon: "🎵", desc: "Стандарт" },
-  { key: "busy", label: "Busy", icon: "⚡", desc: "Энергично" },
-];
-
 const STATION_NAMES: Record<string, string> = {
   cozy_coffee: "☕ Coffee Mood",
   cocktail_dinner: "🍽️ Dinner & Lounge",
@@ -36,14 +30,13 @@ const STATION_NAMES: Record<string, string> = {
   spa_garden: "💆 Spa Relax",
   workout: "💪 Active Energy",
   on_the_rocks: "🎸 Bar Mood",
-  best_of_radio: "📻 Mixed Selection",
+  best_of_radio: "⭐ All Day Mix",
 };
 
 function getDaysLeft(expiresAt: string): number {
   const now = new Date();
   const expires = new Date(expiresAt);
-  const diff = expires.getTime() - now.getTime();
-  return Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)));
+  return Math.max(0, Math.ceil((expires.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)));
 }
 
 function getTrackName(track: string): string {
@@ -55,9 +48,7 @@ function getDeviceStatus(updatedAt: string): { level: "online" | "noconn" | "una
   const now = new Date();
   const diffSec = Math.floor((now.getTime() - updated.getTime()) / 1000);
   const diffMin = Math.floor(diffSec / 60);
-
   const timeAgo = diffSec < 60 ? `${diffSec} сек назад` : `${diffMin} мин назад`;
-
   if (diffMin < 2) return { level: "online", label: "Онлайн", color: "#22C55E", bg: "rgba(34,197,94,0.1)", border: "rgba(34,197,94,0.3)", timeAgo };
   if (diffMin < 10) return { level: "noconn", label: "Нет связи", color: "#F59E0B", bg: "rgba(245,158,11,0.1)", border: "rgba(245,158,11,0.3)", timeAgo };
   return { level: "unavailable", label: "Недоступно", color: "#EF4444", bg: "rgba(239,68,68,0.1)", border: "rgba(239,68,68,0.3)", timeAgo };
@@ -100,6 +91,7 @@ function LoginScreen({ onLogin }: { onLogin: (client: any) => void }) {
   const [showForgot, setShowForgot] = useState(false);
   const [forgotPhone, setForgotPhone] = useState("");
   const [forgotSent, setForgotSent] = useState(false);
+
   const login = async () => {
     if (!phone || !password) return;
     setLoading(true);
@@ -138,53 +130,53 @@ function LoginScreen({ onLogin }: { onLogin: (client: any) => void }) {
           {loading ? "Входим..." : "Войти"}
         </button>
         <div style={{ marginTop: 20, textAlign: "center", display: "flex", flexDirection: "column", gap: 8 }}>
-  {!showForgot ? (
-    <>
-      <button onClick={() => setShowForgot(true)} style={{ background: "none", border: "none", color: "#C9A84C", fontSize: 13, cursor: "pointer", fontFamily: "Georgia, serif" }}>
-        Забыли пароль?
-      </button>
-      <a href="/" style={{ fontSize: 13, color: "#8BA7BE", textDecoration: "none" }}>← На главную</a>
-    </>
-  ) : (
-    <div style={{ textAlign: "left" }}>
-      <div style={{ fontSize: 14, color: "#fff", marginBottom: 12, fontWeight: 700 }}>Восстановление пароля</div>
-      {!forgotSent ? (
-        <>
-          <p style={{ fontSize: 13, color: "#8BA7BE", marginBottom: 12 }}>Введите ваш номер телефона — администратор свяжется с вами</p>
-          <input value={forgotPhone} onChange={e => setForgotPhone(e.target.value)} placeholder="+998 __ ___ __ __"
-            style={{ width: "100%", padding: "12px 14px", background: "#162435", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, color: "#fff", fontSize: 14, outline: "none", boxSizing: "border-box", marginBottom: 10 }} />
-          <button onClick={async () => {
-            if (!forgotPhone) return;
-            const data = await sb(`clients?phone=eq.${encodeURIComponent(forgotPhone)}&select=name,phone,password`);
-            const text = data && data.length > 0
-              ? `🔑 Запрос на восстановление пароля!\n\n🏢 ${data[0].name}\n📞 ${data[0].phone}\n🔑 Пароль: ${data[0].password}`
-              : `🔑 Запрос пароля от неизвестного номера: ${forgotPhone}`;
-            await fetch(`https://api.telegram.org/bot8572453029:AAGacP96un1FuPOcj6hmc708pOBv7nYPIiI/sendMessage`, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ chat_id: "500210645", text }),
-            });
-            setForgotSent(true);
-          }} style={{ width: "100%", padding: "12px", background: "#C9A84C", border: "none", borderRadius: 10, color: "#080C12", fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: "Georgia, serif", marginBottom: 8 }}>
-            Отправить запрос
-          </button>
-          <button onClick={() => setShowForgot(false)} style={{ background: "none", border: "none", color: "#8BA7BE", fontSize: 13, cursor: "pointer", fontFamily: "Georgia, serif" }}>
-            ← Назад
-          </button>
-        </>
-      ) : (
-        <div style={{ textAlign: "center" }}>
-          <div style={{ fontSize: 32, marginBottom: 8 }}>✅</div>
-          <div style={{ fontSize: 14, color: "#fff", marginBottom: 6 }}>Запрос отправлен!</div>
-          <div style={{ fontSize: 13, color: "#8BA7BE", marginBottom: 12 }}>Администратор свяжется с вами в ближайшее время</div>
-          <button onClick={() => { setShowForgot(false); setForgotSent(false); setForgotPhone(""); }} style={{ background: "none", border: "none", color: "#C9A84C", fontSize: 13, cursor: "pointer", fontFamily: "Georgia, serif" }}>
-            ← Назад к входу
-          </button>
+          {!showForgot ? (
+            <>
+              <button onClick={() => setShowForgot(true)} style={{ background: "none", border: "none", color: "#C9A84C", fontSize: 13, cursor: "pointer", fontFamily: "Georgia, serif" }}>
+                Забыли пароль?
+              </button>
+              <a href="/" style={{ fontSize: 13, color: "#8BA7BE", textDecoration: "none" }}>← На главную</a>
+            </>
+          ) : (
+            <div style={{ textAlign: "left" }}>
+              <div style={{ fontSize: 14, color: "#fff", marginBottom: 12, fontWeight: 700 }}>Восстановление пароля</div>
+              {!forgotSent ? (
+                <>
+                  <p style={{ fontSize: 13, color: "#8BA7BE", marginBottom: 12 }}>Введите ваш номер телефона — администратор свяжется с вами</p>
+                  <input value={forgotPhone} onChange={e => setForgotPhone(e.target.value)} placeholder="+998 __ ___ __ __"
+                    style={{ width: "100%", padding: "12px 14px", background: "#162435", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, color: "#fff", fontSize: 14, outline: "none", boxSizing: "border-box", marginBottom: 10 }} />
+                  <button onClick={async () => {
+                    if (!forgotPhone) return;
+                    const data = await sb(`clients?phone=eq.${encodeURIComponent(forgotPhone)}&select=name,phone,password`);
+                    const text = data && data.length > 0
+                      ? `🔑 Запрос на восстановление пароля!\n\n🏢 ${data[0].name}\n📞 ${data[0].phone}\n🔑 Пароль: ${data[0].password}`
+                      : `🔑 Запрос пароля от неизвестного номера: ${forgotPhone}`;
+                    await fetch(`https://api.telegram.org/bot8572453029:AAGacP96un1FuPOcj6hmc708pOBv7nYPIiI/sendMessage`, {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ chat_id: "500210645", text }),
+                    });
+                    setForgotSent(true);
+                  }} style={{ width: "100%", padding: "12px", background: "#C9A84C", border: "none", borderRadius: 10, color: "#080C12", fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: "Georgia, serif", marginBottom: 8 }}>
+                    Отправить запрос
+                  </button>
+                  <button onClick={() => setShowForgot(false)} style={{ background: "none", border: "none", color: "#8BA7BE", fontSize: 13, cursor: "pointer", fontFamily: "Georgia, serif" }}>
+                    ← Назад
+                  </button>
+                </>
+              ) : (
+                <div style={{ textAlign: "center" }}>
+                  <div style={{ fontSize: 32, marginBottom: 8 }}>✅</div>
+                  <div style={{ fontSize: 14, color: "#fff", marginBottom: 6 }}>Запрос отправлен!</div>
+                  <div style={{ fontSize: 13, color: "#8BA7BE", marginBottom: 12 }}>Администратор свяжется с вами в ближайшее время</div>
+                  <button onClick={() => { setShowForgot(false); setForgotSent(false); setForgotPhone(""); }} style={{ background: "none", border: "none", color: "#C9A84C", fontSize: 13, cursor: "pointer", fontFamily: "Georgia, serif" }}>
+                    ← Назад к входу
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
         </div>
-      )}
-    </div>
-  )}
-</div>
       </div>
     </main>
   );
@@ -197,8 +189,10 @@ export default function DashboardPage() {
   const [stations, setStations] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
   const [stationCategories, setStationCategories] = useState<any[]>([]);
+  const [scheduleTemplates, setScheduleTemplates] = useState<any[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [savingSchedule, setSavingSchedule] = useState(false);
   const [success, setSuccess] = useState("");
   const [daysLeft, setDaysLeft] = useState<number | null>(null);
   const [showChangePassword, setShowChangePassword] = useState(false);
@@ -206,6 +200,7 @@ export default function DashboardPage() {
   const [newPassword, setNewPassword] = useState("");
   const [passwordError, setPasswordError] = useState("");
   const [passwordSuccess, setPasswordSuccess] = useState("");
+
   useEffect(() => {
     if (screen === "dashboard") {
       loadData();
@@ -219,14 +214,16 @@ export default function DashboardPage() {
   }, [client]);
 
   const loadData = async () => {
-    const [s, c, sc] = await Promise.all([
+    const [s, c, sc, tmpl] = await Promise.all([
       sb("stations?is_active=eq.true&select=*&order=display_name"),
       sb("business_categories?select=*&order=name"),
       sb("station_categories?select=station_id,category_id"),
+      sb("schedule_templates?select=*&order=template_name"),
     ]);
     if (s) setStations(s);
     if (c) setCategories(c);
     if (sc) setStationCategories(sc);
+    if (tmpl) setScheduleTemplates(tmpl);
   };
 
   const loadDeviceStatus = async () => {
@@ -282,17 +279,6 @@ export default function DashboardPage() {
     setTimeout(() => setSuccess(""), 3000);
   };
 
-  const changeMode = async (mode: string) => {
-    if (!client || saving) return;
-    setSaving(true);
-    await sb(`clients?id=eq.${client.id}`, { method: "PATCH", body: JSON.stringify({ mode }) });
-    await sendCommand("change_mode", { mode });
-    setClient({ ...client, mode });
-    setSaving(false);
-    setSuccess("Атмосфера изменена!");
-    setTimeout(() => setSuccess(""), 3000);
-  };
-
   const nextTrack = async () => {
     if (!client || saving) return;
     setSaving(true);
@@ -302,31 +288,42 @@ export default function DashboardPage() {
     setTimeout(() => { setSuccess(""); loadDeviceStatus(); }, 5000);
   };
 
+  const changeSchedule = async (templateKey: string) => {
+    if (!client || savingSchedule) return;
+    setSavingSchedule(true);
+    await sb(`clients?id=eq.${client.id}`, {
+      method: "PATCH",
+      body: JSON.stringify({ template_key: templateKey }),
+    });
+    await sendCommand("refresh_schedule");
+    setClient({ ...client, template_key: templateKey });
+    setSavingSchedule(false);
+    setSuccess("Расписание обновлено!");
+    setTimeout(() => setSuccess(""), 3000);
+  };
+
   const changePassword = async () => {
-  if (!oldPassword || !newPassword) return;
-  setPasswordError("");
-  if (oldPassword !== client.password) {
-    setPasswordError("Неверный текущий пароль");
-    return;
-  }
-  if (newPassword.length < 4) {
-    setPasswordError("Пароль должен быть не менее 4 символов");
-    return;
-  }
-  setSaving(true);
-  await sb(`clients?id=eq.${client.id}`, {
-    method: "PATCH",
-    body: JSON.stringify({ password: newPassword }),
-  });
-  setClient({ ...client, password: newPassword });
-  setSaving(false);
-  setPasswordSuccess("Пароль успешно изменён!");
-  setOldPassword("");
-  setNewPassword("");
-  setTimeout(() => {
-    setPasswordSuccess("");
-    setShowChangePassword(false);
-  }, 2000);
+    if (!oldPassword || !newPassword) return;
+    setPasswordError("");
+    if (oldPassword !== client.password) {
+      setPasswordError("Неверный текущий пароль");
+      return;
+    }
+    if (newPassword.length < 4) {
+      setPasswordError("Пароль должен быть не менее 4 символов");
+      return;
+    }
+    setSaving(true);
+    await sb(`clients?id=eq.${client.id}`, {
+      method: "PATCH",
+      body: JSON.stringify({ password: newPassword }),
+    });
+    setClient({ ...client, password: newPassword });
+    setSaving(false);
+    setPasswordSuccess("Пароль успешно изменён!");
+    setOldPassword("");
+    setNewPassword("");
+    setTimeout(() => { setPasswordSuccess(""); setShowChangePassword(false); }, 2000);
   };
 
   const getStationsForCategory = (categoryKey: string) => {
@@ -335,8 +332,6 @@ export default function DashboardPage() {
     const stationIds = stationCategories.filter(sc => sc.category_id === category.id).map(sc => sc.station_id);
     return stations.filter(s => stationIds.includes(s.id));
   };
-
-    const currentStationObj = stations.find(s => s.station_key === client?.station_key);
 
   if (screen === "login") return <LoginScreen onLogin={handleLogin} />;
   if (screen === "paywall") return <PaywallScreen />;
@@ -381,39 +376,37 @@ export default function DashboardPage() {
         )}
 
         {/* 1. СТАТУС УСТРОЙСТВА */}
-<div style={{ background: "#0D1B2A", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 16, padding: "20px 24px", marginBottom: 20 }}>
-  {deviceStatus ? (() => {
-    const status = getDeviceStatus(deviceStatus.updated_at);
-    return (
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 12 }}>
-        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-            <div style={{ width: 8, height: 8, borderRadius: "50%", background: status.color }} />
-            <span style={{ fontSize: 14, fontWeight: 700, color: status.color }}>{status.label}</span>
-            <span style={{ fontSize: 12, color: "#8BA7BE" }}>· {status.timeAgo}</span>
-          </div>
-          <div style={{ display: "flex", gap: 16, fontSize: 12, color: "#8BA7BE", flexWrap: "wrap" }}>
-            <span>📱 {client?.device_id}</span>
-            {deviceStatus.current_station && <span>🎵 {STATION_NAMES[deviceStatus.current_station] || deviceStatus.current_station}</span>}
-            {deviceStatus.cache_size_mb > 0 && <span>💾 {deviceStatus.cache_size_mb}MB кэш</span>}
-          </div>
+        <div style={{ background: "#0D1B2A", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 16, padding: "20px 24px", marginBottom: 20 }}>
+          {deviceStatus ? (() => {
+            const status = getDeviceStatus(deviceStatus.updated_at);
+            return (
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 12 }}>
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                    <div style={{ width: 8, height: 8, borderRadius: "50%", background: status.color }} />
+                    <span style={{ fontSize: 14, fontWeight: 700, color: status.color }}>{status.label}</span>
+                    <span style={{ fontSize: 12, color: "#8BA7BE" }}>· {status.timeAgo}</span>
+                  </div>
+                  <div style={{ display: "flex", gap: 16, fontSize: 12, color: "#8BA7BE", flexWrap: "wrap" }}>
+                    <span>📱 {client?.device_id}</span>
+                    {deviceStatus.current_station && <span>🎵 {STATION_NAMES[deviceStatus.current_station] || deviceStatus.current_station}</span>}
+                    {deviceStatus.cache_size_mb > 0 && <span>💾 {deviceStatus.cache_size_mb}MB кэш</span>}
+                  </div>
+                </div>
+                <div style={{ padding: "4px 12px", background: status.bg, border: `1px solid ${status.border}`, borderRadius: 100 }}>
+                  <span style={{ fontSize: 12, color: status.color }}>{status.level === "online" ? "🟢" : status.level === "noconn" ? "🟡" : "🔴"} {status.label}</span>
+                </div>
+              </div>
+            );
+          })() : (
+            <div style={{ fontSize: 13, color: "#8BA7BE" }}>⏳ Загрузка статуса устройства...</div>
+          )}
         </div>
-        <div style={{ padding: "4px 12px", background: status.bg, border: `1px solid ${status.border}`, borderRadius: 100 }}>
-          <span style={{ fontSize: 12, color: status.color }}>{status.level === "online" ? "🟢" : status.level === "noconn" ? "🟡" : "🔴"} {status.label}</span>
-        </div>
-      </div>
-    );
-  })() : (
-    <div style={{ fontSize: 13, color: "#8BA7BE" }}>⏳ Загрузка статуса устройства...</div>
-  )}
-</div>
 
         {/* 2. ВЫБОР СТАНЦИИ */}
         <div style={{ background: "#0D1B2A", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 16, padding: "24px", marginBottom: 20 }}>
           <h2 style={{ fontSize: 16, fontWeight: 700, color: "#fff", marginBottom: 4 }}>🎵 Выбор станции</h2>
           <p style={{ fontSize: 13, color: "#8BA7BE", marginBottom: 16 }}>Выберите музыку для вашего заведения</p>
-
-          {/* Category filter */}
           <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 20 }}>
             <button onClick={() => setSelectedCategory(null)} style={{
               padding: "7px 16px", borderRadius: 20, fontSize: 12, cursor: "pointer", fontFamily: "Georgia, serif",
@@ -431,8 +424,6 @@ export default function DashboardPage() {
               }}>{c.icon} {c.name}</button>
             ))}
           </div>
-
-          {/* Stations grid */}
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
             {(selectedCategory ? getStationsForCategory(selectedCategory) : stations).map(s => {
               const isActive = client?.station_key === s.station_key;
@@ -446,9 +437,7 @@ export default function DashboardPage() {
                 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
                     <span style={{ fontSize: 20 }}>{s.icon}</span>
-                    <span style={{ fontSize: 13, fontWeight: 700, color: isActive ? "#C9A84C" : "#fff" }}>
-                      {s.display_name}
-                    </span>
+                    <span style={{ fontSize: 13, fontWeight: 700, color: isActive ? "#C9A84C" : "#fff" }}>{s.display_name}</span>
                   </div>
                   <div style={{ fontSize: 11, color: "#8BA7BE", lineHeight: 1.4 }}>{s.description}</div>
                   {isActive && (
@@ -463,8 +452,7 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        
-        {/* 4. СЕЙЧАС ИГРАЕТ */}
+        {/* 3. СЕЙЧАС ИГРАЕТ */}
         <div style={{ background: "#0D1B2A", border: "1px solid rgba(201,168,76,0.2)", borderRadius: 16, padding: "24px", marginBottom: 20 }}>
           <div style={{ fontSize: 11, color: "#C9A84C", letterSpacing: 2, marginBottom: 12 }}>▶ СЕЙЧАС ИГРАЕТ</div>
           {deviceStatus ? (
@@ -479,7 +467,6 @@ export default function DashboardPage() {
           ) : (
             <div style={{ fontSize: 14, color: "#8BA7BE", marginBottom: 16 }}>⏳ Загрузка данных устройства...</div>
           )}
-
           <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
             <button onClick={nextTrack} disabled={saving} style={{
               padding: "12px 24px", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)",
@@ -491,35 +478,58 @@ export default function DashboardPage() {
               padding: "12px 24px", background: "rgba(201,168,76,0.1)", border: "1px solid rgba(201,168,76,0.3)",
               borderRadius: 10, color: "#C9A84C", fontSize: 14, fontWeight: 700, textDecoration: "none", display: "inline-block",
             }}>
-              🎵 Открыть веб-плеер
+              🎵 Открыть плеер
             </a>
           </div>
         </div>
 
-        {/* СМЕНА ПАРОЛЯ */}
-<div style={{ background: "#0D1B2A", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 16, padding: "24px", marginBottom: 20 }}>
-  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: showChangePassword ? 16 : 0 }}>
-    <h2 style={{ fontSize: 16, fontWeight: 700, color: "#fff" }}>🔑 Пароль</h2>
-    <button onClick={() => { setShowChangePassword(!showChangePassword); setPasswordError(""); }} style={{ padding: "7px 14px", background: "transparent", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, color: "#8BA7BE", fontSize: 12, cursor: "pointer", fontFamily: "Georgia, serif" }}>
-      {showChangePassword ? "Отмена" : "Изменить пароль"}
-    </button>
-  </div>
-  {showChangePassword && (
-    <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-      <input type="password" value={oldPassword} onChange={e => setOldPassword(e.target.value)} placeholder="Текущий пароль"
-        style={{ padding: "12px 14px", background: "#162435", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, color: "#fff", fontSize: 14, outline: "none" }} />
-      <input type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} placeholder="Новый пароль"
-        style={{ padding: "12px 14px", background: "#162435", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, color: "#fff", fontSize: 14, outline: "none" }} />
-      {passwordError && <div style={{ fontSize: 13, color: "#EF4444" }}>{passwordError}</div>}
-      {passwordSuccess && <div style={{ fontSize: 13, color: "#22C55E" }}>{passwordSuccess}</div>}
-      <button onClick={changePassword} disabled={saving} style={{ padding: "12px", background: "#C9A84C", border: "none", borderRadius: 10, color: "#080C12", fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: "Georgia, serif" }}>
-        Сохранить пароль
-      </button>
-    </div>
-  )}
-</div>
-        
-        {/* 5. СЕРТИФИКАТ */}
+        {/* 4. РАСПИСАНИЕ */}
+        <div style={{ background: "#0D1B2A", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 16, padding: "24px", marginBottom: 20 }}>
+          <h2 style={{ fontSize: 16, fontWeight: 700, color: "#fff", marginBottom: 4 }}>📅 Расписание</h2>
+          <p style={{ fontSize: 13, color: "#8BA7BE", marginBottom: 16 }}>Музыка автоматически меняется по времени дня</p>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {scheduleTemplates.map(t => (
+              <button key={t.template_key} onClick={() => changeSchedule(t.template_key)} disabled={savingSchedule} style={{
+                padding: "14px 16px", borderRadius: 12, cursor: "pointer", textAlign: "left", fontFamily: "Georgia, serif",
+                background: client?.template_key === t.template_key ? "rgba(201,168,76,0.12)" : "rgba(255,255,255,0.03)",
+                border: `${client?.template_key === t.template_key ? "2px" : "1px"} solid ${client?.template_key === t.template_key ? "rgba(201,168,76,0.5)" : "rgba(255,255,255,0.08)"}`,
+                width: "100%",
+              }}>
+                <div style={{ fontSize: 14, fontWeight: 700, color: client?.template_key === t.template_key ? "#C9A84C" : "#fff" }}>
+                  {t.template_name}
+                </div>
+                {client?.template_key === t.template_key && (
+                  <div style={{ fontSize: 10, color: "#C9A84C", marginTop: 4 }}>✓ АКТИВНО</div>
+                )}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* 5. СМЕНА ПАРОЛЯ */}
+        <div style={{ background: "#0D1B2A", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 16, padding: "24px", marginBottom: 20 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: showChangePassword ? 16 : 0 }}>
+            <h2 style={{ fontSize: 16, fontWeight: 700, color: "#fff" }}>🔑 Пароль</h2>
+            <button onClick={() => { setShowChangePassword(!showChangePassword); setPasswordError(""); }} style={{ padding: "7px 14px", background: "transparent", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, color: "#8BA7BE", fontSize: 12, cursor: "pointer", fontFamily: "Georgia, serif" }}>
+              {showChangePassword ? "Отмена" : "Изменить пароль"}
+            </button>
+          </div>
+          {showChangePassword && (
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              <input type="password" value={oldPassword} onChange={e => setOldPassword(e.target.value)} placeholder="Текущий пароль"
+                style={{ padding: "12px 14px", background: "#162435", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, color: "#fff", fontSize: 14, outline: "none" }} />
+              <input type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} placeholder="Новый пароль"
+                style={{ padding: "12px 14px", background: "#162435", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, color: "#fff", fontSize: 14, outline: "none" }} />
+              {passwordError && <div style={{ fontSize: 13, color: "#EF4444" }}>{passwordError}</div>}
+              {passwordSuccess && <div style={{ fontSize: 13, color: "#22C55E" }}>{passwordSuccess}</div>}
+              <button onClick={changePassword} disabled={saving} style={{ padding: "12px", background: "#C9A84C", border: "none", borderRadius: 10, color: "#080C12", fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: "Georgia, serif" }}>
+                Сохранить пароль
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* 6. СЕРТИФИКАТ */}
         <div style={{ background: "#0D1B2A", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 16, padding: "24px" }}>
           <h2 style={{ fontSize: 16, fontWeight: 700, color: "#fff", marginBottom: 6 }}>📄 Сертификат</h2>
           <p style={{ fontSize: 13, color: "#8BA7BE", marginBottom: 16 }}>Официальный сертификат JAMENDO Licensing</p>
