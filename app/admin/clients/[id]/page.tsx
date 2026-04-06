@@ -80,19 +80,26 @@ const inputStyle: React.CSSProperties = {
   color: "#fff", fontSize: 13, outline: "none", boxSizing: "border-box",
 };
 
+const selectStyle: React.CSSProperties = {
+  flex: 1, padding: "8px 12px", background: "#162435",
+  border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8,
+  color: "#fff", fontSize: 12, outline: "none",
+};
+
 export default function ClientDetailPage() {
   const params = useParams();
   const router = useRouter();
   const [client, setClient] = useState<any>(null);
   const [deviceStatus, setDeviceStatus] = useState<any>(null);
   const [commands, setCommands] = useState<any[]>([]);
+  const [scheduleTemplates, setScheduleTemplates] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState("");
   const [notes, setNotes] = useState("");
   const [selectedStation, setSelectedStation] = useState("");
+  const [selectedTemplate, setSelectedTemplate] = useState("");
 
-  // Edit form
   const [showEdit, setShowEdit] = useState(false);
   const [editData, setEditData] = useState({ name: "", phone: "", password: "", device_id: "" });
   const [savingEdit, setSavingEdit] = useState(false);
@@ -105,12 +112,17 @@ export default function ClientDetailPage() {
 
   const loadData = async () => {
     setLoading(true);
-    const c = await sb(`clients?id=eq.${params.id}&select=*`);
+    const [c, tmpl] = await Promise.all([
+      sb(`clients?id=eq.${params.id}&select=*`),
+      sb("schedule_templates?select=*&order=template_name"),
+    ]);
+    if (tmpl) setScheduleTemplates(tmpl);
     if (c && c.length > 0) {
       const cl = c[0];
       setClient(cl);
       setNotes(cl.notes || "");
       setSelectedStation(cl.station_key || "best_of_radio");
+      setSelectedTemplate(cl.template_key || "");
       setEditData({
         name: cl.name || "",
         phone: cl.phone || "",
@@ -183,7 +195,7 @@ export default function ClientDetailPage() {
     setSaving(true);
     await sb(`clients?id=eq.${client.id}`, {
       method: "PATCH",
-      body: JSON.stringify({ station_key: selectedStation }),
+      body: JSON.stringify({ station_key: selectedStation, music_mode: "manual" }),
     });
     if (client.device_id) {
       await sb("commands", {
@@ -194,6 +206,24 @@ export default function ClientDetailPage() {
     await loadData();
     setSaving(false);
     showSuccessMsg("Станция изменена!");
+  };
+
+  const changeSchedule = async () => {
+    if (!client || !selectedTemplate) return;
+    setSaving(true);
+    await sb(`clients?id=eq.${client.id}`, {
+      method: "PATCH",
+      body: JSON.stringify({ template_key: selectedTemplate, music_mode: "automatic" }),
+    });
+    if (client.device_id) {
+      await sb("commands", {
+        method: "POST",
+        body: JSON.stringify({ device_id: client.device_id, command: "refresh_schedule", executed: false }),
+      });
+    }
+    await loadData();
+    setSaving(false);
+    showSuccessMsg("Расписание изменено!");
   };
 
   const sendCommand = async (command: string) => {
@@ -280,7 +310,7 @@ export default function ClientDetailPage() {
               <div>
                 <div style={{ fontSize: 11, color: "#8BA7BE", marginBottom: 4 }}>Пароль</div>
                 <input value={editData.password} onChange={e => setEditData({...editData, password: e.target.value})}
-                  placeholder="Новый пароль (или оставьте текущий)" style={inputStyle} />
+                  placeholder="Новый пароль" style={inputStyle} />
               </div>
               <div>
                 <div style={{ fontSize: 11, color: "#8BA7BE", marginBottom: 4 }}>Device ID</div>
@@ -347,8 +377,8 @@ export default function ClientDetailPage() {
             <div style={{ marginBottom: 16 }}>
               {[
                 { label: "Текущая станция", value: STATION_NAMES[client.station_key] || client.station_key || "—" },
-                { label: "Шаблон расписания", value: client.template_key || "—" },
-                { label: "Режим", value: client.music_mode || "—" },
+                { label: "Расписание", value: scheduleTemplates.find(t => t.template_key === client.template_key)?.template_name || client.template_key || "—" },
+                { label: "Режим", value: client.music_mode === "automatic" ? "🟢 Авто" : client.music_mode === "manual" ? "🔵 Ручной" : "—" },
               ].map(item => (
                 <div key={item.label} style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
                   <span style={{ fontSize: 12, color: "#8BA7BE" }}>{item.label}</span>
@@ -356,13 +386,29 @@ export default function ClientDetailPage() {
                 </div>
               ))}
             </div>
-            <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-              <select value={selectedStation} onChange={e => setSelectedStation(e.target.value)}
-                style={{ flex: 1, padding: "8px 12px", background: "#162435", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, color: "#fff", fontSize: 12, outline: "none" }}>
+
+            {/* Смена станции */}
+            <div style={{ fontSize: 11, color: "#8BA7BE", marginBottom: 6 }}>Сменить станцию (ручной режим)</div>
+            <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 10 }}>
+              <select value={selectedStation} onChange={e => setSelectedStation(e.target.value)} style={selectStyle}>
                 {STATIONS.map(s => <option key={s.key} value={s.key}>{s.name}</option>)}
               </select>
               <button onClick={changeStation} disabled={saving} style={{ padding: "8px 16px", background: "#C9A84C", border: "none", borderRadius: 8, color: "#080C12", fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "Georgia, serif" }}>
                 Применить
+              </button>
+            </div>
+
+            {/* Смена расписания */}
+            <div style={{ fontSize: 11, color: "#8BA7BE", marginBottom: 6 }}>Сменить расписание (авто режим)</div>
+            <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+              <select value={selectedTemplate} onChange={e => setSelectedTemplate(e.target.value)} style={selectStyle}>
+                <option value="">— Выбрать расписание —</option>
+                {scheduleTemplates.map(t => (
+                  <option key={t.template_key} value={t.template_key}>{t.template_name}</option>
+                ))}
+              </select>
+              <button onClick={changeSchedule} disabled={saving || !selectedTemplate} style={{ padding: "8px 16px", background: "#3B82F6", border: "none", borderRadius: 8, color: "#fff", fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "Georgia, serif" }}>
+                Расписание
               </button>
             </div>
           </div>
