@@ -151,18 +151,19 @@ export default function PlayerPage() {
   };
 
   const loadPlaylist = async (stationKey: string) => {
-    setIsLoadingTrack(true);
-    const folder = STATION_FOLDERS[stationKey] || "Cozy Coffee";
-    try {
-      const res = await fetch(`${BASE_URL}/${folder.replace(/ /g, "%20")}/playlist.json`);
-      const tracks: string[] = await res.json();
-      const shuffled = [...tracks].sort(() => Math.random() - 0.5);
-      setPlaylist(shuffled);
-      setTrackIndex(0);
-      setCurrentTrack(shuffled[0] || "");
-      setIsLoadingTrack(false);
-    } catch { setIsLoadingTrack(false); }
-  };
+  setIsLoadingTrack(true);
+  const folder = STATION_FOLDERS[stationKey] || "Cozy Coffee";
+  try {
+    const res = await fetch(`${BASE_URL}/${folder.replace(/ /g, "%20")}/playlist.json`);
+    const tracks: string[] = await res.json();
+    const shuffled = [...tracks].sort(() => Math.random() - 0.5);
+    setPlaylist(shuffled);
+    setTrackIndex(0);
+    setCurrentTrack(shuffled[0] || "");
+    setIsLoadingTrack(false);
+    setTimeout(() => playTrack(0, shuffled, stationKey), 100);
+  } catch { setIsLoadingTrack(false); }
+};
 
   const playTrack = (index: number, tracks?: string[], stationKey?: string) => {
     const list = tracks || playlist;
