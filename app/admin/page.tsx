@@ -51,6 +51,11 @@ const STATUS_COLORS: Record<string, { color: string, bg: string, label: string }
   expired: { color: "#EF4444", bg: "rgba(239,68,68,0.1)", label: "Истёк" },
 };
 
+const EMPTY_CLIENT = {
+  name: "", phone: "", password: "", device_id: "",
+  subscription_status: "demo", demo_expires_at: "",
+};
+
 export default function AdminPage() {
   const router = useRouter();
   const [authed, setAuthed] = useState(false);
@@ -61,6 +66,11 @@ export default function AdminPage() {
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<"overview" | "clients" | "devices">("overview");
+  const [showAddClient, setShowAddClient] = useState(false);
+  const [savingClient, setSavingClient] = useState(false);
+  const [addClientError, setAddClientError] = useState("");
+  const [addClientSuccess, setAddClientSuccess] = useState("");
+  const [newClient, setNewClient] = useState(EMPTY_CLIENT);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -88,6 +98,39 @@ export default function AdminPage() {
     if (c) setClients(c);
     if (d) setDevices(d);
     setLoading(false);
+  };
+
+  const createClient = async () => {
+    if (!newClient.name || !newClient.password) {
+      setAddClientError("Название и пароль обязательны!");
+      return;
+    }
+    setSavingClient(true);
+    setAddClientError("");
+    const body: any = {
+      name: newClient.name,
+      phone: newClient.phone || null,
+      password: newClient.password,
+      device_id: newClient.device_id || null,
+      subscription_status: newClient.subscription_status,
+      station_key: "best_of_radio",
+      music_mode: "automatic",
+    };
+    if (newClient.demo_expires_at) body.demo_expires_at = newClient.demo_expires_at;
+    const res = await sb("clients", {
+      method: "POST",
+      headers: { "Prefer": "return=representation" },
+      body: JSON.stringify(body),
+    });
+    setSavingClient(false);
+    if (res) {
+      setAddClientSuccess(`Клиент "${newClient.name}" создан!`);
+      setNewClient(EMPTY_CLIENT);
+      setTimeout(() => { setAddClientSuccess(""); setShowAddClient(false); }, 2000);
+      loadData();
+    } else {
+      setAddClientError("Ошибка создания клиента!");
+    }
   };
 
   if (!authed) {
@@ -139,6 +182,8 @@ export default function AdminPage() {
     { label: "Офлайн", value: offlineDevices, color: "#EF4444" },
   ];
 
+  const inputStyle = { padding: "11px 14px", background: "#162435", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, color: "#fff", fontSize: 13, outline: "none", width: "100%", boxSizing: "border-box" as const };
+
   return (
     <main style={{ minHeight: "100vh", background: "#080C12", fontFamily: "Georgia, serif", color: "#E8EFF5" }}>
       <header style={{ padding: "18px 24px", borderBottom: "1px solid rgba(201,168,76,0.15)", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
@@ -180,6 +225,7 @@ export default function AdminPage() {
 
         {loading && <div style={{ textAlign: "center", color: "#8BA7BE", padding: 40 }}>⏳ Загрузка...</div>}
 
+        {/* ОБЗОР */}
         {activeTab === "overview" && (
           <>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 12, marginBottom: 28 }}>
@@ -245,37 +291,89 @@ export default function AdminPage() {
           </>
         )}
 
+        {/* КЛИЕНТЫ */}
         {activeTab === "clients" && (
-          <div style={{ background: "#0D1B2A", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 16, padding: "20px" }}>
-            <h2 style={{ fontSize: 15, fontWeight: 700, color: "#fff", marginBottom: 16 }}>👥 Все клиенты ({filteredClients.length})</h2>
-            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-              {filteredClients.map(c => {
-                const st = STATUS_COLORS[c.subscription_status] || STATUS_COLORS.expired;
-                const dev = devices.find(d => d.device_id === c.device_id);
-                const devStatus = dev ? getDeviceStatus(dev.updated_at) : null;
-                return (
-                  <div key={c.id} style={{ padding: "16px", background: "#162435", borderRadius: 12, display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10 }}>
-                    <div style={{ flex: 1, minWidth: 200 }}>
-                      <div style={{ fontSize: 14, fontWeight: 700, color: "#fff", marginBottom: 4 }}>{c.name}</div>
-                      <div style={{ fontSize: 12, color: "#8BA7BE", marginBottom: 2 }}>{c.phone}</div>
-                      <div style={{ fontSize: 11, color: "#4a5a6a" }}>{c.device_id || "Нет устройства"} · {STATION_NAMES[c.station_key] || "—"}</div>
-                    </div>
-                    <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
-                      <span style={{ fontSize: 11, padding: "3px 10px", background: st.bg, color: st.color, borderRadius: 100 }}>{st.label}</span>
-                      {devStatus && <span style={{ fontSize: 11, color: devStatus.color }}>{devStatus.dot} {devStatus.label}</span>}
-                      {!devStatus && <span style={{ fontSize: 11, color: "#4a5a6a" }}>⚪ Нет устройства</span>}
-                      <button onClick={() => router.push(`/admin/clients/${c.id}`)} style={{ padding: "6px 14px", background: "rgba(201,168,76,0.1)", border: "1px solid rgba(201,168,76,0.3)", borderRadius: 6, color: "#C9A84C", fontSize: 12, cursor: "pointer", fontFamily: "Georgia, serif" }}>
-                        Открыть →
-                      </button>
-                    </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+
+            {/* ФОРМА ДОБАВЛЕНИЯ */}
+            <div style={{ background: "#0D1B2A", border: "1px solid rgba(201,168,76,0.2)", borderRadius: 16, overflow: "hidden" }}>
+              <button onClick={() => setShowAddClient(!showAddClient)} style={{
+                width: "100%", padding: "16px 20px", background: "transparent", border: "none",
+                cursor: "pointer", fontFamily: "Georgia, serif",
+                display: "flex", alignItems: "center", justifyContent: "space-between",
+              }}>
+                <span style={{ fontSize: 14, fontWeight: 700, color: "#C9A84C" }}>➕ Добавить клиента</span>
+                <span style={{ color: "#C9A84C" }}>{showAddClient ? "▲" : "▼"}</span>
+              </button>
+              {showAddClient && (
+                <div style={{ padding: "0 20px 20px", borderTop: "1px solid rgba(201,168,76,0.1)" }}>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginTop: 16 }}>
+                    <input value={newClient.name} onChange={e => setNewClient({...newClient, name: e.target.value})}
+                      placeholder="Название заведения *" style={inputStyle} />
+                    <input value={newClient.phone} onChange={e => {
+                      let val = e.target.value.replace(/\D/g, "");
+                      if (val.startsWith("998")) val = val.slice(3);
+                      if (val.length > 9) val = val.slice(0, 9);
+                      setNewClient({...newClient, phone: val ? "+998" + val : ""});
+                    }} placeholder="99 410 09 10" style={inputStyle} />
+                    <input value={newClient.password} onChange={e => setNewClient({...newClient, password: e.target.value})}
+                      placeholder="Пароль *" style={inputStyle} />
+                    <input value={newClient.device_id} onChange={e => setNewClient({...newClient, device_id: e.target.value})}
+                      placeholder="Device ID (напр. TOX3_8C3532)" style={inputStyle} />
+                    <select value={newClient.subscription_status} onChange={e => setNewClient({...newClient, subscription_status: e.target.value})}
+                      style={inputStyle}>
+                      <option value="demo">Демо</option>
+                      <option value="active">Активный</option>
+                    </select>
+                    <input value={newClient.demo_expires_at} onChange={e => setNewClient({...newClient, demo_expires_at: e.target.value})}
+                      type="date" placeholder="Дата окончания демо" style={inputStyle} />
                   </div>
-                );
-              })}
-              {filteredClients.length === 0 && <div style={{ textAlign: "center", color: "#8BA7BE", padding: 20 }}>Клиентов не найдено</div>}
+                  {addClientError && <div style={{ fontSize: 13, color: "#EF4444", marginTop: 10 }}>{addClientError}</div>}
+                  {addClientSuccess && <div style={{ fontSize: 13, color: "#22C55E", marginTop: 10 }}>✓ {addClientSuccess}</div>}
+                  <button onClick={createClient} disabled={savingClient} style={{
+                    marginTop: 12, padding: "12px 24px", background: "#C9A84C", border: "none",
+                    borderRadius: 8, color: "#080C12", fontSize: 13, fontWeight: 700,
+                    cursor: "pointer", fontFamily: "Georgia, serif",
+                  }}>
+                    {savingClient ? "Создаём..." : "Создать клиента"}
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* СПИСОК КЛИЕНТОВ */}
+            <div style={{ background: "#0D1B2A", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 16, padding: "20px" }}>
+              <h2 style={{ fontSize: 15, fontWeight: 700, color: "#fff", marginBottom: 16 }}>👥 Все клиенты ({filteredClients.length})</h2>
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                {filteredClients.map(c => {
+                  const st = STATUS_COLORS[c.subscription_status] || STATUS_COLORS.expired;
+                  const dev = devices.find(d => d.device_id === c.device_id);
+                  const devStatus = dev ? getDeviceStatus(dev.updated_at) : null;
+                  return (
+                    <div key={c.id} style={{ padding: "16px", background: "#162435", borderRadius: 12, display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10 }}>
+                      <div style={{ flex: 1, minWidth: 200 }}>
+                        <div style={{ fontSize: 14, fontWeight: 700, color: "#fff", marginBottom: 4 }}>{c.name}</div>
+                        <div style={{ fontSize: 12, color: "#8BA7BE", marginBottom: 2 }}>{c.phone}</div>
+                        <div style={{ fontSize: 11, color: "#4a5a6a" }}>{c.device_id || "Нет устройства"} · {STATION_NAMES[c.station_key] || "—"}</div>
+                      </div>
+                      <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+                        <span style={{ fontSize: 11, padding: "3px 10px", background: st.bg, color: st.color, borderRadius: 100 }}>{st.label}</span>
+                        {devStatus && <span style={{ fontSize: 11, color: devStatus.color }}>{devStatus.dot} {devStatus.label}</span>}
+                        {!devStatus && <span style={{ fontSize: 11, color: "#4a5a6a" }}>⚪ Нет устройства</span>}
+                        <button onClick={() => router.push(`/admin/clients/${c.id}`)} style={{ padding: "6px 14px", background: "rgba(201,168,76,0.1)", border: "1px solid rgba(201,168,76,0.3)", borderRadius: 6, color: "#C9A84C", fontSize: 12, cursor: "pointer", fontFamily: "Georgia, serif" }}>
+                          Открыть →
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+                {filteredClients.length === 0 && <div style={{ textAlign: "center", color: "#8BA7BE", padding: 20 }}>Клиентов не найдено</div>}
+              </div>
             </div>
           </div>
         )}
 
+        {/* УСТРОЙСТВА */}
         {activeTab === "devices" && (
           <div style={{ background: "#0D1B2A", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 16, padding: "20px" }}>
             <h2 style={{ fontSize: 15, fontWeight: 700, color: "#fff", marginBottom: 16 }}>📱 Все устройства ({filteredDevices.length})</h2>
