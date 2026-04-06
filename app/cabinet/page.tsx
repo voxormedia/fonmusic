@@ -151,7 +151,12 @@ export default function CabinetPage() {
           <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 24 }}>
             <div>
               <div style={{ fontSize: 12, color: "#8BA7BE", marginBottom: 6 }}>Телефон</div>
-              <input value={phone} onChange={e => setPhone(e.target.value)} placeholder="+998 99 410 09 10"
+              <input value={phone} onChange={e => {
+  let val = e.target.value.replace(/\D/g, "");
+  if (val.startsWith("998")) val = val.slice(3);
+  if (val.length > 9) val = val.slice(0, 9);
+  setPhone(val ? "+998" + val : "");
+}} placeholder="99 410 09 10" type="tel"
                 style={{ width: "100%", padding: "12px 16px", background: "#162435", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, color: "#fff", fontSize: 15, outline: "none", boxSizing: "border-box" }} />
             </div>
             <div>

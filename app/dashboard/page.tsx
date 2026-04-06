@@ -115,7 +115,12 @@ function LoginScreen({ onLogin }: { onLogin: (client: any) => void }) {
         <h1 style={{ fontSize: 24, fontWeight: 700, color: "#fff", marginBottom: 8 }}>Личный кабинет</h1>
         <p style={{ fontSize: 14, color: "#8BA7BE", marginBottom: 32 }}>Войдите чтобы управлять музыкой</p>
         <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 24 }}>
-          <input value={phone} onChange={e => setPhone(e.target.value)} placeholder="+998 99 410 09 10"
+          <input value={phone} onChange={e => {
+  let val = e.target.value.replace(/\D/g, "");
+  if (val.startsWith("998")) val = val.slice(3);
+  if (val.length > 9) val = val.slice(0, 9);
+  setPhone(val ? "+998" + val : "");
+}} placeholder="99 410 09 10" type="tel"
             style={{ padding: "14px 16px", background: "#162435", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, color: "#fff", fontSize: 15, outline: "none", boxSizing: "border-box", width: "100%" }} />
           <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="••••••"
             onKeyDown={e => e.key === "Enter" && login()}
@@ -143,7 +148,12 @@ function LoginScreen({ onLogin }: { onLogin: (client: any) => void }) {
               {!forgotSent ? (
                 <>
                   <p style={{ fontSize: 13, color: "#8BA7BE", marginBottom: 12 }}>Введите ваш номер телефона — администратор свяжется с вами</p>
-                  <input value={forgotPhone} onChange={e => setForgotPhone(e.target.value)} placeholder="+998 __ ___ __ __"
+                  <input value={forgotPhone} onChange={e => {
+  let val = e.target.value.replace(/\D/g, "");
+  if (val.startsWith("998")) val = val.slice(3);
+  if (val.length > 9) val = val.slice(0, 9);
+  setForgotPhone(val ? "+998" + val : "");
+}} placeholder="99 410 09 10"
                     style={{ width: "100%", padding: "12px 14px", background: "#162435", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, color: "#fff", fontSize: 14, outline: "none", boxSizing: "border-box", marginBottom: 10 }} />
                   <button onClick={async () => {
                     if (!forgotPhone) return;

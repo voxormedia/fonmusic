@@ -127,7 +127,12 @@ function LeadModal({ onClose, onSuccess }: { onClose: () => void; onSuccess: () 
             <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 16 }}>
               <input value={name} onChange={e => setName(e.target.value)} placeholder="Название заведения"
                 style={{ padding: "16px", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 12, color: "#fff", fontSize: 15, outline: "none" }} />
-              <input value={phone} onChange={e => setPhone(e.target.value)} placeholder="+998 __ ___ __ __" type="tel"
+              <input value={phone} onChange={e => {
+  let val = e.target.value.replace(/\D/g, "");
+  if (val.startsWith("998")) val = val.slice(3);
+  if (val.length > 9) val = val.slice(0, 9);
+  setPhone(val ? "+998" + val : "");
+}} placeholder="99 410 09 10" type="tel"
                 style={{ padding: "16px", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 12, color: "#fff", fontSize: 15, outline: "none" }} />
               <select value={type} onChange={e => setType(e.target.value)}
                 style={{ padding: "16px", background: "#162435", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 12, color: "#fff", fontSize: 15, outline: "none" }}>
