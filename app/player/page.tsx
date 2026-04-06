@@ -66,11 +66,25 @@ export default function PlayerPage() {
   const [duration, setDuration] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const scheduleRef = useRef<any[]>([]);
+  const lastScheduleStation = useRef<string>("");
+  const clientRef = useRef<any>(null);
+  const currentStationRef = useRef<string>("cozy_coffee");
 
   useEffect(() => {
     const clientId = localStorage.getItem("fonmusic_client_id");
     if (!clientId) { window.location.href = "/dashboard"; return; }
     loadClient(clientId);
+  }, []);
+
+  // Проверка расписания каждую минуту
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (clientRef.current?.music_mode !== "manual") {
+        checkSchedule();
+      }
+    }, 60000);
+    return () => clearInterval(interval);
   }, []);
 
   const loadClient = async (clientId: string) => {
@@ -79,10 +93,62 @@ export default function PlayerPage() {
     const c = data[0];
     if (c.subscription_status === "expired") { window.location.href = "/dashboard"; return; }
     setClient(c);
+    clientRef.current = c;
     const station = c.station_key || "cozy_coffee";
     setCurrentStation(station);
+    currentStationRef.current = station;
     setLoading(false);
-    loadPlaylist(station);
+
+    // Загружаем расписание если есть template_key и режим не ручной
+    if (c.template_key && c.music_mode !== "manual") {
+      await loadSchedule(c.template_key);
+      checkSchedule();
+    } else {
+      loadPlaylist(station);
+    }
+  };
+
+  const loadSchedule = async (templateKey: string) => {
+    try {
+      const tmpl = await sb(`schedule_templates?template_key=eq.${templateKey}&select=id`);
+      if (!tmpl || tmpl.length === 0) { loadPlaylist(currentStationRef.current); return; }
+      const templateId = tmpl[0].id;
+      const items = await sb(`schedule_template_items?template_id=eq.${templateId}&select=start_time,end_time,stations(station_key)`);
+      if (items && items.length > 0) {
+        scheduleRef.current = items;
+      } else {
+        loadPlaylist(currentStationRef.current);
+      }
+    } catch {
+      loadPlaylist(currentStationRef.current);
+    }
+  };
+
+  const checkSchedule = () => {
+    if (!scheduleRef.current.length) return;
+    const now = new Date();
+    const currentMinutes = now.getHours() * 60 + now.getMinutes();
+
+    for (const item of scheduleRef.current) {
+      const [sh, sm] = item.start_time.split(":").map(Number);
+      const [eh, em] = item.end_time.split(":").map(Number);
+      const start = sh * 60 + sm;
+      const end = eh * 60 + em;
+      const inRange = end < start
+        ? currentMinutes >= start || currentMinutes < end
+        : currentMinutes >= start && currentMinutes < end;
+
+      if (inRange) {
+        const stationKey = item.stations?.station_key;
+        if (stationKey && stationKey !== lastScheduleStation.current) {
+          lastScheduleStation.current = stationKey;
+          setCurrentStation(stationKey);
+          currentStationRef.current = stationKey;
+          loadPlaylist(stationKey);
+        }
+        break;
+      }
+    }
   };
 
   const loadPlaylist = async (stationKey: string) => {
@@ -103,7 +169,7 @@ export default function PlayerPage() {
 
   const playTrack = (index: number, tracks?: string[], stationKey?: string) => {
     const list = tracks || playlist;
-    const station = stationKey || currentStation;
+    const station = stationKey || currentStationRef.current;
     if (!list.length) return;
     const track = list[index % list.length];
     const folder = STATION_FOLDERS[station] || "Cozy Coffee";
@@ -139,15 +205,19 @@ export default function PlayerPage() {
   const switchStation = async (stationKey: string) => {
     if (audioRef.current) audioRef.current.pause();
     setCurrentStation(stationKey);
+    currentStationRef.current = stationKey;
     setIsPlaying(false);
     setShowStations(false);
     setIsLoadingTrack(true);
     setProgress(0);
     setCurrentTime(0);
+    // Переключение вручную — сбрасываем расписание
+    lastScheduleStation.current = stationKey;
     await sb(`clients?id=eq.${client.id}`, {
       method: "PATCH",
       body: JSON.stringify({ station_key: stationKey, music_mode: "manual" }),
     });
+    if (clientRef.current) clientRef.current.music_mode = "manual";
     const folder = STATION_FOLDERS[stationKey] || "Cozy Coffee";
     try {
       const res = await fetch(`${BASE_URL}/${folder.replace(/ /g, "%20")}/playlist.json`);
@@ -185,6 +255,7 @@ export default function PlayerPage() {
   };
 
   const currentStationObj = STATIONS.find(s => s.key === currentStation);
+  const isAutoMode = client?.music_mode !== "manual" && scheduleRef.current.length > 0;
 
   if (loading) return (
     <main style={{ minHeight: "100vh", background: "#080C12", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "Georgia, serif" }}>
@@ -221,7 +292,10 @@ export default function PlayerPage() {
           </div>
           <div>
             <div style={{ fontSize: 13, fontWeight: 700, color: "#fff" }}>{client?.name}</div>
-            <div style={{ fontSize: 11, color: "#8BA7BE" }}>{currentStationObj?.name || currentStation}</div>
+            <div style={{ fontSize: 11, color: "#8BA7BE" }}>
+              {currentStationObj?.name || currentStation}
+              {isAutoMode && <span style={{ marginLeft: 6, color: "#22C55E" }}>· Авто</span>}
+            </div>
           </div>
           <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 6 }}>
             <div style={{ width: 6, height: 6, borderRadius: "50%", background: isPlaying ? "#22C55E" : "#555" }} />
