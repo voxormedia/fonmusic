@@ -299,18 +299,18 @@ export default function DashboardPage() {
   };
 
   const changeSchedule = async (templateKey: string) => {
-    if (!client || savingSchedule) return;
-    setSavingSchedule(true);
-    await sb(`clients?id=eq.${client.id}`, {
-      method: "PATCH",
-      body: JSON.stringify({ template_key: templateKey }),
-    });
-    await sendCommand("refresh_schedule");
-    setClient({ ...client, template_key: templateKey });
-    setSavingSchedule(false);
-    setSuccess("Расписание обновлено!");
-    setTimeout(() => setSuccess(""), 3000);
-  };
+  if (!client || savingSchedule) return;
+  setSavingSchedule(true);
+  await sb(`clients?id=eq.${client.id}`, {
+    method: "PATCH",
+    body: JSON.stringify({ template_key: templateKey, music_mode: "automatic" }),
+  });
+  await sendCommand("refresh_schedule");
+  setClient({ ...client, template_key: templateKey, music_mode: "automatic" });
+  setSavingSchedule(false);
+  setSuccess("Расписание обновлено!");
+  setTimeout(() => setSuccess(""), 3000);
+};
 
   const changePassword = async () => {
     if (!oldPassword || !newPassword) return;
