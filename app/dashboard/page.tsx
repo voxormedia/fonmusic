@@ -237,10 +237,16 @@ export default function DashboardPage() {
   };
 
   const loadDeviceStatus = async () => {
-    if (!client?.device_id) return;
-    const data = await sb(`device_status?device_id=eq.${client.device_id}&select=*`);
-    if (data && data.length > 0) setDeviceStatus(data[0]);
-  };
+  if (!client?.device_id) return;
+  const [data, clientData] = await Promise.all([
+    sb(`device_status?device_id=eq.${client.device_id}&select=*`),
+    sb(`clients?id=eq.${client.id}&select=station_key,music_mode,template_key`),
+  ]);
+  if (data && data.length > 0) setDeviceStatus(data[0]);
+  if (clientData && clientData.length > 0) {
+    setClient((prev: any) => ({ ...prev, ...clientData[0] }));
+  }
+};
 
   const handleLogin = (clientData: any) => {
     localStorage.setItem("fonmusic_client_id", clientData.id);
