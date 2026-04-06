@@ -69,6 +69,7 @@ export default function PlayerPage() {
   const [scheduleTemplates, setScheduleTemplates] = useState<any[]>([]);
   const [savingSchedule, setSavingSchedule] = useState(false);
   const [scheduleSuccess, setScheduleSuccess] = useState("");
+  const [showSchedule, setShowSchedule] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const scheduleRef = useRef<any[]>([]);
   const lastScheduleStation = useRef<string>("");
@@ -408,27 +409,41 @@ export default function PlayerPage() {
         </div>
 
         {/* РАСПИСАНИЕ */}
-        <div style={{ background: "#0D1B2A", border: "0.5px solid rgba(255,255,255,0.06)", borderRadius: 16, padding: "20px", marginBottom: 16 }}>
-          <h2 style={{ fontSize: 14, fontWeight: 700, color: "#fff", marginBottom: 4 }}>📅 Расписание</h2>
-          <p style={{ fontSize: 11, color: "#8BA7BE", marginBottom: 14 }}>Музыка автоматически меняется по времени дня</p>
-          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-            {scheduleTemplates.map(t => (
-              <button key={t.template_key} onClick={() => changeSchedule(t.template_key)} disabled={savingSchedule} style={{
-                padding: "12px 14px", borderRadius: 10, cursor: "pointer", textAlign: "left", fontFamily: "Georgia, serif",
-                background: client?.template_key === t.template_key ? "rgba(59,130,246,0.1)" : "rgba(255,255,255,0.03)",
-                border: `0.5px solid ${client?.template_key === t.template_key ? "rgba(59,130,246,0.3)" : "rgba(255,255,255,0.06)"}`,
-                width: "100%",
-              }}>
-                <div style={{ fontSize: 13, fontWeight: client?.template_key === t.template_key ? 700 : 400, color: client?.template_key === t.template_key ? "#3B82F6" : "#fff" }}>
-                  {t.template_name}
-                </div>
-                {client?.template_key === t.template_key && (
-                  <div style={{ fontSize: 10, color: "#3B82F6", marginTop: 2 }}>✓ АКТИВНО</div>
-                )}
-              </button>
-            ))}
+<div style={{ background: "#0D1B2A", border: "0.5px solid rgba(255,255,255,0.06)", borderRadius: 16, overflow: "hidden", marginBottom: 16 }}>
+  <button onClick={() => setShowSchedule(!showSchedule)} style={{
+    width: "100%", padding: "16px 20px", background: "transparent", border: "none",
+    cursor: "pointer", fontFamily: "Georgia, serif",
+    display: "flex", alignItems: "center", justifyContent: "space-between",
+  }}>
+    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+      <span style={{ fontSize: 16 }}>📅</span>
+      <div style={{ textAlign: "left" }}>
+        <div style={{ fontSize: 13, fontWeight: 700, color: "#fff" }}>Расписание</div>
+        <div style={{ fontSize: 11, color: "#8BA7BE" }}>Музыка меняется по времени дня</div>
+      </div>
+    </div>
+    <span style={{ color: "#3B82F6", fontSize: 12 }}>{showSchedule ? "▲" : "▼"}</span>
+  </button>
+  {showSchedule && (
+    <div style={{ borderTop: "0.5px solid rgba(255,255,255,0.06)", padding: "8px" }}>
+      {scheduleTemplates.map(t => (
+        <button key={t.template_key} onClick={() => changeSchedule(t.template_key)} disabled={savingSchedule} style={{
+          padding: "12px 14px", borderRadius: 10, cursor: "pointer", textAlign: "left", fontFamily: "Georgia, serif", marginBottom: 4,
+          background: client?.template_key === t.template_key ? "rgba(59,130,246,0.1)" : "transparent",
+          border: `0.5px solid ${client?.template_key === t.template_key ? "rgba(59,130,246,0.3)" : "transparent"}`,
+          width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between",
+        }}>
+          <div style={{ fontSize: 13, fontWeight: client?.template_key === t.template_key ? 700 : 400, color: client?.template_key === t.template_key ? "#3B82F6" : "#fff" }}>
+            {t.template_name}
           </div>
-        </div>
+          {client?.template_key === t.template_key && (
+            <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#3B82F6" }} />
+          )}
+        </button>
+      ))}
+    </div>
+  )}
+</div>
 
         {/* UPSELL BOX */}
         <div style={{ background: "#0D1B2A", border: "1px solid rgba(201,168,76,0.15)", borderRadius: 16, overflow: "hidden" }}>
