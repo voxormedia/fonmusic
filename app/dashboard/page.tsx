@@ -390,17 +390,23 @@ export default function DashboardPage() {
     </a>
   </div>
   <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "12px 14px", background: "rgba(255,255,255,0.03)", borderRadius: 10 }}>
-    <span style={{ fontSize: 13, color: "#8BA7BE", flexShrink: 0 }}>🔈</span>
-    <input type="range" min={0} max={100} step={5} defaultValue={70}
-      onChange={async e => {
-        const vol = parseInt(e.target.value);
-        await sendCommand("set_volume", { volume: vol });
-      }}
-      style={{ flex: 1, accentColor: "#C9A84C", cursor: "pointer" }}
-    />
-    <span style={{ fontSize: 13, color: "#C9A84C", flexShrink: 0 }}>🔊</span>
-    <span style={{ fontSize: 12, color: "#8BA7BE", flexShrink: 0 }}>Громкость бокса</span>
-  </div>
+  <span style={{ fontSize: 13, color: "#8BA7BE", flexShrink: 0 }}>🔈</span>
+  <input type="range" min={0} max={100} step={5} defaultValue={70}
+    onMouseUp={async e => {
+      const vol = parseInt((e.target as HTMLInputElement).value);
+      await sendCommand("set_volume", { volume: vol });
+      setSuccess(`Громкость: ${vol}%`);
+      setTimeout(() => setSuccess(""), 2000);
+    }}
+    onTouchEnd={async e => {
+      const vol = parseInt((e.target as HTMLInputElement).value);
+      await sendCommand("set_volume", { volume: vol });
+    }}
+    style={{ flex: 1, accentColor: "#C9A84C", cursor: "pointer" }}
+  />
+  <span style={{ fontSize: 13, color: "#C9A84C", flexShrink: 0 }}>🔊</span>
+  <span style={{ fontSize: 12, color: "#8BA7BE", flexShrink: 0 }}>Громкость бокса</span>
+</div>
 </div>
         {/* 2. РЕЖИМ МУЗЫКИ */}
         <div style={{ background: "#0D1B2A", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 16, padding: "20px 24px", marginBottom: 20 }}>
