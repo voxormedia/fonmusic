@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 function useIsMobile() {
   const [isMobile, setIsMobile] = useState(false);
@@ -12,6 +12,28 @@ function useIsMobile() {
   return isMobile;
 }
 
+const BASE_URL = "https://pub-b2c1411547b247808cb42732bb122560.r2.dev";
+
+const BUSINESS_TYPES = [
+  { key: "cafe", icon: "☕", name: "Кафе", desc: "Уютная атмосфера", station: "Cozy Coffee", folder: "Cozy Coffee", color: "#C9A84C" },
+  { key: "restaurant", icon: "🍽️", name: "Ресторан", desc: "Элегантный вечер", station: "Dinner & Lounge", folder: "Cocktail and Dinner Groove", color: "#3B82F6" },
+  { key: "boutique", icon: "🛍️", name: "Бутик", desc: "Стиль и энергия", station: "Retail Energy", folder: "Shopping Vibes", color: "#A855F7" },
+  { key: "fitness", icon: "💪", name: "Фитнес", desc: "Максимальная энергия", station: "Active Energy", folder: "Workout", color: "#EF4444" },
+  { key: "spa", icon: "💆", name: "SPA", desc: "Расслабление", station: "Spa Relax", folder: "Spa Garden", color: "#22C55E" },
+  { key: "bar", icon: "🎸", name: "Бар", desc: "Вечерняя атмосфера", station: "Bar Mood", folder: "The Rocks", color: "#F59E0B" },
+  { key: "hotel", icon: "🏨", name: "Отель", desc: "Премиальный лобби", station: "Lounge Flow", folder: "Lounge", color: "#8BA7BE" },
+  { key: "market", icon: "🛒", name: "Супермаркет", desc: "Нейтральный фон", station: "All Day Mix", folder: "Best Of Radio", color: "#06B6D4" },
+];
+
+const FAQS = [
+  { q: "Можно ли использовать Spotify или YouTube в заведении?", a: "Нет. Spotify, YouTube и обычное радио запрещены для коммерческого использования. Их лицензия рассчитана только на личное прослушивание. FonMusic — это легальный сервис специально для бизнеса." },
+  { q: "Нужен ли отдельный договор?", a: "Нет. Вы принимаете публичную оферту при регистрации. Факт оплаты является акцептом договора согласно законодательству РУз. После оплаты вы получаете электронный сертификат." },
+  { q: "Как работает FonMusic Box?", a: "Это небольшая Android-приставка которая подключается к интернету и вашей аудиосистеме. После подключения музыка запускается автоматически и работает 24/7 без участия человека." },
+  { q: "Можно ли слушать только через браузер?", a: "Да! Веб-плеер работает на любом устройстве — компьютере, планшете или телефоне. Просто откройте личный кабинет и нажмите Play." },
+  { q: "Что будет если закончится подписка?", a: "Музыка автоматически остановится. Вы получите уведомление за 3 дня до окончания. После оплаты доступ возобновляется мгновенно." },
+  { q: "Можно ли менять музыку самостоятельно?", a: "Да! В личном кабинете вы можете выбрать станцию вручную или настроить автоматическое расписание — музыка будет меняться по времени дня." },
+];
+
 function LeadForm({ onSuccess }: { onSuccess?: () => void }) {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
@@ -20,63 +42,37 @@ function LeadForm({ onSuccess }: { onSuccess?: () => void }) {
   const [loading, setLoading] = useState(false);
 
   const send = async () => {
-  if (!name || !phone) return;
-  setLoading(true);
-
-  const digits = phone.replace(/\D/g, "");
-  const password = digits.slice(-4);
-
-  const existing = await fetch(`https://ovafknvfckdmatrnlecr.supabase.co/rest/v1/clients?phone=eq.${encodeURIComponent(phone)}&select=id`, {
-    headers: {
-      "apikey": "sb_publishable_sMrkdTU705Zgw9-Sc12-Ww_XDrl1ASP",
-      "Authorization": "Bearer sb_publishable_sMrkdTU705Zgw9-Sc12-Ww_XDrl1ASP",
-    },
-  });
-  const existingData = await existing.json();
-
-  if (!existingData || existingData.length === 0) {
-    const demoExpires = new Date();
-    demoExpires.setDate(demoExpires.getDate() + 7);
-
-    await fetch(`https://ovafknvfckdmatrnlecr.supabase.co/rest/v1/clients`, {
-      method: "POST",
-      headers: {
-        "apikey": "sb_publishable_sMrkdTU705Zgw9-Sc12-Ww_XDrl1ASP",
-        "Authorization": "Bearer sb_publishable_sMrkdTU705Zgw9-Sc12-Ww_XDrl1ASP",
-        "Content-Type": "application/json",
-        "Prefer": "return=representation",
-      },
-      body: JSON.stringify({
-        name,
-        phone,
-        password,
-        business_type: type,
-        subscription_status: "demo",
-        demo_expires_at: demoExpires.toISOString(),
-        station_key: "cozy_coffee",
-      }),
+    if (!name || !phone) return;
+    setLoading(true);
+    const digits = phone.replace(/\D/g, "");
+    const password = digits.slice(-4);
+    const existing = await fetch(`https://ovafknvfckdmatrnlecr.supabase.co/rest/v1/clients?phone=eq.${encodeURIComponent(phone)}&select=id`, {
+      headers: { "apikey": "sb_publishable_sMrkdTU705Zgw9-Sc12-Ww_XDrl1ASP", "Authorization": "Bearer sb_publishable_sMrkdTU705Zgw9-Sc12-Ww_XDrl1ASP" },
     });
-  }
-
-  const text = `🎵 Новая заявка FonMusic!\n\n🏢 Заведение: ${name}\n📞 Телефон: ${phone}\n🍽 Тип: ${type}\n🔑 Пароль: ${password}\n\n${existingData?.length > 0 ? "⚠️ Клиент уже существует" : "✅ Аккаунт создан автоматически"}`;
-  await fetch(`https://api.telegram.org/bot8572453029:AAGacP96un1FuPOcj6hmc708pOBv7nYPIiI/sendMessage`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ chat_id: "500210645", text }),
-  });
-
-  setLoading(false);
-  setSent(true);
-  onSuccess?.();
-};
+    const existingData = await existing.json();
+    if (!existingData || existingData.length === 0) {
+      const demoExpires = new Date();
+      demoExpires.setDate(demoExpires.getDate() + 7);
+      await fetch(`https://ovafknvfckdmatrnlecr.supabase.co/rest/v1/clients`, {
+        method: "POST",
+        headers: { "apikey": "sb_publishable_sMrkdTU705Zgw9-Sc12-Ww_XDrl1ASP", "Authorization": "Bearer sb_publishable_sMrkdTU705Zgw9-Sc12-Ww_XDrl1ASP", "Content-Type": "application/json", "Prefer": "return=representation" },
+        body: JSON.stringify({ name, phone, password, business_type: type, subscription_status: "demo", demo_expires_at: demoExpires.toISOString(), station_key: "best_of_radio" }),
+      });
+    }
+    const text = `🎵 Новая заявка FonMusic!\n\n🏢 Заведение: ${name}\n📞 Телефон: ${phone}\n🍽 Тип: ${type}\n🔑 Пароль: ${password}\n\n${existingData?.length > 0 ? "⚠️ Клиент уже существует" : "✅ Аккаунт создан автоматически"}`;
+    await fetch(`https://api.telegram.org/bot8572453029:AAGacP96un1FuPOcj6hmc708pOBv7nYPIiI/sendMessage`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ chat_id: "500210645", text }) });
+    setLoading(false);
+    setSent(true);
+    onSuccess?.();
+  };
 
   if (sent) return (
     <div style={{ textAlign: "center", padding: "32px 24px", background: "rgba(34,197,94,0.08)", border: "1px solid rgba(34,197,94,0.3)", borderRadius: 20 }}>
       <div style={{ fontSize: 48, marginBottom: 12 }}>🎉</div>
       <div style={{ fontSize: 20, fontWeight: 700, color: "#fff", marginBottom: 8 }}>Заявка отправлена!</div>
       <div style={{ fontSize: 14, color: "#8BA7BE", marginBottom: 24 }}>Мы свяжемся с вами в течение 30 минут</div>
-      <a href="/demo" style={{ display: "block", padding: "16px", background: "#C9A84C", color: "#080C12", borderRadius: 12, fontSize: 16, fontWeight: 700, textDecoration: "none" }}>
-        Послушать демо прямо сейчас →
+      <a href="/dashboard" style={{ display: "block", padding: "16px", background: "#C9A84C", color: "#080C12", borderRadius: 12, fontSize: 16, fontWeight: 700, textDecoration: "none" }}>
+        Войти в кабинет →
       </a>
     </div>
   );
@@ -87,15 +83,15 @@ function LeadForm({ onSuccess }: { onSuccess?: () => void }) {
         <input value={name} onChange={e => setName(e.target.value)} placeholder="Название заведения"
           style={{ padding: "16px 18px", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 12, color: "#fff", fontSize: 16, outline: "none", width: "100%", boxSizing: "border-box" }} />
         <input value={phone} onChange={e => {
-  let val = e.target.value.replace(/\D/g, "");
-  if (val.startsWith("998")) val = val.slice(3);
-  if (val.length > 9) val = val.slice(0, 9);
-  setPhone(val ? "+998" + val : "");
-}} placeholder="99 410 09 10" type="tel"
+          let val = e.target.value.replace(/\D/g, "");
+          if (val.startsWith("998")) val = val.slice(3);
+          if (val.length > 9) val = val.slice(0, 9);
+          setPhone(val ? "+998" + val : "");
+        }} placeholder="99 410 09 10" type="tel"
           style={{ padding: "16px 18px", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 12, color: "#fff", fontSize: 16, outline: "none", width: "100%", boxSizing: "border-box" }} />
         <select value={type} onChange={e => setType(e.target.value)}
           style={{ padding: "16px 18px", background: "#0D1B2A", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 12, color: "#fff", fontSize: 16, outline: "none", width: "100%", boxSizing: "border-box" }}>
-          {["Кафе", "Ресторан", "Магазин", "Отель", "Салон красоты", "Фитнес", "Бар", "Другое"].map(t => (
+          {["Кафе", "Ресторан", "Магазин", "Бутик", "Отель", "Салон красоты", "Фитнес", "SPA", "Бар", "Супермаркет", "Другое"].map(t => (
             <option key={t} value={t}>{t}</option>
           ))}
         </select>
@@ -110,10 +106,97 @@ function LeadForm({ onSuccess }: { onSuccess?: () => void }) {
   );
 }
 
+function DemoPlayer() {
+  const [selectedBusiness, setSelectedBusiness] = useState(BUSINESS_TYPES[0]);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [currentTrack, setCurrentTrack] = useState("");
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  const playStation = async (business: typeof BUSINESS_TYPES[0]) => {
+    if (audioRef.current) { audioRef.current.pause(); audioRef.current.src = ""; }
+    setSelectedBusiness(business);
+    setIsPlaying(false);
+    setIsLoading(true);
+    setCurrentTrack("");
+    try {
+      const res = await fetch(`${BASE_URL}/${business.folder.replace(/ /g, "%20")}/playlist.json`);
+      const data = await res.json();
+      const tracks = data.map((t: any) => typeof t === "string" ? t : t.f).filter(Boolean);
+      const track = tracks[Math.floor(Math.random() * Math.min(20, tracks.length))];
+      const url = `${BASE_URL}/${business.folder.replace(/ /g, "%20")}/${encodeURIComponent(track)}`;
+      const audio = new Audio(url);
+      audioRef.current = audio;
+      audio.volume = 0.7;
+      audio.oncanplay = () => {
+        setIsLoading(false);
+        setCurrentTrack(track.replace(".mp3", "").split("-").slice(1).join(" ").trim());
+        audio.play();
+        setIsPlaying(true);
+      };
+      audio.onerror = () => { setIsLoading(false); setIsPlaying(false); };
+      audio.onended = () => setIsPlaying(false);
+    } catch { setIsLoading(false); }
+  };
+
+  const togglePlay = () => {
+    if (!audioRef.current) { playStation(selectedBusiness); return; }
+    if (isPlaying) { audioRef.current.pause(); setIsPlaying(false); }
+    else { audioRef.current.play(); setIsPlaying(true); }
+  };
+
+  useEffect(() => {
+    return () => { if (audioRef.current) { audioRef.current.pause(); audioRef.current.src = ""; } };
+  }, []);
+
+  return (
+    <div style={{ background: "#0D1B2A", border: "1px solid rgba(201,168,76,0.2)", borderRadius: 20, padding: "28px", overflow: "hidden" }}>
+      <div style={{ fontSize: 11, color: "#C9A84C", letterSpacing: "0.15em", marginBottom: 8 }}>ДЕМО-ПЛЕЕР</div>
+      <h3 style={{ fontSize: 20, fontWeight: 700, color: "#fff", marginBottom: 6 }}>Послушайте музыку для вашего бизнеса</h3>
+      <p style={{ fontSize: 13, color: "#8BA7BE", marginBottom: 20 }}>Выберите тип заведения и нажмите Play</p>
+
+      {/* Выбор бизнеса */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 8, marginBottom: 20 }}>
+        {BUSINESS_TYPES.map(b => (
+          <button key={b.key} onClick={() => playStation(b)} style={{
+            padding: "10px 6px", borderRadius: 10, cursor: "pointer", fontFamily: "Georgia, serif", textAlign: "center",
+            background: selectedBusiness.key === b.key ? `rgba(${b.key === "cafe" ? "201,168,76" : b.key === "restaurant" ? "59,130,246" : b.key === "boutique" ? "168,85,247" : b.key === "fitness" ? "239,68,68" : b.key === "spa" ? "34,197,94" : b.key === "bar" ? "245,158,11" : b.key === "hotel" ? "139,167,190" : "6,182,212"},0.15)` : "rgba(255,255,255,0.03)",
+            border: `1px solid ${selectedBusiness.key === b.key ? b.color : "rgba(255,255,255,0.06)"}`,
+          }}>
+            <div style={{ fontSize: 20, marginBottom: 4 }}>{b.icon}</div>
+            <div style={{ fontSize: 10, color: selectedBusiness.key === b.key ? "#fff" : "#8BA7BE", fontWeight: selectedBusiness.key === b.key ? 700 : 400 }}>{b.name}</div>
+          </button>
+        ))}
+      </div>
+
+      {/* Плеер */}
+      <div style={{ background: "rgba(255,255,255,0.03)", borderRadius: 14, padding: "16px 20px", display: "flex", alignItems: "center", gap: 16 }}>
+        <button onClick={togglePlay} style={{
+          width: 52, height: 52, borderRadius: "50%", background: selectedBusiness.color,
+          border: "none", cursor: "pointer", fontSize: 20, flexShrink: 0,
+          display: "flex", alignItems: "center", justifyContent: "center", color: "#fff",
+        }}>
+          {isLoading ? "⏳" : isPlaying ? "⏸" : "▶"}
+        </button>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontSize: 13, fontWeight: 700, color: "#fff", marginBottom: 2 }}>
+            {selectedBusiness.icon} {selectedBusiness.station}
+          </div>
+          <div style={{ fontSize: 11, color: "#8BA7BE", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+            {isLoading ? "Загрузка..." : currentTrack || "Нажмите Play для воспроизведения"}
+          </div>
+        </div>
+        <div style={{ fontSize: 11, color: "#4a5a6a", flexShrink: 0 }}>Jamendo</div>
+      </div>
+    </div>
+  );
+}
+
 export default function Home() {
   const isMobile = useIsMobile();
   const [mounted, setMounted] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const [openFaq, setOpenFaq] = useState<number | null>(null);
 
   useEffect(() => { setMounted(true); }, []);
   useEffect(() => {
@@ -128,55 +211,22 @@ export default function Home() {
   const px = m ? 20 : 48;
 
   const plans = [
-  {
-    name: "Базовый",
-    usd: "599 000",
-    sum: "",
-    desc: "Для небольших заведений",
-    popular: "",
-    features: ["Веб-плеер в браузере", "30 000+ треков", "1 атмосфера для вашего бизнеса", "Без рекламы", "Официальный сертификат"],
-    highlight: false,
-  },
-  {
-    name: "Стандарт",
-    usd: "849 000",
-    sum: "",
-    desc: "Для кафе, ресторанов и магазинов",
-    popular: "Самый популярный для кафе и ресторанов",
-    features: ["Всё из Базового", "30+ музыкальных атмосфер", "Расписание музыки", "Смена атмосферы", "Удалённое управление"],
-    highlight: true,
-  },
-  {
-    name: "Премиум",
-    usd: "999 000",
-    sum: "",
-    desc: "Идеально для сетей кофеен, магазинов и ресторанов",
-    popular: "",
-    features: ["Всё из Стандарта", "Несколько заведений", "Разные атмосферы в точках", "Централизованное управление", "Индивидуальные условия"],
-    highlight: false,
-  },
-];
+    { name: "Базовый", price: "599 000", desc: "Для небольших заведений", popular: "", features: ["Веб-плеер в браузере", "30 000+ треков", "Готовые станции", "Без рекламы", "Официальный сертификат"], highlight: false },
+    { name: "Стандарт", price: "849 000", desc: "Для кафе, ресторанов и магазинов", popular: "Самый популярный", features: ["Всё из Базового", "Автоматическое расписание", "Удалённое управление", "FonMusic Box в комплекте", "Музыка 24/7"], highlight: true },
+    { name: "Премиум", price: "999 000", desc: "Для сетей заведений", popular: "", features: ["Всё из Стандарта", "Несколько заведений", "Разные атмосферы в точках", "Централизованное управление", "Приоритетная поддержка"], highlight: false },
+  ];
 
   const steps = [
-    { num: "01", icon: "📋", title: "Выбираете тариф", desc: "Подбираем станцию под ваш бизнес" },
-    { num: "02", icon: "🚀", title: "Получаете доступ", desc: "Приставка или веб-плеер за 30 минут" },
-    { num: "03", icon: "🎵", title: "Музыка играет", desc: "Автоматически. Ничего не нужно делать" },
-    { num: "04", icon: "📄", title: "Вы защищены", desc: "Официальный сертификат JAMENDO" },
+    { num: "01", icon: "☕", title: "Выберите тип бизнеса", desc: "Кафе, ресторан, магазин, фитнес — система подберёт идеальную музыку" },
+    { num: "02", icon: "🎵", title: "Получите готовую программу", desc: "Станции и расписание настраиваются автоматически" },
+    { num: "03", icon: "▶", title: "Запустите музыку", desc: "Через браузер или FonMusic Box — музыка играет 24/7" },
+    { num: "04", icon: "📄", title: "Вы защищены", desc: "Официальный сертификат JAMENDO для проверяющих органов" },
   ];
 
   const risks = [
-    { icon: "🚫", title: "Spotify и YouTube запрещены", desc: "Использование в коммерческих заведениях нарушает лицензию" },
-    { icon: "💸", title: "Штрафы при проверке", desc: "Инспекторы могут выписать серьёзные санкции" },
-    { icon: "📉", title: "Репутационный риск", desc: "Инцидент при проверке — удар по имиджу заведения" },
-  ];
-
-  const stations = [
-    { icon: "☕", name: "Cozy Coffee", desc: "Кафе и кофейни" },
-    { icon: "🍽️", name: "Dinner & Lounge", desc: "Рестораны" },
-    { icon: "🛍️", name: "Shopping Vibes", desc: "Магазины" },
-    { icon: "💆", name: "Spa Relax", desc: "Спа и салоны" },
-    { icon: "🎸", name: "Bar Mood", desc: "Бары" },
-    { icon: "💪", name: "Active Energy", desc: "Фитнес" },
+    { icon: "🚫", title: "Spotify и YouTube запрещены", desc: "Использование в коммерческих заведениях нарушает лицензионное соглашение" },
+    { icon: "💸", title: "Штрафы при проверке", desc: "Инспекторы могут выписать серьёзные санкции за нелегальную музыку" },
+    { icon: "📉", title: "Репутационный риск", desc: "Инцидент при проверке — удар по имиджу вашего заведения" },
   ];
 
   return (
@@ -191,12 +241,15 @@ export default function Home() {
         {!m && (
           <div style={{ display: "flex", gap: 28, fontSize: 14 }}>
             <a href="#how" style={{ color: "#8BA7BE", textDecoration: "none" }}>Как работает</a>
+            <a href="#demo" style={{ color: "#8BA7BE", textDecoration: "none" }}>Демо</a>
             <a href="#pricing" style={{ color: "#8BA7BE", textDecoration: "none" }}>Тарифы</a>
-            <a href="/demo" style={{ color: "#8BA7BE", textDecoration: "none" }}>Демо</a>
+            <a href="/license" style={{ color: "#8BA7BE", textDecoration: "none" }}>Лицензия</a>
           </div>
         )}
         <div style={{ display: "flex", gap: 8 }}>
-          {!m && <a href="/demo" style={{ padding: "9px 18px", background: "transparent", border: "1px solid rgba(201,168,76,0.4)", color: "#C9A84C", borderRadius: 8, fontSize: 13, fontWeight: 600, textDecoration: "none" }}>Демо</a>}
+          <a href="/dashboard" style={{ padding: "9px 18px", background: "transparent", border: "1px solid rgba(255,255,255,0.15)", color: "#8BA7BE", borderRadius: 8, fontSize: 13, fontWeight: 600, textDecoration: "none" }}>
+            {m ? "Кабинет" : "Войти в кабинет"}
+          </a>
           <a href="#trial" style={{ padding: m ? "9px 14px" : "9px 20px", background: "#C9A84C", color: "#080C12", borderRadius: 8, fontSize: m ? 12 : 13, fontWeight: 700, textDecoration: "none" }}>
             {m ? "7 дней бесплатно" : "Начать бесплатно"}
           </a>
@@ -207,19 +260,19 @@ export default function Home() {
       <section style={{ minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: `${m ? 100 : 120}px ${px}px ${m ? 60 : 80}px`, textAlign: "center", position: "relative", overflow: "hidden" }}>
         <div style={{ position: "absolute", top: "20%", left: "50%", transform: "translateX(-50%)", width: m ? 300 : 700, height: m ? 300 : 700, borderRadius: "50%", background: "radial-gradient(circle, rgba(201,168,76,0.06) 0%, transparent 70%)", pointerEvents: "none" }} />
         <div style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "6px 16px", background: "rgba(201,168,76,0.1)", border: "1px solid rgba(201,168,76,0.3)", borderRadius: 100, fontSize: 11, color: "#C9A84C", letterSpacing: "0.08em", marginBottom: 28 }}>
-          ♪ JAMENDO LICENSED · ОФИЦИАЛЬНО
+          ♪ ЛИЦЕНЗИРОВАННАЯ МУЗЫКА · ОФИЦИАЛЬНО
         </div>
         <h1 style={{ fontSize: m ? 36 : 64, fontWeight: 700, lineHeight: 1.15, marginBottom: 20, color: "#fff", maxWidth: 700 }}>
-          Легальная музыка<br /><span style={{ color: "#C9A84C" }}>для вашего бизнеса</span>
+          Музыка для бизнеса<br /><span style={{ color: "#C9A84C" }}>без рекламы и рисков</span>
         </h1>
         <p style={{ fontSize: m ? 15 : 18, color: "#8BA7BE", lineHeight: 1.7, marginBottom: 36, maxWidth: 520 }}>
-          30 000+ лицензированных треков, готовые станции для кафе, ресторанов, магазинов и салонов. Официальный сертификат.
+          Лицензированная фоновая музыка для кафе, ресторанов, магазинов, фитнес-клубов и салонов. Официальный сертификат.
         </p>
         <div style={{ display: "flex", flexDirection: m ? "column" : "row", gap: 12, width: m ? "100%" : "auto", marginBottom: 48 }}>
           <a href="#trial" style={{ padding: m ? "18px 24px" : "16px 36px", background: "#C9A84C", color: "#080C12", borderRadius: 12, fontSize: m ? 16 : 17, fontWeight: 700, textDecoration: "none", boxShadow: "0 8px 32px rgba(201,168,76,0.3)", textAlign: "center" }}>
             Попробовать 7 дней бесплатно
           </a>
-          <a href="/demo" style={{ padding: m ? "18px 24px" : "16px 36px", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.15)", color: "#fff", borderRadius: 12, fontSize: m ? 16 : 17, fontWeight: 600, textDecoration: "none", textAlign: "center" }}>
+          <a href="#demo" style={{ padding: m ? "18px 24px" : "16px 36px", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.15)", color: "#fff", borderRadius: 12, fontSize: m ? 16 : 17, fontWeight: 600, textDecoration: "none", textAlign: "center" }}>
             ▶ Послушать демо
           </a>
         </div>
@@ -276,58 +329,49 @@ export default function Home() {
         </div>
       </section>
 
-      {/* STATIONS */}
-      <section style={{ padding: `64px ${px}px`, background: "#0A0F18" }}>
+      {/* DEMO PLAYER */}
+      <section id="demo" style={{ padding: `64px ${px}px`, background: "#0A0F18" }}>
         <div style={{ maxWidth: 640, margin: "0 auto" }}>
           <div style={{ textAlign: "center", marginBottom: 32 }}>
-            <div style={{ fontSize: 11, color: "#C9A84C", letterSpacing: "0.15em", marginBottom: 10 }}>МУЗЫКАЛЬНЫЕ СТАНЦИИ</div>
-            <h2 style={{ fontSize: m ? 26 : 36, fontWeight: 700, color: "#fff" }}>Для каждого бизнеса</h2>
+            <div style={{ fontSize: 11, color: "#C9A84C", letterSpacing: "0.15em", marginBottom: 10 }}>ДЕМО</div>
+            <h2 style={{ fontSize: m ? 26 : 36, fontWeight: 700, color: "#fff" }}>Услышьте атмосферу вашего заведения</h2>
+            <p style={{ fontSize: 14, color: "#8BA7BE", marginTop: 10 }}>Реальная музыка из нашего каталога</p>
           </div>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-            {stations.map(s => (
-              <div key={s.name} style={{ padding: "18px", background: "#0D1B2A", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 14, display: "flex", alignItems: "center", gap: 12 }}>
-                <span style={{ fontSize: 24 }}>{s.icon}</span>
-                <div>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: "#fff" }}>{s.name}</div>
-                  <div style={{ fontSize: 11, color: "#8BA7BE" }}>{s.desc}</div>
-                </div>
-              </div>
+          <DemoPlayer />
+        </div>
+      </section>
+
+      {/* FOR BUSINESS */}
+      <section style={{ padding: `64px ${px}px` }}>
+        <div style={{ maxWidth: 640, margin: "0 auto" }}>
+          <div style={{ textAlign: "center", marginBottom: 32 }}>
+            <div style={{ fontSize: 11, color: "#C9A84C", letterSpacing: "0.15em", marginBottom: 10 }}>ДЛЯ КАКИХ БИЗНЕСОВ</div>
+            <h2 style={{ fontSize: m ? 26 : 36, fontWeight: 700, color: "#fff" }}>Музыка для каждого заведения</h2>
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: m ? "1fr 1fr" : "1fr 1fr 1fr 1fr", gap: 10 }}>
+            {BUSINESS_TYPES.map(b => (
+              <a key={b.key} href="#demo" style={{ padding: "20px 12px", background: "#0D1B2A", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 14, textAlign: "center", textDecoration: "none", display: "block", transition: "all 0.2s" }}>
+                <div style={{ fontSize: 32, marginBottom: 8 }}>{b.icon}</div>
+                <div style={{ fontSize: 13, fontWeight: 700, color: "#fff", marginBottom: 4 }}>{b.name}</div>
+                <div style={{ fontSize: 11, color: "#8BA7BE" }}>{b.desc}</div>
+              </a>
             ))}
-          </div>
-          <div style={{ textAlign: "center", marginTop: 24 }}>
-            <a href="/demo" style={{ display: "inline-block", padding: "14px 28px", background: "rgba(201,168,76,0.1)", border: "1px solid rgba(201,168,76,0.3)", color: "#C9A84C", borderRadius: 10, fontSize: 14, fontWeight: 700, textDecoration: "none" }}>
-              ▶ Послушать все станции
-            </a>
           </div>
         </div>
       </section>
 
       {/* PRICING */}
-      <section id="pricing" style={{ padding: `64px ${px}px` }}>
+      <section id="pricing" style={{ padding: `64px ${px}px`, background: "#0A0F18" }}>
         <div style={{ maxWidth: 640, margin: "0 auto" }}>
           <div style={{ textAlign: "center", marginBottom: 32 }}>
             <div style={{ fontSize: 11, color: "#C9A84C", letterSpacing: "0.15em", marginBottom: 10 }}>ТАРИФЫ</div>
             <h2 style={{ fontSize: m ? 26 : 36, fontWeight: 700, color: "#fff", marginBottom: 16 }}>Прозрачные цены</h2>
-            {/* Объяснение что включено */}
-            <div style={{ background: "#0D1B2A", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 16, padding: "20px", textAlign: "left", marginBottom: 24 }}>
-              <div style={{ fontSize: 14, fontWeight: 700, color: "#fff", marginBottom: 12 }}>Одна подписка включает:</div>
-              {["30 000+ треков Jamendo", "Готовые музыкальные станции", "Автоматическое воспроизведение", "Официальный сертификат для проверок"].map(f => (
-                <div key={f} style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 8 }}>
-                  <span style={{ color: "#C9A84C" }}>✓</span>
-                  <span style={{ fontSize: 13, color: "#8BA7BE" }}>{f}</span>
-                </div>
-              ))}
-            </div>
           </div>
-
-          {/* Тарифные карточки */}
           <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 32 }}>
             {plans.map(plan => (
               <div key={plan.name} style={{ padding: "24px", background: plan.highlight ? "linear-gradient(135deg, rgba(26,107,154,0.3), rgba(13,61,94,0.3))" : "#0D1B2A", border: `2px solid ${plan.highlight ? "#C9A84C" : "rgba(255,255,255,0.06)"}`, borderRadius: 16, position: "relative" }}>
                 {plan.highlight && (
-                  <div style={{ position: "absolute", top: -12, right: 20, background: "#C9A84C", color: "#080C12", padding: "4px 14px", borderRadius: 100, fontSize: 11, fontWeight: 700 }}>
-                    РЕКОМЕНДУЕМ
-                  </div>
+                  <div style={{ position: "absolute", top: -12, right: 20, background: "#C9A84C", color: "#080C12", padding: "4px 14px", borderRadius: 100, fontSize: 11, fontWeight: 700 }}>РЕКОМЕНДУЕМ</div>
                 )}
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 }}>
                   <div>
@@ -335,14 +379,12 @@ export default function Home() {
                     <div style={{ fontSize: 13, color: "#8BA7BE" }}>{plan.desc}</div>
                   </div>
                   <div style={{ textAlign: "right" }}>
-                   <div style={{ fontSize: 20, fontWeight: 700, color: "#C9A84C" }}>{plan.usd}</div>
-                   <div style={{ fontSize: 11, color: "#8BA7BE" }}>сум / месяц</div>
+                    <div style={{ fontSize: 20, fontWeight: 700, color: "#C9A84C" }}>{plan.price}</div>
+                    <div style={{ fontSize: 11, color: "#8BA7BE" }}>сум / месяц</div>
                   </div>
                 </div>
                 {plan.popular && (
-                  <div style={{ fontSize: 12, color: "#22C55E", marginBottom: 12, padding: "4px 10px", background: "rgba(34,197,94,0.1)", borderRadius: 6, display: "inline-block" }}>
-                    ⭐ {plan.popular}
-                  </div>
+                  <div style={{ fontSize: 12, color: "#22C55E", marginBottom: 12, padding: "4px 10px", background: "rgba(34,197,94,0.1)", borderRadius: 6, display: "inline-block" }}>⭐ {plan.popular}</div>
                 )}
                 <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 16 }}>
                   {plan.features.map(f => (
@@ -362,7 +404,7 @@ export default function Home() {
           {/* FonMusic Box */}
           <div style={{ background: "linear-gradient(135deg, #0D1B2A, #162435)", border: "1px solid rgba(201,168,76,0.3)", borderRadius: 20, padding: "28px", marginBottom: 24 }}>
             <div style={{ fontSize: 11, color: "#C9A84C", letterSpacing: "0.1em", marginBottom: 8 }}>FONMUSIC BOX</div>
-            <h3 style={{ fontSize: 20, fontWeight: 700, color: "#fff", marginBottom: 10 }}>🎵 Автоматическая музыка 24/7</h3>
+            <h3 style={{ fontSize: 20, fontWeight: 700, color: "#fff", marginBottom: 10 }}>📦 Автоматическая музыка 24/7</h3>
             <p style={{ fontSize: 13, color: "#8BA7BE", lineHeight: 1.7, marginBottom: 16 }}>
               Небольшая приставка, которая подключается к интернету и вашей аудиосистеме. Музыка запускается автоматически и не зависит от браузера или компьютера.
             </p>
@@ -381,36 +423,60 @@ export default function Home() {
               </a>
             </div>
           </div>
+        </div>
+      </section>
 
-          {/* Сравнение */}
-          <div style={{ background: "#0D1B2A", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 16, padding: "24px" }}>
-            <div style={{ fontSize: 14, fontWeight: 700, color: "#fff", marginBottom: 20, textAlign: "center" }}>Веб-плеер vs FonMusic Box</div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
-              <div>
-                <div style={{ fontSize: 13, fontWeight: 700, color: "#8BA7BE", marginBottom: 12, textAlign: "center" }}>🌐 Веб-плеер</div>
-                {["Музыка в браузере", "Нужен компьютер", "Может остановиться"].map(f => (
-                  <div key={f} style={{ display: "flex", gap: 6, alignItems: "flex-start", marginBottom: 8 }}>
-                    <span style={{ color: "#EF4444", fontSize: 12, flexShrink: 0 }}>✗</span>
-                    <span style={{ fontSize: 12, color: "#8BA7BE", lineHeight: 1.5 }}>{f}</span>
-                  </div>
-                ))}
-              </div>
-              <div>
-                <div style={{ fontSize: 13, fontWeight: 700, color: "#C9A84C", marginBottom: 12, textAlign: "center" }}>📦 FonMusic Box</div>
-                {["Работает 24/7", "Запускается сам", "Не зависит от браузера"].map(f => (
-                  <div key={f} style={{ display: "flex", gap: 6, alignItems: "flex-start", marginBottom: 8 }}>
-                    <span style={{ color: "#22C55E", fontSize: 12, flexShrink: 0 }}>✓</span>
-                    <span style={{ fontSize: 12, color: "#E8EFF5", lineHeight: 1.5 }}>{f}</span>
-                  </div>
-                ))}
-              </div>
+      {/* LICENSE BLOCK */}
+      <section style={{ padding: `64px ${px}px` }}>
+        <div style={{ maxWidth: 640, margin: "0 auto" }}>
+          <div style={{ background: "#0D1B2A", border: "1px solid rgba(201,168,76,0.2)", borderRadius: 20, padding: "32px", textAlign: "center" }}>
+            <div style={{ fontSize: 40, marginBottom: 16 }}>📄</div>
+            <h2 style={{ fontSize: m ? 22 : 28, fontWeight: 700, color: "#fff", marginBottom: 12 }}>Лицензированная музыка для бизнеса</h2>
+            <p style={{ fontSize: 14, color: "#8BA7BE", lineHeight: 1.7, marginBottom: 24, maxWidth: 460, margin: "0 auto 24px" }}>
+              FonMusic использует лицензированный каталог Jamendo, предназначенный для коммерческого воспроизведения. Каждый клиент получает официальный сертификат.
+            </p>
+            <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: 16, marginBottom: 24 }}>
+              {["✓ Кафе и кофейни", "✓ Рестораны", "✓ Магазины", "✓ Фитнес-клубы", "✓ Салоны красоты", "✓ Отели"].map(f => (
+                <span key={f} style={{ fontSize: 13, color: "#22C55E" }}>{f}</span>
+              ))}
             </div>
+            <a href="/license" style={{ display: "inline-block", padding: "12px 28px", background: "rgba(201,168,76,0.1)", border: "1px solid rgba(201,168,76,0.3)", color: "#C9A84C", borderRadius: 10, fontSize: 14, fontWeight: 700, textDecoration: "none" }}>
+              Подробнее о лицензии →
+            </a>
+          </div>
+        </div>
+      </section>
+
+      {/* FAQ */}
+      <section style={{ padding: `64px ${px}px`, background: "#0A0F18" }}>
+        <div style={{ maxWidth: 640, margin: "0 auto" }}>
+          <div style={{ textAlign: "center", marginBottom: 32 }}>
+            <div style={{ fontSize: 11, color: "#C9A84C", letterSpacing: "0.15em", marginBottom: 10 }}>FAQ</div>
+            <h2 style={{ fontSize: m ? 26 : 36, fontWeight: 700, color: "#fff" }}>Частые вопросы</h2>
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {FAQS.map((faq, i) => (
+              <div key={i} style={{ background: "#0D1B2A", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 14, overflow: "hidden" }}>
+                <button onClick={() => setOpenFaq(openFaq === i ? null : i)} style={{
+                  width: "100%", padding: "18px 20px", background: "transparent", border: "none",
+                  cursor: "pointer", fontFamily: "Georgia, serif", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12,
+                }}>
+                  <span style={{ fontSize: 14, fontWeight: 700, color: "#fff", textAlign: "left" }}>{faq.q}</span>
+                  <span style={{ color: "#C9A84C", fontSize: 18, flexShrink: 0 }}>{openFaq === i ? "▲" : "▼"}</span>
+                </button>
+                {openFaq === i && (
+                  <div style={{ padding: "0 20px 18px", fontSize: 13, color: "#8BA7BE", lineHeight: 1.7 }}>
+                    {faq.a}
+                  </div>
+                )}
+              </div>
+            ))}
           </div>
         </div>
       </section>
 
       {/* TRIAL FORM */}
-      <section id="trial" style={{ padding: `64px ${px}px`, position: "relative", overflow: "hidden", background: "#0A0F18" }}>
+      <section id="trial" style={{ padding: `64px ${px}px`, position: "relative", overflow: "hidden" }}>
         <div style={{ position: "absolute", inset: 0, background: "radial-gradient(ellipse at center, rgba(201,168,76,0.06) 0%, transparent 70%)", pointerEvents: "none" }} />
         <div style={{ maxWidth: 480, margin: "0 auto", position: "relative" }}>
           <div style={{ textAlign: "center", marginBottom: 32 }}>
@@ -423,29 +489,53 @@ export default function Home() {
             </p>
           </div>
           <LeadForm />
-          <div style={{ marginTop: 28, textAlign: "center", padding: "20px", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 14 }}>
-            <div style={{ fontSize: 13, color: "#8BA7BE", marginBottom: 12 }}>Хотите сначала послушать?</div>
-            <a href="/demo" style={{ display: "inline-block", padding: "12px 24px", background: "transparent", border: "1px solid rgba(201,168,76,0.4)", color: "#C9A84C", borderRadius: 10, fontSize: 14, fontWeight: 700, textDecoration: "none" }}>
-              ▶ Открыть демо-плеер
-            </a>
-          </div>
         </div>
       </section>
 
       {/* FOOTER */}
-      <footer style={{ padding: `28px ${px}px`, borderTop: "1px solid rgba(255,255,255,0.06)" }}>
-        <div style={{ maxWidth: 640, margin: "0 auto" }}>
-          <div style={{ display: "flex", flexDirection: m ? "column" : "row", justifyContent: "space-between", alignItems: "center", gap: 16, textAlign: "center" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <div style={{ width: 4, height: 18, background: "#C9A84C", borderRadius: 2 }} />
-              <span style={{ fontWeight: 700, color: "#fff", fontSize: 16 }}>FonMusic</span>
+      <footer style={{ padding: `40px ${px}px`, borderTop: "1px solid rgba(255,255,255,0.06)", background: "#0A0F18" }}>
+        <div style={{ maxWidth: 860, margin: "0 auto" }}>
+          <div style={{ display: "grid", gridTemplateColumns: m ? "1fr" : "1fr 1fr 1fr", gap: 32, marginBottom: 32 }}>
+            <div>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
+                <div style={{ width: 4, height: 18, background: "#C9A84C", borderRadius: 2 }} />
+                <span style={{ fontWeight: 700, color: "#fff", fontSize: 16 }}>FonMusic</span>
+              </div>
+              <div style={{ fontSize: 13, color: "#8BA7BE", lineHeight: 1.7 }}>Лицензированная фоновая музыка для бизнеса в Узбекистане</div>
             </div>
-            <div style={{ display: "flex", flexDirection: m ? "column" : "row", gap: m ? 8 : 24, fontSize: 13, color: "#8BA7BE" }}>
-              <a href="tel:+998994100910" style={{ color: "#8BA7BE", textDecoration: "none" }}>+998 99 410 09 10</a>
-              <a href="https://t.me/fonmusic2026" style={{ color: "#8BA7BE", textDecoration: "none" }}>Telegram</a>
-              <span>info@fonmusic.uz</span>
+            <div>
+              <div style={{ fontSize: 13, fontWeight: 700, color: "#fff", marginBottom: 12 }}>Навигация</div>
+              {[
+                { label: "Как работает", href: "#how" },
+                { label: "Демо", href: "#demo" },
+                { label: "Тарифы", href: "#pricing" },
+                { label: "Войти в кабинет", href: "/dashboard" },
+              ].map(l => (
+                <div key={l.label} style={{ marginBottom: 8 }}>
+                  <a href={l.href} style={{ fontSize: 13, color: "#8BA7BE", textDecoration: "none" }}>{l.label}</a>
+                </div>
+              ))}
             </div>
-            <div style={{ fontSize: 12, color: "#4a5a6a" }}>© 2026 FonMusic.uz</div>
+            <div>
+              <div style={{ fontSize: 13, fontWeight: 700, color: "#fff", marginBottom: 12 }}>Юридическое</div>
+              {[
+                { label: "Публичная оферта", href: "/offer" },
+                { label: "Лицензия на музыку", href: "/license" },
+                { label: "Политика конфиденциальности", href: "/privacy" },
+              ].map(l => (
+                <div key={l.label} style={{ marginBottom: 8 }}>
+                  <a href={l.href} style={{ fontSize: 13, color: "#8BA7BE", textDecoration: "none" }}>{l.label}</a>
+                </div>
+              ))}
+              <div style={{ marginTop: 16, fontSize: 13, color: "#8BA7BE" }}>
+                <div><a href="tel:+998994100910" style={{ color: "#C9A84C", textDecoration: "none" }}>+998 99 410 09 10</a></div>
+                <div><a href="https://t.me/fonmusic2026" style={{ color: "#8BA7BE", textDecoration: "none" }}>Telegram</a></div>
+              </div>
+            </div>
+          </div>
+          <div style={{ borderTop: "1px solid rgba(255,255,255,0.06)", paddingTop: 20, display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12 }}>
+            <div style={{ fontSize: 12, color: "#4a5a6a" }}>© 2026 FonMusic.uz · Voxor Media Group</div>
+            <div style={{ fontSize: 12, color: "#4a5a6a" }}>Лицензированная музыка для бизнеса</div>
           </div>
         </div>
       </footer>
