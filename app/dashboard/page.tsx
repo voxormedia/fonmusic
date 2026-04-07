@@ -72,7 +72,7 @@ function PaywallScreen() {
             </div>
           ))}
         </div>
-        <a href="/#trial" style={{ display: "block", padding: "18px", background: "#C9A84C", color: "#080C12", borderRadius: 14, fontSize: 16, fontWeight: 700, textDecoration: "none", marginBottom: 16, boxShadow: "0 8px 32px rgba(201,168,76,0.3)" }}>
+        <a href="/#trial" style={{ display: "block", padding: "18px", background: "#C9A84C", color: "#080C12", borderRadius: 14, fontSize: 16, fontWeight: 700, textDecoration: "none", marginBottom: 16 }}>
           Оформить подписку →
         </a>
         <a href="tel:+998994100910" style={{ display: "block", padding: "14px", background: "transparent", border: "1px solid rgba(255,255,255,0.1)", color: "#8BA7BE", borderRadius: 12, fontSize: 14, textDecoration: "none" }}>
@@ -116,11 +116,11 @@ function LoginScreen({ onLogin }: { onLogin: (client: any) => void }) {
         <p style={{ fontSize: 14, color: "#8BA7BE", marginBottom: 32 }}>Войдите чтобы управлять музыкой</p>
         <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 24 }}>
           <input value={phone} onChange={e => {
-  let val = e.target.value.replace(/\D/g, "");
-  if (val.startsWith("998")) val = val.slice(3);
-  if (val.length > 9) val = val.slice(0, 9);
-  setPhone(val ? "+998" + val : "");
-}} placeholder="99 410 09 10" type="tel"
+            let val = e.target.value.replace(/\D/g, "");
+            if (val.startsWith("998")) val = val.slice(3);
+            if (val.length > 9) val = val.slice(0, 9);
+            setPhone(val ? "+998" + val : "");
+          }} placeholder="99 410 09 10" type="tel"
             style={{ padding: "14px 16px", background: "#162435", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, color: "#fff", fontSize: 15, outline: "none", boxSizing: "border-box", width: "100%" }} />
           <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="••••••"
             onKeyDown={e => e.key === "Enter" && login()}
@@ -149,11 +149,11 @@ function LoginScreen({ onLogin }: { onLogin: (client: any) => void }) {
                 <>
                   <p style={{ fontSize: 13, color: "#8BA7BE", marginBottom: 12 }}>Введите ваш номер телефона — администратор свяжется с вами</p>
                   <input value={forgotPhone} onChange={e => {
-  let val = e.target.value.replace(/\D/g, "");
-  if (val.startsWith("998")) val = val.slice(3);
-  if (val.length > 9) val = val.slice(0, 9);
-  setForgotPhone(val ? "+998" + val : "");
-}} placeholder="99 410 09 10"
+                    let val = e.target.value.replace(/\D/g, "");
+                    if (val.startsWith("998")) val = val.slice(3);
+                    if (val.length > 9) val = val.slice(0, 9);
+                    setForgotPhone(val ? "+998" + val : "");
+                  }} placeholder="99 410 09 10"
                     style={{ width: "100%", padding: "12px 14px", background: "#162435", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, color: "#fff", fontSize: 14, outline: "none", boxSizing: "border-box", marginBottom: 10 }} />
                   <button onClick={async () => {
                     if (!forgotPhone) return;
@@ -237,16 +237,16 @@ export default function DashboardPage() {
   };
 
   const loadDeviceStatus = async () => {
-  if (!client?.device_id) return;
-  const [data, clientData] = await Promise.all([
-    sb(`device_status?device_id=eq.${client.device_id}&select=*`),
-    sb(`clients?id=eq.${client.id}&select=station_key,music_mode,template_key`),
-  ]);
-  if (data && data.length > 0) setDeviceStatus(data[0]);
-  if (clientData && clientData.length > 0) {
-    setClient((prev: any) => ({ ...prev, ...clientData[0] }));
-  }
-};
+    if (!client?.device_id) return;
+    const [data, clientData] = await Promise.all([
+      sb(`device_status?device_id=eq.${client.device_id}&select=*`),
+      sb(`clients?id=eq.${client.id}&select=station_key,music_mode,template_key`),
+    ]);
+    if (data && data.length > 0) setDeviceStatus(data[0]);
+    if (clientData && clientData.length > 0) {
+      setClient((prev: any) => ({ ...prev, ...clientData[0] }));
+    }
+  };
 
   const handleLogin = (clientData: any) => {
     localStorage.setItem("fonmusic_client_id", clientData.id);
@@ -283,13 +283,32 @@ export default function DashboardPage() {
     });
   };
 
+  const switchMode = async (mode: "automatic" | "manual") => {
+    if (!client || saving) return;
+    setSaving(true);
+    await sb(`clients?id=eq.${client.id}`, {
+      method: "PATCH",
+      body: JSON.stringify({ music_mode: mode }),
+    });
+    if (mode === "automatic" && client.template_key) {
+      await sendCommand("refresh_schedule");
+    }
+    setClient({ ...client, music_mode: mode });
+    setSaving(false);
+    setSuccess(mode === "automatic" ? "Режим: Автоматический" : "Режим: Ручной");
+    setTimeout(() => setSuccess(""), 3000);
+  };
+
   const changeStation = async (stationKey: string) => {
     if (!client || saving) return;
     setSaving(true);
     setSuccess("");
-    await sb(`clients?id=eq.${client.id}`, { method: "PATCH", body: JSON.stringify({ station_key: stationKey }) });
+    await sb(`clients?id=eq.${client.id}`, {
+      method: "PATCH",
+      body: JSON.stringify({ station_key: stationKey, music_mode: "manual" }),
+    });
     await sendCommand("change_station", { genre: stationKey });
-    setClient({ ...client, station_key: stationKey });
+    setClient({ ...client, station_key: stationKey, music_mode: "manual" });
     setSaving(false);
     setSuccess("Станция изменена!");
     setTimeout(() => setSuccess(""), 3000);
@@ -305,40 +324,30 @@ export default function DashboardPage() {
   };
 
   const changeSchedule = async (templateKey: string) => {
-  if (!client || savingSchedule) return;
-  setSavingSchedule(true);
-  await sb(`clients?id=eq.${client.id}`, {
-    method: "PATCH",
-    body: JSON.stringify({ template_key: templateKey, music_mode: "automatic" }),
-  });
-  await sendCommand("refresh_schedule");
-  setClient({ ...client, template_key: templateKey, music_mode: "automatic" });
-  setSavingSchedule(false);
-  setSuccess("Расписание обновлено!");
-  setTimeout(() => setSuccess(""), 3000);
-};
+    if (!client || savingSchedule) return;
+    setSavingSchedule(true);
+    await sb(`clients?id=eq.${client.id}`, {
+      method: "PATCH",
+      body: JSON.stringify({ template_key: templateKey, music_mode: "automatic" }),
+    });
+    await sendCommand("refresh_schedule");
+    setClient({ ...client, template_key: templateKey, music_mode: "automatic" });
+    setSavingSchedule(false);
+    setSuccess("Расписание обновлено!");
+    setTimeout(() => setSuccess(""), 3000);
+  };
 
   const changePassword = async () => {
     if (!oldPassword || !newPassword) return;
     setPasswordError("");
-    if (oldPassword !== client.password) {
-      setPasswordError("Неверный текущий пароль");
-      return;
-    }
-    if (newPassword.length < 4) {
-      setPasswordError("Пароль должен быть не менее 4 символов");
-      return;
-    }
+    if (oldPassword !== client.password) { setPasswordError("Неверный текущий пароль"); return; }
+    if (newPassword.length < 4) { setPasswordError("Пароль должен быть не менее 4 символов"); return; }
     setSaving(true);
-    await sb(`clients?id=eq.${client.id}`, {
-      method: "PATCH",
-      body: JSON.stringify({ password: newPassword }),
-    });
+    await sb(`clients?id=eq.${client.id}`, { method: "PATCH", body: JSON.stringify({ password: newPassword }) });
     setClient({ ...client, password: newPassword });
     setSaving(false);
     setPasswordSuccess("Пароль успешно изменён!");
-    setOldPassword("");
-    setNewPassword("");
+    setOldPassword(""); setNewPassword("");
     setTimeout(() => { setPasswordSuccess(""); setShowChangePassword(false); }, 2000);
   };
 
@@ -348,6 +357,8 @@ export default function DashboardPage() {
     const stationIds = stationCategories.filter(sc => sc.category_id === category.id).map(sc => sc.station_id);
     return stations.filter(s => stationIds.includes(s.id));
   };
+
+  const isAutoMode = client?.music_mode === "automatic";
 
   if (screen === "login") return <LoginScreen onLogin={handleLogin} />;
   if (screen === "paywall") return <PaywallScreen />;
@@ -376,14 +387,12 @@ export default function DashboardPage() {
 
       <div style={{ maxWidth: 860, margin: "0 auto", padding: "32px 20px" }}>
 
-        {/* SUCCESS */}
         {success && (
           <div style={{ padding: "12px 20px", background: "rgba(34,197,94,0.1)", border: "1px solid rgba(34,197,94,0.3)", borderRadius: 10, fontSize: 14, color: "#22C55E", marginBottom: 20 }}>
             ✓ {success}
           </div>
         )}
 
-        {/* DEMO BANNER */}
         {daysLeft !== null && daysLeft > 0 && (
           <div style={{ padding: "16px 20px", background: "rgba(201,168,76,0.08)", border: "1px solid rgba(201,168,76,0.2)", borderRadius: 14, marginBottom: 20, display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
             <div style={{ fontSize: 14, color: "#C9A84C" }}>🕐 Тестовый период: осталось <strong>{daysLeft} дней</strong></div>
@@ -419,20 +428,63 @@ export default function DashboardPage() {
           )}
         </div>
 
-        {/* 2. ВЫБОР СТАНЦИИ */}
-        <div style={{ background: "#0D1B2A", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 16, padding: "24px", marginBottom: 20 }}>
-          <h2 style={{ fontSize: 16, fontWeight: 700, color: "#fff", marginBottom: 4 }}>🎵 Выбор станции</h2>
-          <p style={{ fontSize: 13, color: "#8BA7BE", marginBottom: 16 }}>Выберите музыку для вашего заведения</p>
+        {/* 2. РЕЖИМ МУЗЫКИ */}
+        <div style={{ background: "#0D1B2A", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 16, padding: "20px 24px", marginBottom: 20 }}>
+          <h2 style={{ fontSize: 15, fontWeight: 700, color: "#fff", marginBottom: 4 }}>🎛️ Режим музыки</h2>
+          <p style={{ fontSize: 12, color: "#8BA7BE", marginBottom: 16 }}>
+            {isAutoMode ? "Музыка меняется автоматически по расписанию" : "Вы управляете музыкой вручную"}
+          </p>
+          <div style={{ display: "flex", gap: 8 }}>
+            <button onClick={() => switchMode("automatic")} style={{
+              flex: 1, padding: "12px 16px", borderRadius: 10, cursor: "pointer", fontFamily: "Georgia, serif",
+              background: isAutoMode ? "rgba(34,197,94,0.12)" : "rgba(255,255,255,0.03)",
+              border: `${isAutoMode ? "2px" : "1px"} solid ${isAutoMode ? "rgba(34,197,94,0.5)" : "rgba(255,255,255,0.08)"}`,
+              display: "flex", alignItems: "center", gap: 10,
+            }}>
+              <div style={{ width: 16, height: 16, borderRadius: "50%", background: isAutoMode ? "#22C55E" : "#333", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                {isAutoMode && <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#fff" }} />}
+              </div>
+              <div style={{ textAlign: "left" }}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: isAutoMode ? "#22C55E" : "#fff" }}>Автоматически</div>
+                <div style={{ fontSize: 11, color: "#8BA7BE" }}>По расписанию</div>
+              </div>
+            </button>
+            <button onClick={() => switchMode("manual")} style={{
+              flex: 1, padding: "12px 16px", borderRadius: 10, cursor: "pointer", fontFamily: "Georgia, serif",
+              background: !isAutoMode ? "rgba(59,130,246,0.12)" : "rgba(255,255,255,0.03)",
+              border: `${!isAutoMode ? "2px" : "1px"} solid ${!isAutoMode ? "rgba(59,130,246,0.5)" : "rgba(255,255,255,0.08)"}`,
+              display: "flex", alignItems: "center", gap: 10,
+            }}>
+              <div style={{ width: 16, height: 16, borderRadius: "50%", background: !isAutoMode ? "#3B82F6" : "#333", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                {!isAutoMode && <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#fff" }} />}
+              </div>
+              <div style={{ textAlign: "left" }}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: !isAutoMode ? "#3B82F6" : "#fff" }}>Ручной</div>
+                <div style={{ fontSize: 11, color: "#8BA7BE" }}>Выбор станции</div>
+              </div>
+            </button>
+          </div>
+        </div>
+
+        {/* 3. ВЫБОР СТАНЦИИ */}
+        <div style={{ background: "#0D1B2A", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 16, padding: "24px", marginBottom: 20, opacity: isAutoMode ? 0.5 : 1, transition: "opacity 0.2s" }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
+            <h2 style={{ fontSize: 16, fontWeight: 700, color: "#fff" }}>🎵 Выбор станции</h2>
+            {isAutoMode && <span style={{ fontSize: 11, color: "#8BA7BE", background: "rgba(255,255,255,0.06)", padding: "3px 10px", borderRadius: 100 }}>Управляет расписание</span>}
+          </div>
+          <p style={{ fontSize: 13, color: "#8BA7BE", marginBottom: 16 }}>
+            {isAutoMode ? "Переключите в ручной режим чтобы выбрать станцию" : "Выберите музыку для вашего заведения"}
+          </p>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 20 }}>
-            <button onClick={() => setSelectedCategory(null)} style={{
-              padding: "7px 16px", borderRadius: 20, fontSize: 12, cursor: "pointer", fontFamily: "Georgia, serif",
+            <button onClick={() => setSelectedCategory(null)} disabled={isAutoMode} style={{
+              padding: "7px 16px", borderRadius: 20, fontSize: 12, cursor: isAutoMode ? "default" : "pointer", fontFamily: "Georgia, serif",
               background: !selectedCategory ? "#C9A84C" : "rgba(255,255,255,0.05)",
               border: !selectedCategory ? "none" : "1px solid rgba(255,255,255,0.1)",
               color: !selectedCategory ? "#080C12" : "#E8EFF5", fontWeight: !selectedCategory ? 700 : 400,
             }}>Все</button>
             {categories.map(c => (
-              <button key={c.category_key} onClick={() => setSelectedCategory(c.category_key)} style={{
-                padding: "7px 16px", borderRadius: 20, fontSize: 12, cursor: "pointer", fontFamily: "Georgia, serif",
+              <button key={c.category_key} onClick={() => !isAutoMode && setSelectedCategory(c.category_key)} disabled={isAutoMode} style={{
+                padding: "7px 16px", borderRadius: 20, fontSize: 12, cursor: isAutoMode ? "default" : "pointer", fontFamily: "Georgia, serif",
                 background: selectedCategory === c.category_key ? "#C9A84C" : "rgba(255,255,255,0.05)",
                 border: selectedCategory === c.category_key ? "none" : "1px solid rgba(255,255,255,0.1)",
                 color: selectedCategory === c.category_key ? "#080C12" : "#E8EFF5",
@@ -444,11 +496,10 @@ export default function DashboardPage() {
             {(selectedCategory ? getStationsForCategory(selectedCategory) : stations).map(s => {
               const isActive = client?.station_key === s.station_key;
               return (
-                <button key={s.station_key} onClick={() => changeStation(s.station_key)} disabled={saving} style={{
-                  padding: "18px", borderRadius: 12, cursor: "pointer", textAlign: "left", fontFamily: "Georgia, serif",
+                <button key={s.station_key} onClick={() => !isAutoMode && changeStation(s.station_key)} disabled={saving || isAutoMode} style={{
+                  padding: "18px", borderRadius: 12, cursor: isAutoMode ? "default" : "pointer", textAlign: "left", fontFamily: "Georgia, serif",
                   background: isActive ? "rgba(201,168,76,0.12)" : "rgba(255,255,255,0.03)",
                   border: `${isActive ? "2px" : "1px"} solid ${isActive ? "rgba(201,168,76,0.5)" : "rgba(255,255,255,0.08)"}`,
-                  boxShadow: isActive ? "0 0 16px rgba(201,168,76,0.15)" : "none",
                   transition: "all 0.2s",
                 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
@@ -468,7 +519,7 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* 3. СЕЙЧАС ИГРАЕТ */}
+        {/* 4. СЕЙЧАС ИГРАЕТ */}
         <div style={{ background: "#0D1B2A", border: "1px solid rgba(201,168,76,0.2)", borderRadius: 16, padding: "24px", marginBottom: 20 }}>
           <div style={{ fontSize: 11, color: "#C9A84C", letterSpacing: 2, marginBottom: 12 }}>▶ СЕЙЧАС ИГРАЕТ</div>
           {deviceStatus ? (
@@ -499,9 +550,12 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* 4. РАСПИСАНИЕ */}
-        <div style={{ background: "#0D1B2A", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 16, padding: "24px", marginBottom: 20 }}>
-          <h2 style={{ fontSize: 16, fontWeight: 700, color: "#fff", marginBottom: 4 }}>📅 Расписание</h2>
+        {/* 5. РАСПИСАНИЕ */}
+        <div style={{ background: "#0D1B2A", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 16, padding: "24px", marginBottom: 20, opacity: !isAutoMode ? 0.5 : 1, transition: "opacity 0.2s" }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
+            <h2 style={{ fontSize: 16, fontWeight: 700, color: "#fff" }}>📅 Расписание</h2>
+            {!isAutoMode && <span style={{ fontSize: 11, color: "#8BA7BE", background: "rgba(255,255,255,0.06)", padding: "3px 10px", borderRadius: 100 }}>Включите авто режим</span>}
+          </div>
           <p style={{ fontSize: 13, color: "#8BA7BE", marginBottom: 16 }}>Музыка автоматически меняется по времени дня</p>
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             {scheduleTemplates.map(t => (
@@ -522,7 +576,7 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* 5. СМЕНА ПАРОЛЯ */}
+        {/* 6. СМЕНА ПАРОЛЯ */}
         <div style={{ background: "#0D1B2A", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 16, padding: "24px", marginBottom: 20 }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: showChangePassword ? 16 : 0 }}>
             <h2 style={{ fontSize: 16, fontWeight: 700, color: "#fff" }}>🔑 Пароль</h2>
@@ -545,7 +599,7 @@ export default function DashboardPage() {
           )}
         </div>
 
-        {/* 6. СЕРТИФИКАТ */}
+        {/* 7. СЕРТИФИКАТ */}
         <div style={{ background: "#0D1B2A", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 16, padding: "24px" }}>
           <h2 style={{ fontSize: 16, fontWeight: 700, color: "#fff", marginBottom: 6 }}>📄 Сертификат</h2>
           <p style={{ fontSize: 13, color: "#8BA7BE", marginBottom: 16 }}>Официальный сертификат JAMENDO Licensing</p>
