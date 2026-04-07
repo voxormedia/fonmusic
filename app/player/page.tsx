@@ -155,7 +155,9 @@ export default function PlayerPage() {
   const folder = STATION_FOLDERS[stationKey] || "Cozy Coffee";
   try {
     const res = await fetch(`${BASE_URL}/${folder.replace(/ /g, "%20")}/playlist.json`);
-    const tracks: string[] = await res.json();
+    const raw = await res.json();
+    // Поддержка обоих форматов: строка и объект {f, e, b, a}
+    const tracks: string[] = raw.map((t: any) => typeof t === "string" ? t : t.f).filter(Boolean);
     const shuffled = [...tracks].sort(() => Math.random() - 0.5);
     setPlaylist(shuffled);
     setTrackIndex(0);
@@ -217,7 +219,8 @@ export default function PlayerPage() {
     const folder = STATION_FOLDERS[stationKey] || "Cozy Coffee";
     try {
       const res = await fetch(`${BASE_URL}/${folder.replace(/ /g, "%20")}/playlist.json`);
-      const tracks: string[] = await res.json();
+      const raw = await res.json();
+      const tracks: string[] = raw.map((t: any) => typeof t === "string" ? t : t.f).filter(Boolean);
       const shuffled = [...tracks].sort(() => Math.random() - 0.5);
       setPlaylist(shuffled);
       setTrackIndex(0);
