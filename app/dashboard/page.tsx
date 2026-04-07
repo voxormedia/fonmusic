@@ -33,6 +33,12 @@ const STATION_NAMES: Record<string, string> = {
   best_of_radio: "⭐ All Day Mix",
 };
 
+const MOOD_STATIONS = {
+  calm: "cool_calm",
+  standard: null, // вернуть к расписанию
+  energetic: "shopping_vibes",
+};
+
 function getDaysLeft(expiresAt: string): number {
   const now = new Date();
   const expires = new Date(expiresAt);
@@ -101,6 +107,7 @@ export default function DashboardPage() {
   const [newPassword, setNewPassword] = useState("");
   const [passwordError, setPasswordError] = useState("");
   const [passwordSuccess, setPasswordSuccess] = useState("");
+  const [currentMood, setCurrentMood] = useState<"calm" | "standard" | "energetic">("standard");
 
   useEffect(() => {
     const clientId = localStorage.getItem("fonmusic_client_id");
@@ -113,15 +120,13 @@ export default function DashboardPage() {
     if (!data || data.length === 0) { window.location.href = "/login"; return; }
     const c = data[0];
     setClient(c);
-
     if (c.subscription_status === "expired") { setScreen("paywall"); return; }
     if (c.subscription_status === "demo" && c.demo_expires_at) {
       const days = getDaysLeft(c.demo_expires_at);
       setDaysLeft(days);
       if (days <= 0) {
         await sb(`clients?id=eq.${c.id}`, { method: "PATCH", body: JSON.stringify({ subscription_status: "expired" }) });
-        setScreen("paywall");
-        return;
+        setScreen("paywall"); return;
       }
     }
     setScreen("dashboard");
@@ -160,17 +165,11 @@ export default function DashboardPage() {
     if (clientData && clientData.length > 0) setClient((prev: any) => ({ ...prev, ...clientData[0] }));
   };
 
-  const logout = () => {
-    localStorage.removeItem("fonmusic_client_id");
-    window.location.href = "/login";
-  };
+  const logout = () => { localStorage.removeItem("fonmusic_client_id"); window.location.href = "/login"; };
 
   const sendCommand = async (command: string, extra?: object) => {
     if (!client?.device_id) return;
-    await sb("commands", {
-      method: "POST",
-      body: JSON.stringify({ device_id: client.device_id, command, genre: client.station_key, mode: client.mode || "normal", executed: false, ...extra }),
-    });
+    await sb("commands", { method: "POST", body: JSON.stringify({ device_id: client.device_id, command, genre: client.station_key, mode: client.mode || "normal", executed: false, ...extra }) });
   };
 
   const switchMode = async (mode: "automatic" | "manual") => {
@@ -202,6 +201,36 @@ export default function DashboardPage() {
     setSaving(false);
     setSuccess("Переключаем трек...");
     setTimeout(() => { setSuccess(""); loadDeviceStatus(); }, 5000);
+  };
+
+  const restartMusic = async () => {
+    if (!client || saving) return;
+    setSaving(true);
+    await sendCommand("restart");
+    setSaving(false);
+    setSuccess("Перезапускаем музыку...");
+    setTimeout(() => { setSuccess(""); loadDeviceStatus(); }, 5000);
+  };
+
+  const setMood = async (mood: "calm" | "standard" | "energetic") => {
+    if (!client || saving) return;
+    setSaving(true);
+    setCurrentMood(mood);
+    if (mood === "standard") {
+      // Возврат к расписанию
+      await sb(`clients?id=eq.${client.id}`, { method: "PATCH", body: JSON.stringify({ music_mode: "automatic" }) });
+      if (client.template_key) await sendCommand("refresh_schedule");
+      setClient({ ...client, music_mode: "automatic" });
+      setSuccess("Стандартная атмосфера — расписание активно");
+    } else {
+      const stationKey = mood === "calm" ? "cool_calm" : "shopping_vibes";
+      await sb(`clients?id=eq.${client.id}`, { method: "PATCH", body: JSON.stringify({ station_key: stationKey, music_mode: "manual" }) });
+      await sendCommand("change_station", { genre: stationKey });
+      setClient({ ...client, station_key: stationKey, music_mode: "manual" });
+      setSuccess(mood === "calm" ? "Спокойная атмосфера включена" : "Энергичная атмосфера включена");
+    }
+    setSaving(false);
+    setTimeout(() => setSuccess(""), 3000);
   };
 
   const changeSchedule = async (templateKey: string) => {
@@ -311,7 +340,30 @@ export default function DashboardPage() {
           )}
         </div>
 
-        {/* 2. РЕЖИМ МУЗЫКИ */}
+        {/* 2. АТМОСФЕРА */}
+        <div style={{ background: "#0D1B2A", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 16, padding: "20px 24px", marginBottom: 20 }}>
+          <h2 style={{ fontSize: 15, fontWeight: 700, color: "#fff", marginBottom: 4 }}>✨ Атмосфера сейчас</h2>
+          <p style={{ fontSize: 12, color: "#8BA7BE", marginBottom: 16 }}>Быстро изменить настроение заведения</p>
+          <div style={{ display: "flex", gap: 8 }}>
+            {[
+              { key: "calm", label: "Спокойно", icon: "🌿", color: "#22C55E", desc: "Тихо и уютно" },
+              { key: "standard", label: "Стандарт", icon: "🎵", color: "#C9A84C", desc: "По расписанию" },
+              { key: "energetic", label: "Энергично", icon: "⚡", color: "#EF4444", desc: "Живо и бодро" },
+            ].map(mood => (
+              <button key={mood.key} onClick={() => setMood(mood.key as any)} disabled={saving} style={{
+                flex: 1, padding: "14px 10px", borderRadius: 12, cursor: "pointer", fontFamily: "Georgia, serif", textAlign: "center",
+                background: currentMood === mood.key ? `rgba(${mood.key === "calm" ? "34,197,94" : mood.key === "standard" ? "201,168,76" : "239,68,68"},0.12)` : "rgba(255,255,255,0.03)",
+                border: `${currentMood === mood.key ? "2px" : "1px"} solid ${currentMood === mood.key ? `rgba(${mood.key === "calm" ? "34,197,94" : mood.key === "standard" ? "201,168,76" : "239,68,68"},0.5)` : "rgba(255,255,255,0.08)"}`,
+              }}>
+                <div style={{ fontSize: 22, marginBottom: 4 }}>{mood.icon}</div>
+                <div style={{ fontSize: 12, fontWeight: 700, color: currentMood === mood.key ? mood.color : "#fff", marginBottom: 2 }}>{mood.label}</div>
+                <div style={{ fontSize: 10, color: "#8BA7BE" }}>{mood.desc}</div>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* 3. РЕЖИМ МУЗЫКИ */}
         <div style={{ background: "#0D1B2A", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 16, padding: "20px 24px", marginBottom: 20 }}>
           <h2 style={{ fontSize: 15, fontWeight: 700, color: "#fff", marginBottom: 4 }}>🎛️ Режим музыки</h2>
           <p style={{ fontSize: 12, color: "#8BA7BE", marginBottom: 16 }}>
@@ -349,7 +401,7 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* 3. ВЫБОР СТАНЦИИ */}
+        {/* 4. ВЫБОР СТАНЦИИ */}
         <div style={{ background: "#0D1B2A", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 16, padding: "24px", marginBottom: 20, opacity: isAutoMode ? 0.5 : 1, transition: "opacity 0.2s" }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
             <h2 style={{ fontSize: 16, fontWeight: 700, color: "#fff" }}>🎵 Выбор станции</h2>
@@ -402,7 +454,7 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* 4. СЕЙЧАС ИГРАЕТ */}
+        {/* 5. СЕЙЧАС ИГРАЕТ */}
         <div style={{ background: "#0D1B2A", border: "1px solid rgba(201,168,76,0.2)", borderRadius: 16, padding: "24px", marginBottom: 20 }}>
           <div style={{ fontSize: 11, color: "#C9A84C", letterSpacing: 2, marginBottom: 12 }}>▶ СЕЙЧАС ИГРАЕТ</div>
           {deviceStatus ? (
@@ -417,23 +469,20 @@ export default function DashboardPage() {
           ) : (
             <div style={{ fontSize: 14, color: "#8BA7BE", marginBottom: 16 }}>⏳ Загрузка данных устройства...</div>
           )}
-          <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
-            <button onClick={nextTrack} disabled={saving} style={{
-              padding: "12px 24px", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)",
-              borderRadius: 10, color: "#fff", fontSize: 14, cursor: "pointer", fontFamily: "Georgia, serif",
-            }}>
+          <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+            <button onClick={nextTrack} disabled={saving} style={{ padding: "11px 20px", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 10, color: "#fff", fontSize: 13, cursor: "pointer", fontFamily: "Georgia, serif" }}>
               ⏭ Следующий трек
             </button>
-            <a href="/player" style={{
-              padding: "12px 24px", background: "rgba(201,168,76,0.1)", border: "1px solid rgba(201,168,76,0.3)",
-              borderRadius: 10, color: "#C9A84C", fontSize: 14, fontWeight: 700, textDecoration: "none", display: "inline-block",
-            }}>
-              🎵 Открыть плеер
+            <button onClick={restartMusic} disabled={saving} style={{ padding: "11px 20px", background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)", borderRadius: 10, color: "#EF4444", fontSize: 13, cursor: "pointer", fontFamily: "Georgia, serif" }}>
+              🔄 Перезапустить
+            </button>
+            <a href="/player" style={{ padding: "11px 20px", background: "rgba(201,168,76,0.1)", border: "1px solid rgba(201,168,76,0.3)", borderRadius: 10, color: "#C9A84C", fontSize: 13, fontWeight: 700, textDecoration: "none", display: "inline-flex", alignItems: "center" }}>
+              🔊 Открыть плеер
             </a>
           </div>
         </div>
 
-        {/* 5. РАСПИСАНИЕ */}
+        {/* 6. РАСПИСАНИЕ */}
         <div style={{ background: "#0D1B2A", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 16, padding: "24px", marginBottom: 20, opacity: !isAutoMode ? 0.5 : 1, transition: "opacity 0.2s" }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
             <h2 style={{ fontSize: 16, fontWeight: 700, color: "#fff" }}>📅 Расписание</h2>
@@ -451,15 +500,30 @@ export default function DashboardPage() {
                 <div style={{ fontSize: 14, fontWeight: 700, color: client?.template_key === t.template_key ? "#C9A84C" : "#fff" }}>
                   {t.template_name}
                 </div>
-                {client?.template_key === t.template_key && (
-                  <div style={{ fontSize: 10, color: "#C9A84C", marginTop: 4 }}>✓ АКТИВНО</div>
-                )}
+                {client?.template_key === t.template_key && <div style={{ fontSize: 10, color: "#C9A84C", marginTop: 4 }}>✓ АКТИВНО</div>}
               </button>
             ))}
           </div>
         </div>
 
-        {/* 6. СМЕНА ПАРОЛЯ */}
+        {/* 7. ПОДДЕРЖКА */}
+        <div style={{ background: "#0D1B2A", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 16, padding: "24px", marginBottom: 20 }}>
+          <h2 style={{ fontSize: 16, fontWeight: 700, color: "#fff", marginBottom: 6 }}>💬 Поддержка</h2>
+          <p style={{ fontSize: 13, color: "#8BA7BE", marginBottom: 16 }}>Если возникли вопросы — мы на связи</p>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
+            <a href="https://t.me/fonmusic2026" target="_blank" style={{ display: "flex", alignItems: "center", gap: 8, padding: "11px 18px", background: "rgba(0,136,204,0.1)", border: "1px solid rgba(0,136,204,0.3)", borderRadius: 10, color: "#0088CC", fontSize: 13, fontWeight: 700, textDecoration: "none" }}>
+              ✈ Telegram
+            </a>
+            <a href="https://wa.me/998994100910" target="_blank" style={{ display: "flex", alignItems: "center", gap: 8, padding: "11px 18px", background: "rgba(37,211,102,0.1)", border: "1px solid rgba(37,211,102,0.3)", borderRadius: 10, color: "#25D166", fontSize: 13, fontWeight: 700, textDecoration: "none" }}>
+              💬 WhatsApp
+            </a>
+            <a href="tel:+998994100910" style={{ display: "flex", alignItems: "center", gap: 8, padding: "11px 18px", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, color: "#8BA7BE", fontSize: 13, fontWeight: 700, textDecoration: "none" }}>
+              📞 +998 99 410 09 10
+            </a>
+          </div>
+        </div>
+
+        {/* 8. СМЕНА ПАРОЛЯ */}
         <div style={{ background: "#0D1B2A", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 16, padding: "24px", marginBottom: 20 }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: showChangePassword ? 16 : 0 }}>
             <h2 style={{ fontSize: 16, fontWeight: 700, color: "#fff" }}>🔑 Пароль</h2>
@@ -482,7 +546,7 @@ export default function DashboardPage() {
           )}
         </div>
 
-        {/* 7. СЕРТИФИКАТ */}
+        {/* 9. СЕРТИФИКАТ */}
         <div style={{ background: "#0D1B2A", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 16, padding: "24px" }}>
           <h2 style={{ fontSize: 16, fontWeight: 700, color: "#fff", marginBottom: 6 }}>📄 Сертификат</h2>
           <p style={{ fontSize: 13, color: "#8BA7BE", marginBottom: 16 }}>Официальный сертификат лицензии на музыку</p>
