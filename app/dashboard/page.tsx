@@ -65,7 +65,7 @@ function PaywallScreen() {
         </p>
         <div style={{ background: "#0D1B2A", border: "1px solid rgba(201,168,76,0.2)", borderRadius: 20, padding: 28, marginBottom: 24 }}>
           <div style={{ fontSize: 13, color: "#8BA7BE", marginBottom: 16 }}>Что входит в подписку:</div>
-          {["10 музыкальных станций Jamendo", "Автоматическое расписание", "Android TV приставка", "Официальный сертификат", "Личный кабинет"].map(f => (
+          {["10 музыкальных станций", "Автоматическое расписание", "Android TV приставка", "Официальный сертификат", "Личный кабинет"].map(f => (
             <div key={f} style={{ display: "flex", gap: 10, alignItems: "center", marginBottom: 10 }}>
               <span style={{ color: "#C9A84C" }}>✓</span>
               <span style={{ fontSize: 14, color: "#E8EFF5" }}>{f}</span>
@@ -83,117 +83,8 @@ function PaywallScreen() {
   );
 }
 
-function LoginScreen({ onLogin }: { onLogin: (client: any) => void }) {
-  const [phone, setPhone] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [showForgot, setShowForgot] = useState(false);
-  const [forgotPhone, setForgotPhone] = useState("");
-  const [forgotSent, setForgotSent] = useState(false);
-
-  const login = async () => {
-    if (!phone || !password) return;
-    setLoading(true);
-    setError("");
-    const data = await sb(`clients?phone=eq.${encodeURIComponent(phone)}&password=eq.${password}&select=*`);
-    setLoading(false);
-    if (data && data.length > 0) {
-      onLogin(data[0]);
-    } else {
-      setError("Неверный телефон или пароль");
-    }
-  };
-
-  return (
-    <main style={{ minHeight: "100vh", background: "#080C12", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "Georgia, serif" }}>
-      <div style={{ width: "100%", maxWidth: 420, padding: 40, background: "#0D1B2A", border: "1px solid rgba(201,168,76,0.2)", borderRadius: 24, margin: 20, boxShadow: "0 40px 80px rgba(0,0,0,0.5)" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 40 }}>
-          <div style={{ width: 6, height: 24, background: "#C9A84C", borderRadius: 2 }} />
-          <span style={{ fontSize: 20, fontWeight: 700, color: "#fff" }}>FonMusic</span>
-        </div>
-        <h1 style={{ fontSize: 24, fontWeight: 700, color: "#fff", marginBottom: 8 }}>Личный кабинет</h1>
-        <p style={{ fontSize: 14, color: "#8BA7BE", marginBottom: 32 }}>Войдите чтобы управлять музыкой</p>
-        <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 24 }}>
-          <input value={phone} onChange={e => {
-            let val = e.target.value.replace(/\D/g, "");
-            if (val.startsWith("998")) val = val.slice(3);
-            if (val.length > 9) val = val.slice(0, 9);
-            setPhone(val ? "+998" + val : "");
-          }} placeholder="99 410 09 10" type="tel"
-            style={{ padding: "14px 16px", background: "#162435", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, color: "#fff", fontSize: 15, outline: "none", boxSizing: "border-box", width: "100%" }} />
-          <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="••••••"
-            onKeyDown={e => e.key === "Enter" && login()}
-            style={{ padding: "14px 16px", background: "#162435", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, color: "#fff", fontSize: 15, outline: "none", boxSizing: "border-box", width: "100%" }} />
-        </div>
-        {error && (
-          <div style={{ padding: "10px 16px", background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", borderRadius: 8, fontSize: 13, color: "#EF4444", marginBottom: 16 }}>
-            {error}
-          </div>
-        )}
-        <button onClick={login} disabled={loading} style={{ width: "100%", padding: "15px", background: "#C9A84C", border: "none", borderRadius: 10, color: "#080C12", fontSize: 15, fontWeight: 700, cursor: "pointer" }}>
-          {loading ? "Входим..." : "Войти"}
-        </button>
-        <div style={{ marginTop: 20, textAlign: "center", display: "flex", flexDirection: "column", gap: 8 }}>
-          {!showForgot ? (
-            <>
-              <button onClick={() => setShowForgot(true)} style={{ background: "none", border: "none", color: "#C9A84C", fontSize: 13, cursor: "pointer", fontFamily: "Georgia, serif" }}>
-                Забыли пароль?
-              </button>
-              <a href="/" style={{ fontSize: 13, color: "#8BA7BE", textDecoration: "none" }}>← На главную</a>
-            </>
-          ) : (
-            <div style={{ textAlign: "left" }}>
-              <div style={{ fontSize: 14, color: "#fff", marginBottom: 12, fontWeight: 700 }}>Восстановление пароля</div>
-              {!forgotSent ? (
-                <>
-                  <p style={{ fontSize: 13, color: "#8BA7BE", marginBottom: 12 }}>Введите ваш номер телефона — администратор свяжется с вами</p>
-                  <input value={forgotPhone} onChange={e => {
-                    let val = e.target.value.replace(/\D/g, "");
-                    if (val.startsWith("998")) val = val.slice(3);
-                    if (val.length > 9) val = val.slice(0, 9);
-                    setForgotPhone(val ? "+998" + val : "");
-                  }} placeholder="99 410 09 10"
-                    style={{ width: "100%", padding: "12px 14px", background: "#162435", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, color: "#fff", fontSize: 14, outline: "none", boxSizing: "border-box", marginBottom: 10 }} />
-                  <button onClick={async () => {
-                    if (!forgotPhone) return;
-                    const data = await sb(`clients?phone=eq.${encodeURIComponent(forgotPhone)}&select=name,phone,password`);
-                    const text = data && data.length > 0
-                      ? `🔑 Запрос на восстановление пароля!\n\n🏢 ${data[0].name}\n📞 ${data[0].phone}\n🔑 Пароль: ${data[0].password}`
-                      : `🔑 Запрос пароля от неизвестного номера: ${forgotPhone}`;
-                    await fetch(`https://api.telegram.org/bot8572453029:AAGacP96un1FuPOcj6hmc708pOBv7nYPIiI/sendMessage`, {
-                      method: "POST",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({ chat_id: "500210645", text }),
-                    });
-                    setForgotSent(true);
-                  }} style={{ width: "100%", padding: "12px", background: "#C9A84C", border: "none", borderRadius: 10, color: "#080C12", fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: "Georgia, serif", marginBottom: 8 }}>
-                    Отправить запрос
-                  </button>
-                  <button onClick={() => setShowForgot(false)} style={{ background: "none", border: "none", color: "#8BA7BE", fontSize: 13, cursor: "pointer", fontFamily: "Georgia, serif" }}>
-                    ← Назад
-                  </button>
-                </>
-              ) : (
-                <div style={{ textAlign: "center" }}>
-                  <div style={{ fontSize: 32, marginBottom: 8 }}>✅</div>
-                  <div style={{ fontSize: 14, color: "#fff", marginBottom: 6 }}>Запрос отправлен!</div>
-                  <div style={{ fontSize: 13, color: "#8BA7BE", marginBottom: 12 }}>Администратор свяжется с вами в ближайшее время</div>
-                  <button onClick={() => { setShowForgot(false); setForgotSent(false); setForgotPhone(""); }} style={{ background: "none", border: "none", color: "#C9A84C", fontSize: 13, cursor: "pointer", fontFamily: "Georgia, serif" }}>
-                    ← Назад к входу
-                  </button>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-      </div>
-    </main>
-  );
-}
-
 export default function DashboardPage() {
-  const [screen, setScreen] = useState<"login" | "dashboard" | "paywall">("login");
+  const [screen, setScreen] = useState<"loading" | "dashboard" | "paywall">("loading");
   const [client, setClient] = useState<any>(null);
   const [deviceStatus, setDeviceStatus] = useState<any>(null);
   const [stations, setStations] = useState<any[]>([]);
@@ -212,16 +103,38 @@ export default function DashboardPage() {
   const [passwordSuccess, setPasswordSuccess] = useState("");
 
   useEffect(() => {
-    if (screen === "dashboard") {
-      loadData();
-      const interval = setInterval(() => loadDeviceStatus(), 30000);
-      return () => clearInterval(interval);
+    const clientId = localStorage.getItem("fonmusic_client_id");
+    if (!clientId) { window.location.href = "/login"; return; }
+    initClient(clientId);
+  }, []);
+
+  const initClient = async (clientId: string) => {
+    const data = await sb(`clients?id=eq.${clientId}&select=*`);
+    if (!data || data.length === 0) { window.location.href = "/login"; return; }
+    const c = data[0];
+    setClient(c);
+
+    if (c.subscription_status === "expired") { setScreen("paywall"); return; }
+    if (c.subscription_status === "demo" && c.demo_expires_at) {
+      const days = getDaysLeft(c.demo_expires_at);
+      setDaysLeft(days);
+      if (days <= 0) {
+        await sb(`clients?id=eq.${c.id}`, { method: "PATCH", body: JSON.stringify({ subscription_status: "expired" }) });
+        setScreen("paywall");
+        return;
+      }
     }
-  }, [screen]);
+    setScreen("dashboard");
+    loadData();
+    if (c.device_id) loadDeviceStatus(c);
+  };
 
   useEffect(() => {
-    if (client?.device_id && screen === "dashboard") loadDeviceStatus();
-  }, [client]);
+    if (screen === "dashboard" && client) {
+      const interval = setInterval(() => loadDeviceStatus(client), 30000);
+      return () => clearInterval(interval);
+    }
+  }, [screen, client]);
 
   const loadData = async () => {
     const [s, c, sc, tmpl] = await Promise.all([
@@ -236,63 +149,35 @@ export default function DashboardPage() {
     if (tmpl) setScheduleTemplates(tmpl);
   };
 
-  const loadDeviceStatus = async () => {
-    if (!client?.device_id) return;
+  const loadDeviceStatus = async (cl?: any) => {
+    const c = cl || client;
+    if (!c?.device_id) return;
     const [data, clientData] = await Promise.all([
-      sb(`device_status?device_id=eq.${client.device_id}&select=*`),
-      sb(`clients?id=eq.${client.id}&select=station_key,music_mode,template_key`),
+      sb(`device_status?device_id=eq.${c.device_id}&select=*`),
+      sb(`clients?id=eq.${c.id}&select=station_key,music_mode,template_key`),
     ]);
     if (data && data.length > 0) setDeviceStatus(data[0]);
-    if (clientData && clientData.length > 0) {
-      setClient((prev: any) => ({ ...prev, ...clientData[0] }));
-    }
+    if (clientData && clientData.length > 0) setClient((prev: any) => ({ ...prev, ...clientData[0] }));
   };
 
-  const handleLogin = (clientData: any) => {
-    localStorage.setItem("fonmusic_client_id", clientData.id);
-    setClient(clientData);
-    const status = clientData.subscription_status;
-    const expiresAt = clientData.demo_expires_at;
-    if (status === "active") { setScreen("dashboard"); return; }
-    if (status === "expired") { setScreen("paywall"); return; }
-    if (status === "demo" && expiresAt) {
-      const days = getDaysLeft(expiresAt);
-      setDaysLeft(days);
-      if (days <= 0) {
-        sb(`clients?id=eq.${clientData.id}`, { method: "PATCH", body: JSON.stringify({ subscription_status: "expired" }) });
-        setScreen("paywall");
-      } else {
-        setScreen("dashboard");
-      }
-      return;
-    }
-    setScreen("dashboard");
+  const logout = () => {
+    localStorage.removeItem("fonmusic_client_id");
+    window.location.href = "/login";
   };
 
   const sendCommand = async (command: string, extra?: object) => {
+    if (!client?.device_id) return;
     await sb("commands", {
       method: "POST",
-      body: JSON.stringify({
-        device_id: client.device_id,
-        command,
-        genre: client.station_key,
-        mode: client.mode || "normal",
-        executed: false,
-        ...extra,
-      }),
+      body: JSON.stringify({ device_id: client.device_id, command, genre: client.station_key, mode: client.mode || "normal", executed: false, ...extra }),
     });
   };
 
   const switchMode = async (mode: "automatic" | "manual") => {
     if (!client || saving) return;
     setSaving(true);
-    await sb(`clients?id=eq.${client.id}`, {
-      method: "PATCH",
-      body: JSON.stringify({ music_mode: mode }),
-    });
-    if (mode === "automatic" && client.template_key) {
-      await sendCommand("refresh_schedule");
-    }
+    await sb(`clients?id=eq.${client.id}`, { method: "PATCH", body: JSON.stringify({ music_mode: mode }) });
+    if (mode === "automatic" && client.template_key) await sendCommand("refresh_schedule");
     setClient({ ...client, music_mode: mode });
     setSaving(false);
     setSuccess(mode === "automatic" ? "Режим: Автоматический" : "Режим: Ручной");
@@ -302,11 +187,7 @@ export default function DashboardPage() {
   const changeStation = async (stationKey: string) => {
     if (!client || saving) return;
     setSaving(true);
-    setSuccess("");
-    await sb(`clients?id=eq.${client.id}`, {
-      method: "PATCH",
-      body: JSON.stringify({ station_key: stationKey, music_mode: "manual" }),
-    });
+    await sb(`clients?id=eq.${client.id}`, { method: "PATCH", body: JSON.stringify({ station_key: stationKey, music_mode: "manual" }) });
     await sendCommand("change_station", { genre: stationKey });
     setClient({ ...client, station_key: stationKey, music_mode: "manual" });
     setSaving(false);
@@ -326,10 +207,7 @@ export default function DashboardPage() {
   const changeSchedule = async (templateKey: string) => {
     if (!client || savingSchedule) return;
     setSavingSchedule(true);
-    await sb(`clients?id=eq.${client.id}`, {
-      method: "PATCH",
-      body: JSON.stringify({ template_key: templateKey, music_mode: "automatic" }),
-    });
+    await sb(`clients?id=eq.${client.id}`, { method: "PATCH", body: JSON.stringify({ template_key: templateKey, music_mode: "automatic" }) });
     await sendCommand("refresh_schedule");
     setClient({ ...client, template_key: templateKey, music_mode: "automatic" });
     setSavingSchedule(false);
@@ -358,10 +236,15 @@ export default function DashboardPage() {
     return stations.filter(s => stationIds.includes(s.id));
   };
 
-  const isAutoMode = client?.music_mode === "automatic";
+  if (screen === "loading") return (
+    <main style={{ minHeight: "100vh", background: "#080C12", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "Georgia, serif" }}>
+      <div style={{ color: "#8BA7BE" }}>⏳ Загрузка...</div>
+    </main>
+  );
 
-  if (screen === "login") return <LoginScreen onLogin={handleLogin} />;
   if (screen === "paywall") return <PaywallScreen />;
+
+  const isAutoMode = client?.music_mode === "automatic";
 
   return (
     <main style={{ minHeight: "100vh", background: "#080C12", fontFamily: "Georgia, serif", color: "#E8EFF5" }}>
@@ -370,7 +253,7 @@ export default function DashboardPage() {
       <nav style={{ padding: "18px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: "1px solid rgba(201,168,76,0.15)" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <div style={{ width: 5, height: 22, background: "#C9A84C", borderRadius: 2 }} />
-          <span style={{ fontSize: 17, fontWeight: 700, color: "#fff" }}>FonMusic</span>
+          <a href="/" style={{ fontSize: 17, fontWeight: 700, color: "#fff", textDecoration: "none" }}>FonMusic</a>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           {daysLeft !== null && daysLeft > 0 && (
@@ -379,7 +262,7 @@ export default function DashboardPage() {
             </div>
           )}
           <div style={{ fontSize: 13, color: "#8BA7BE" }}>👤 {client?.name}</div>
-          <button onClick={() => { setScreen("login"); setClient(null); setDeviceStatus(null); }} style={{ padding: "7px 14px", background: "transparent", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 6, color: "#8BA7BE", fontSize: 12, cursor: "pointer", fontFamily: "Georgia, serif" }}>
+          <button onClick={logout} style={{ padding: "7px 14px", background: "transparent", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 6, color: "#8BA7BE", fontSize: 12, cursor: "pointer", fontFamily: "Georgia, serif" }}>
             Выйти
           </button>
         </div>
@@ -602,7 +485,7 @@ export default function DashboardPage() {
         {/* 7. СЕРТИФИКАТ */}
         <div style={{ background: "#0D1B2A", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 16, padding: "24px" }}>
           <h2 style={{ fontSize: 16, fontWeight: 700, color: "#fff", marginBottom: 6 }}>📄 Сертификат</h2>
-          <p style={{ fontSize: 13, color: "#8BA7BE", marginBottom: 16 }}>Официальный сертификат JAMENDO Licensing</p>
+          <p style={{ fontSize: 13, color: "#8BA7BE", marginBottom: 16 }}>Официальный сертификат лицензии на музыку</p>
           <button onClick={() => window.print()} style={{ padding: "12px 20px", background: "rgba(201,168,76,0.1)", border: "1px solid rgba(201,168,76,0.3)", borderRadius: 8, color: "#C9A84C", fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "Georgia, serif" }}>
             🖨️ Распечатать сертификат
           </button>
