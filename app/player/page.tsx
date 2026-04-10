@@ -762,33 +762,56 @@ export default function PlayerPage() {
         )}
 
         {/* 4. BOX */}
-        <div style={{ background: "rgba(201,168,76,0.06)", backdropFilter: "blur(20px)", border: "1px solid rgba(201,168,76,0.2)", borderRadius: 18, overflow: "hidden" }}>
-          <button onClick={() => setShowBox(!showBox)} style={{ width: "100%", padding: "16px 20px", background: "transparent", border: "none", cursor: "pointer", fontFamily: "Georgia, serif", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              <span style={{ fontSize: 18 }}>📦</span>
-              <div style={{ textAlign: "left" }}>
-                <div style={{ fontSize: 13, fontWeight: 700, color: "#C9A84C" }}>Музыка 24/7 без браузера</div>
-                <div style={{ fontSize: 11, color: "#8BA7BE" }}>Маленькое устройство — музыка всегда автоматически</div>
-              </div>
+<div style={{ background: "rgba(201,168,76,0.06)", backdropFilter: "blur(20px)", border: "1px solid rgba(201,168,76,0.2)", borderRadius: 18, overflow: "hidden" }}>
+  <button onClick={() => setShowBox(!showBox)} style={{ width: "100%", padding: "16px 20px", background: "transparent", border: "none", cursor: "pointer", fontFamily: "Georgia, serif", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+      <span style={{ fontSize: 18 }}>📦</span>
+      <div style={{ textAlign: "left" }}>
+        <div style={{ fontSize: 13, fontWeight: 700, color: "#C9A84C" }}>Музыка 24/7 без браузера</div>
+        <div style={{ fontSize: 11, color: "#8BA7BE" }}>FonMusic Box — маленькое устройство для заведения</div>
+      </div>
+    </div>
+    <span style={{ color: "#C9A84C", fontSize: 11 }}>{showBox ? "▲" : "▼"}</span>
+  </button>
+  {showBox && (
+    <div style={{ padding: "0 20px 24px", borderTop: "1px solid rgba(201,168,76,0.1)" }}>
+      {/* Фото устройства */}
+      <div style={{ textAlign: "center", margin: "16px 0" }}>
+        <img
+          src="https://pub-b2c1411547b247808cb42732bb122560.r2.dev/images/fonmusic-box-small.png"
+          alt="FonMusic Box"
+          style={{ width: "100%", maxWidth: 280, borderRadius: 16, border: "1px solid rgba(201,168,76,0.2)" }}
+        />
+        <div style={{ fontSize: 10, color: "#4a5a6a", marginTop: 6 }}>FonMusic Box · автономное устройство</div>
+      </div>
+
+      {/* 3 преимущества */}
+      <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 16 }}>
+        {[
+          { icon: "📡", title: "Работает круглосуточно", desc: "Музыка играет автоматически без перерывов" },
+          { icon: "⚡", title: "Включается сам", desc: "После включения электричества музыка запускается" },
+          { icon: "🎛️", title: "Управляется удалённо", desc: "Меняйте атмосферу и расписание из любого места" },
+        ].map(f => (
+          <div key={f.title} style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
+            <span style={{ fontSize: 20, flexShrink: 0 }}>{f.icon}</span>
+            <div>
+              <div style={{ fontSize: 13, fontWeight: 700, color: "#C9A84C", marginBottom: 2 }}>{f.title}</div>
+              <div style={{ fontSize: 11, color: "#8BA7BE", lineHeight: 1.5 }}>{f.desc}</div>
             </div>
-            <span style={{ color: "#C9A84C", fontSize: 11 }}>{showBox ? "▲" : "▼"}</span>
-          </button>
-          {showBox && (
-            <div style={{ padding: "0 20px 20px", borderTop: "1px solid rgba(201,168,76,0.1)" }}>
-              <p style={{ fontSize: 13, color: "#8BA7BE", lineHeight: 1.7, margin: "14px 0" }}>
-                FonMusic Box — маленькое устройство которое подключается к аудиосистеме и включает музыку автоматически. Без браузера, без компьютера, без участия человека.
-              </p>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 16 }}>
-                {["Работает 24/7", "Автозапуск", "Без компьютера", "Удалённое управление"].map(f => (
-                  <span key={f} style={{ fontSize: 11, padding: "3px 10px", background: "rgba(201,168,76,0.1)", border: "1px solid rgba(201,168,76,0.2)", borderRadius: 100, color: "#C9A84C" }}>{f}</span>
-                ))}
-              </div>
-              <a href="https://t.me/fonmusic2026" target="_blank" style={{ display: "block", textAlign: "center", padding: "12px", background: "rgba(201,168,76,0.1)", border: "1px solid rgba(201,168,76,0.3)", color: "#C9A84C", borderRadius: 10, fontSize: 13, fontWeight: 700, textDecoration: "none" }}>
-                Подробнее →
-              </a>
-            </div>
-          )}
-        </div>
+          </div>
+        ))}
+      </div>
+
+      <div style={{ fontSize: 11, color: "#4a5a6a", marginBottom: 14, textAlign: "center" }}>
+        Подходит для кафе, магазинов, салонов и фитнес-клубов
+      </div>
+
+      <a href="https://t.me/fonmusic2026" target="_blank" style={{ display: "block", textAlign: "center", padding: "13px", background: "#C9A84C", color: "#070B14", borderRadius: 10, fontSize: 13, fontWeight: 700, textDecoration: "none" }}>
+        Подключить FonMusic Box →
+      </a>
+    </div>
+  )}
+</div>
 
       </div>
 
