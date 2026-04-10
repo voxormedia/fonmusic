@@ -474,19 +474,27 @@ export default function PlayerPage() {
         audioRef.current.src = url;
         audioRef.current.volume = volume;
         audioRef.current.load();
-        audioRef.current.play().catch(() => {});
+        audioRef.current.play().then(() => setIsPlaying(true)).catch(() => setIsPlaying(false));
       }
-      setCurrentTrack(track); setIsPlaying(true);
+      setCurrentTrack(track);
       setTrackIndex(index % list.length);
       setProgress(0); setCurrentTime(0); setTrackFade(1);
     }, 300);
   };
 
-  const togglePlay = () => {
-    if (!audioRef.current) return;
-    if (isPlaying) { audioRef.current.pause(); setIsPlaying(false); }
-    else { if (!currentTrack) playTrack(0); else { audioRef.current.play().catch(() => {}); setIsPlaying(true); } }
-  };
+  const togglePlay = async () => {
+  if (isPlaying && audioRef.current) {
+    audioRef.current.pause();
+    setIsPlaying(false);
+    return;
+  }
+  if (!audioRef.current || !audioRef.current.src) {
+    await loadPlaylist(currentStationRef.current);
+    return;
+  }
+  audioRef.current.play().catch(() => {});
+  setIsPlaying(true);
+};
 
   const nextTrack = () => playTrack((trackIndex + 1) % playlist.length);
   const prevTrack = () => playTrack((trackIndex - 1 + playlist.length) % playlist.length);
