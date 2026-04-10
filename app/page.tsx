@@ -34,77 +34,6 @@ const FAQS = [
   { q: "Можно ли менять музыку самостоятельно?", a: "Да! В личном кабинете вы можете выбрать станцию вручную или настроить автоматическое расписание — музыка будет меняться по времени дня." },
 ];
 
-function LeadForm({ onSuccess }: { onSuccess?: () => void }) {
-  const [name, setName] = useState("");
-  const [phone, setPhone] = useState("");
-  const [type, setType] = useState("Кафе");
-  const [sent, setSent] = useState(false);
-  const [loading, setLoading] = useState(false);
-
-  const send = async () => {
-    if (!name || !phone) return;
-    setLoading(true);
-    const digits = phone.replace(/\D/g, "");
-    const password = digits.slice(-4);
-    const existing = await fetch(`https://ovafknvfckdmatrnlecr.supabase.co/rest/v1/clients?phone=eq.${encodeURIComponent(phone)}&select=id`, {
-      headers: { "apikey": "sb_publishable_sMrkdTU705Zgw9-Sc12-Ww_XDrl1ASP", "Authorization": "Bearer sb_publishable_sMrkdTU705Zgw9-Sc12-Ww_XDrl1ASP" },
-    });
-    const existingData = await existing.json();
-    if (!existingData || existingData.length === 0) {
-      const demoExpires = new Date();
-      demoExpires.setDate(demoExpires.getDate() + 7);
-      await fetch(`https://ovafknvfckdmatrnlecr.supabase.co/rest/v1/clients`, {
-        method: "POST",
-        headers: { "apikey": "sb_publishable_sMrkdTU705Zgw9-Sc12-Ww_XDrl1ASP", "Authorization": "Bearer sb_publishable_sMrkdTU705Zgw9-Sc12-Ww_XDrl1ASP", "Content-Type": "application/json", "Prefer": "return=representation" },
-        body: JSON.stringify({ name, phone, password, business_type: type, subscription_status: "demo", demo_expires_at: demoExpires.toISOString(), station_key: "best_of_radio" }),
-      });
-    }
-    const text = `🎵 Новая заявка FonMusic!\n\n🏢 Заведение: ${name}\n📞 Телефон: ${phone}\n🍽 Тип: ${type}\n🔑 Пароль: ${password}\n\n${existingData?.length > 0 ? "⚠️ Клиент уже существует" : "✅ Аккаунт создан автоматически"}`;
-    await fetch(`https://api.telegram.org/bot8572453029:AAGacP96un1FuPOcj6hmc708pOBv7nYPIiI/sendMessage`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ chat_id: "500210645", text }) });
-    setLoading(false);
-    setSent(true);
-    onSuccess?.();
-  };
-
-  if (sent) return (
-    <div style={{ textAlign: "center", padding: "32px 24px", background: "rgba(34,197,94,0.08)", border: "1px solid rgba(34,197,94,0.3)", borderRadius: 20 }}>
-      <div style={{ fontSize: 48, marginBottom: 12 }}>🎉</div>
-      <div style={{ fontSize: 20, fontWeight: 700, color: "#fff", marginBottom: 8 }}>Заявка отправлена!</div>
-      <div style={{ fontSize: 14, color: "#8BA7BE", marginBottom: 24 }}>Мы свяжемся с вами в течение 30 минут</div>
-      <a href="/dashboard" style={{ display: "block", padding: "16px", background: "#C9A84C", color: "#080C12", borderRadius: 12, fontSize: 16, fontWeight: 700, textDecoration: "none" }}>
-        Войти в кабинет →
-      </a>
-    </div>
-  );
-
-  return (
-    <div style={{ width: "100%" }}>
-      <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 16 }}>
-        <input value={name} onChange={e => setName(e.target.value)} placeholder="Название заведения"
-          style={{ padding: "16px 18px", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 12, color: "#fff", fontSize: 16, outline: "none", width: "100%", boxSizing: "border-box" }} />
-        <input value={phone} onChange={e => {
-          let val = e.target.value.replace(/\D/g, "");
-          if (val.startsWith("998")) val = val.slice(3);
-          if (val.length > 9) val = val.slice(0, 9);
-          setPhone(val ? "+998" + val : "");
-        }} placeholder="99 410 09 10" type="tel"
-          style={{ padding: "16px 18px", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 12, color: "#fff", fontSize: 16, outline: "none", width: "100%", boxSizing: "border-box" }} />
-        <select value={type} onChange={e => setType(e.target.value)}
-          style={{ padding: "16px 18px", background: "#0D1B2A", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 12, color: "#fff", fontSize: 16, outline: "none", width: "100%", boxSizing: "border-box" }}>
-          {["Кафе", "Ресторан", "Магазин", "Бутик", "Отель", "Салон красоты", "Фитнес", "SPA", "Бар", "Супермаркет", "Другое"].map(t => (
-            <option key={t} value={t}>{t}</option>
-          ))}
-        </select>
-      </div>
-      <a href="/signup" style={{ display: "block", width: "100%", padding: "18px", background: "#C9A84C", color: "#080C12", borderRadius: 12, fontSize: 17, fontWeight: 700, textDecoration: "none", textAlign: "center", boxShadow: "0 8px 32px rgba(201,168,76,0.35)" }}>
-  Получить 7 дней бесплатно →
-</a>
-      <div style={{ marginTop: 14, textAlign: "center", fontSize: 13, color: "#8BA7BE" }}>
-        или <a href="tel:+998994100910" style={{ color: "#C9A84C", textDecoration: "none" }}>+998 99 410 09 10</a> · <a href="https://t.me/fonmusic2026" style={{ color: "#C9A84C", textDecoration: "none" }}>Telegram</a>
-      </div>
-    </div>
-  );
-}
 
 function DemoPlayer() {
   const [selectedBusiness, setSelectedBusiness] = useState(BUSINESS_TYPES[0]);
@@ -476,21 +405,24 @@ export default function Home() {
       </section>
 
       {/* TRIAL FORM */}
-      <section id="trial" style={{ padding: `64px ${px}px`, position: "relative", overflow: "hidden" }}>
-        <div style={{ position: "absolute", inset: 0, background: "radial-gradient(ellipse at center, rgba(201,168,76,0.06) 0%, transparent 70%)", pointerEvents: "none" }} />
-        <div style={{ maxWidth: 480, margin: "0 auto", position: "relative" }}>
-          <div style={{ textAlign: "center", marginBottom: 32 }}>
-            <div style={{ fontSize: 11, color: "#C9A84C", letterSpacing: "0.15em", marginBottom: 12 }}>НАЧНИТЕ СЕГОДНЯ</div>
-            <h2 style={{ fontSize: m ? 32 : 44, fontWeight: 700, color: "#fff", marginBottom: 12 }}>
-              7 дней <span style={{ color: "#C9A84C" }}>бесплатно</span>
-            </h2>
-            <p style={{ fontSize: 14, color: "#8BA7BE", lineHeight: 1.6 }}>
-              Подключите ваше заведение уже сегодня. Музыка начнёт играть через несколько минут.
-            </p>
-          </div>
-          <LeadForm />
-        </div>
-      </section>
+<section id="trial" style={{ padding: `64px ${px}px`, position: "relative", overflow: "hidden" }}>
+  <div style={{ position: "absolute", inset: 0, background: "radial-gradient(ellipse at center, rgba(201,168,76,0.06) 0%, transparent 70%)", pointerEvents: "none" }} />
+  <div style={{ maxWidth: 480, margin: "0 auto", position: "relative", textAlign: "center" }}>
+    <div style={{ fontSize: 11, color: "#C9A84C", letterSpacing: "0.15em", marginBottom: 12 }}>НАЧНИТЕ СЕГОДНЯ</div>
+    <h2 style={{ fontSize: m ? 32 : 44, fontWeight: 700, color: "#fff", marginBottom: 12 }}>
+      7 дней <span style={{ color: "#C9A84C" }}>бесплатно</span>
+    </h2>
+    <p style={{ fontSize: 14, color: "#8BA7BE", lineHeight: 1.6, marginBottom: 32 }}>
+      Подключите ваше заведение уже сегодня. Музыка начнёт играть через несколько минут.
+    </p>
+    <a href="/signup" style={{ display: "block", padding: "20px", background: "#C9A84C", color: "#080C12", borderRadius: 14, fontSize: 18, fontWeight: 700, textDecoration: "none", boxShadow: "0 8px 32px rgba(201,168,76,0.35)", marginBottom: 16 }}>
+      Начать 7 дней бесплатно →
+    </a>
+    <div style={{ fontSize: 13, color: "#8BA7BE" }}>
+      или <a href="tel:+998994100910" style={{ color: "#C9A84C", textDecoration: "none" }}>+998 99 410 09 10</a> · <a href="https://t.me/fonmusic2026" style={{ color: "#C9A84C", textDecoration: "none" }}>Telegram</a>
+    </div>
+  </div>
+</section>
 
       {/* FOOTER */}
       <footer style={{ padding: `40px ${px}px`, borderTop: "1px solid rgba(255,255,255,0.06)", background: "#0A0F18" }}>
