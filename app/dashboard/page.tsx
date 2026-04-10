@@ -588,30 +588,7 @@ export default function DashboardPage() {
             </button>
           </div>
         </div>
-
-        {/* 3. МУЗЫКА ПО ТИПУ ЗАВЕДЕНИЯ */}
-        {isAutoMode && (
-          <div style={{ background: "#0D1B2A", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 16, padding: "24px", marginBottom: 20 }}>
-            <h2 style={{ fontSize: 16, fontWeight: 700, color: "#fff", marginBottom: 4 }}>🏪 Музыка по типу заведения</h2>
-            <p style={{ fontSize: 13, color: "#8BA7BE", marginBottom: 16 }}>Система автоматически подбирает расписание для вашего бизнеса</p>
-            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-              {scheduleTemplates.map(t => (
-                <button key={t.template_key} onClick={() => changeSchedule(t.template_key)} disabled={savingSchedule} style={{
-                  padding: "14px 16px", borderRadius: 12, cursor: "pointer", textAlign: "left", fontFamily: "Georgia, serif",
-                  background: client?.template_key === t.template_key ? "rgba(201,168,76,0.12)" : "rgba(255,255,255,0.03)",
-                  border: `${client?.template_key === t.template_key ? "2px" : "1px"} solid ${client?.template_key === t.template_key ? "rgba(201,168,76,0.5)" : "rgba(255,255,255,0.08)"}`,
-                  width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between",
-                }}>
-                  <div style={{ fontSize: 14, fontWeight: 700, color: client?.template_key === t.template_key ? "#C9A84C" : "#fff" }}>
-                    {t.template_name}
-                  </div>
-                  {client?.template_key === t.template_key && <div style={{ fontSize: 10, color: "#C9A84C" }}>✓ АКТИВНО</div>}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-
+  
         {/* 4. МУЗЫКА СЕГОДНЯ */}
         {isAutoMode && scheduleItems.length > 0 && (
           <div style={{ background: "#0D1B2A", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 16, padding: "24px", marginBottom: 20 }}>
