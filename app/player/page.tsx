@@ -554,7 +554,9 @@ export default function PlayerPage() {
           <button onClick={() => setShowOnboarding(true)} style={{ fontSize: 11, color: "#4a5a6a", background: "transparent", border: "none", cursor: "pointer", fontFamily: "Georgia, serif" }}>
             Как это работает?
           </button>
-          <a href="/dashboard" style={{ fontSize: 12, color: "#8BA7BE", textDecoration: "none", padding: "6px 14px", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8 }}>Кабинет</a>
+          <button onClick={() => { localStorage.removeItem("fonmusic_client_id"); window.location.href = "/login"; }} style={{ fontSize: 12, color: "#8BA7BE", background: "transparent", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, padding: "6px 14px", cursor: "pointer", fontFamily: "Georgia, serif" }}>
+  Выйти
+</button>
         </div>
       </header>
 
