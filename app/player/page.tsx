@@ -347,7 +347,7 @@ export default function PlayerPage() {
 
   const stObj = STATIONS.find(s => s.key === currentStation) || STATIONS[9];
   const accent = stObj.accent;
-  const isAutoMode = clientRef.current?.music_mode !== "manual" && scheduleRef.current.length > 0;
+  const isAutoMode = client?.music_mode !== "manual" && scheduleRef.current.length > 0;
 
   useEffect(() => {
     if (isPlaying) {
@@ -552,8 +552,15 @@ export default function PlayerPage() {
     </main>
   );
 
-  if (showOnboarding) return <OnboardingScreen client={client} scheduleItems={scheduleItems} currentStation={currentStation} onDone={handleOnboardingDone} />;
-
+  if (showOnboarding) return <OnboardingScreen client={client} scheduleItems={scheduleItems} currentStation={currentStation} onDone={() => {
+  const clientId = localStorage.getItem("fonmusic_client_id");
+  if (clientId) localStorage.setItem(`fonmusic_onboarding_${clientId}`, "done");
+  setShowOnboarding(false);
+  if (audioRef.current) {
+    audioRef.current.play().catch(() => {});
+    setIsPlaying(true);
+  }
+}} />;
   return (
     <main style={{ minHeight: "100vh", fontFamily: "Georgia, serif", color: "#E8EFF5", position: "relative", overflow: "hidden", background: "#070B14" }}>
       <audio ref={audioRef} onTimeUpdate={handleTimeUpdate} onLoadedMetadata={handleTimeUpdate}
