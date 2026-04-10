@@ -216,12 +216,32 @@ function ScheduleEditor({ client, scheduleItems, accent, onSave, onCancel }: any
           {saving ? "Сохраняем..." : "✓ Сохранить расписание"}
         </button>
         <button onClick={onCancel} style={{ padding: "11px 16px", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, color: "#8BA7BE", fontSize: 13, cursor: "pointer", fontFamily: "Georgia, serif" }}>
-          Отмена
+         Отмена
         </button>
       </div>
       <div style={{ fontSize: 11, color: "#4a5a6a", marginTop: 8, textAlign: "center" }}>
         Изменения сохранятся и будут работать автоматически
       </div>
+      <button onClick={async () => {
+        if (!confirm("Вернуться к стандартному расписанию для вашего типа заведения?")) return;
+        const headers = {
+          "apikey": SUPABASE_KEY,
+          "Authorization": `Bearer ${SUPABASE_KEY}`,
+          "Content-Type": "application/json",
+          "Prefer": "return=representation",
+        };
+        const defaultKey = client.business_type
+          ? `${client.business_type.toLowerCase().replace(/\s/g, "_")}_standard`
+          : "cafe_standard";
+        await fetch(`${SUPABASE_URL}/rest/v1/clients?id=eq.${client.id}`, {
+          method: "PATCH", headers,
+          body: JSON.stringify({ template_key: defaultKey }),
+        });
+        onCancel();
+        window.location.reload();
+      }} style={{ width: "100%", marginTop: 6, padding: "9px", background: "transparent", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 10, color: "#4a5a6a", fontSize: 11, cursor: "pointer", fontFamily: "Georgia, serif" }}>
+        ↩ Вернуться к стандартному расписанию
+      </button>
     </div>
   );
 }
