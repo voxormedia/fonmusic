@@ -524,9 +524,6 @@ export default function DashboardPage() {
               </a>
             )}
             {/* Переключить режим воспроизведения */}
-            <button onClick={() => setScreen("setup")} style={{ padding: "10px 18px", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 10, color: "#4a5a6a", fontSize: 12, cursor: "pointer", fontFamily: "Georgia, serif" }}>
-              {isBoxMode ? "🌐 Перейти на веб" : "📦 Перейти на бокс"}
-            </button>
           </div>
           {/* Громкость — только для бокса */}
           {isBoxMode && (
