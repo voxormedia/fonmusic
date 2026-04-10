@@ -233,7 +233,7 @@ function ScheduleEditor({ client, scheduleItems, accent, onSave, onCancel }: any
         const defaultKey = client.default_template_key || "cafe_standard";
 await fetch(`${SUPABASE_URL}/rest/v1/clients?id=eq.${client.id}`, {
   method: "PATCH", headers,
-  body: JSON.stringify({ template_key: defaultKey }),
+  body: JSON.stringify({ template_key: defaultKey, music_mode: "automatic" }),
 });
         onCancel();
         window.location.reload();
@@ -631,10 +631,10 @@ export default function PlayerPage() {
     По расписанию до {nextSlot ? fmtTime(nextSlot.start_time) : "—"} · следующая → {nextSlotSt.icon} {nextSlotSt.name}
   </div>
 )}
-{!isAutoMode && scheduleItems.length > 0 && nextSlotSt && minLeft !== null && (
+{!isAutoMode && scheduleItems.length > 0 && (
   <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
     <div style={{ fontSize: 11, color: "#F59E0B" }}>
-      Временно · расписание вернётся в {nextSlot ? fmtTime(nextSlot.start_time) : "—"} → {nextSlotSt.icon} {nextSlotSt.name}
+      Временно · расписание продолжит работать автоматически
     </div>
     <button onClick={async () => {
       if (clientRef.current) clientRef.current.music_mode = "automatic";
