@@ -72,6 +72,7 @@ export default function SignupPage() {
         demo_expires_at: demoExpires.toISOString(),
         station_key: businessType.station,
         template_key: businessType.template,
+        default_template_key: businessType.template,
         music_mode: "automatic",
         playback_target: "web",
       }),

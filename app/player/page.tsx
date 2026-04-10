@@ -230,13 +230,11 @@ function ScheduleEditor({ client, scheduleItems, accent, onSave, onCancel }: any
           "Content-Type": "application/json",
           "Prefer": "return=representation",
         };
-        const defaultKey = client.business_type
-          ? `${client.business_type.toLowerCase().replace(/\s/g, "_")}_standard`
-          : "cafe_standard";
-        await fetch(`${SUPABASE_URL}/rest/v1/clients?id=eq.${client.id}`, {
-          method: "PATCH", headers,
-          body: JSON.stringify({ template_key: defaultKey }),
-        });
+        const defaultKey = client.default_template_key || "cafe_standard";
+await fetch(`${SUPABASE_URL}/rest/v1/clients?id=eq.${client.id}`, {
+  method: "PATCH", headers,
+  body: JSON.stringify({ template_key: defaultKey }),
+});
         onCancel();
         window.location.reload();
       }} style={{ width: "100%", marginTop: 6, padding: "9px", background: "transparent", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 10, color: "#4a5a6a", fontSize: 11, cursor: "pointer", fontFamily: "Georgia, serif" }}>
