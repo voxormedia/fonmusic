@@ -20,7 +20,6 @@ async function sb(path: string, options?: RequestInit) {
   return text ? JSON.parse(text) : null;
 }
 
-// Человеческие названия станций
 const STATION_LABELS: Record<string, { name: string, icon: string, desc: string }> = {
   cozy_coffee:    { name: "Музыка для кофеен",    icon: "☕", desc: "Уютная и спокойная" },
   cocktail_dinner:{ name: "Музыка для ужина",     icon: "🍽️", desc: "Элегантная атмосфера" },
@@ -84,6 +83,113 @@ function getNextChangeMinutes(scheduleItems: any[]): number | null {
   return null;
 }
 
+// ===== ЭКРАН ВЫБОРА СПОСОБА ВОСПРОИЗВЕДЕНИЯ =====
+function PlaybackSetupScreen({ client, onSelect }: { client: any, onSelect: (target: string) => void }) {
+  const [selecting, setSelecting] = useState(false);
+
+  const select = async (target: string) => {
+    setSelecting(true);
+    await fetch(`${SUPABASE_URL}/rest/v1/clients?id=eq.${client.id}`, {
+      method: "PATCH",
+      headers: {
+        "apikey": SUPABASE_KEY,
+        "Authorization": `Bearer ${SUPABASE_KEY}`,
+        "Content-Type": "application/json",
+        "Prefer": "return=representation",
+      },
+      body: JSON.stringify({ playback_target: target }),
+    });
+    setSelecting(false);
+    onSelect(target);
+  };
+
+  return (
+    <main style={{ minHeight: "100vh", background: "#080C12", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "Georgia, serif", padding: 20 }}>
+      <div style={{ width: "100%", maxWidth: 480 }}>
+
+        {/* Лого */}
+        <div style={{ textAlign: "center", marginBottom: 40 }}>
+          <div style={{ display: "inline-flex", alignItems: "center", gap: 8, marginBottom: 24 }}>
+            <div style={{ width: 5, height: 24, background: "#C9A84C", borderRadius: 2 }} />
+            <span style={{ fontSize: 22, fontWeight: 700, color: "#fff" }}>FonMusic</span>
+          </div>
+          <h1 style={{ fontSize: 26, fontWeight: 700, color: "#fff", marginBottom: 10 }}>
+            Добро пожаловать, {client.name}! 🎵
+          </h1>
+          <p style={{ fontSize: 15, color: "#8BA7BE", lineHeight: 1.7 }}>
+            Как вы будете воспроизводить музыку в заведении?
+          </p>
+        </div>
+
+        {/* Варианты */}
+        <div style={{ display: "flex", flexDirection: "column", gap: 16, marginBottom: 32 }}>
+
+          {/* Веб-плеер */}
+          <button onClick={() => select("web")} disabled={selecting} style={{
+            padding: "24px", background: "#0D1B2A", border: "1px solid rgba(59,130,246,0.3)",
+            borderRadius: 20, cursor: "pointer", textAlign: "left", fontFamily: "Georgia, serif",
+            transition: "all 0.2s",
+          }}>
+            <div style={{ display: "flex", alignItems: "flex-start", gap: 16 }}>
+              <div style={{ width: 56, height: 56, borderRadius: 14, background: "rgba(59,130,246,0.15)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 26, flexShrink: 0 }}>
+                🎧
+              </div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 17, fontWeight: 700, color: "#fff", marginBottom: 6 }}>Через браузер</div>
+                <div style={{ fontSize: 13, color: "#8BA7BE", lineHeight: 1.6, marginBottom: 12 }}>
+                  Подходит для компьютера, ноутбука или планшета. Музыка играет прямо в браузере.
+                </div>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                  {["Бесплатно", "Сразу готово", "Любое устройство"].map(f => (
+                    <span key={f} style={{ fontSize: 11, padding: "3px 10px", background: "rgba(59,130,246,0.1)", border: "1px solid rgba(59,130,246,0.2)", borderRadius: 100, color: "#3B82F6" }}>{f}</span>
+                  ))}
+                </div>
+              </div>
+            </div>
+            <div style={{ marginTop: 16, padding: "12px 16px", background: "#3B82F6", borderRadius: 10, textAlign: "center", fontSize: 14, fontWeight: 700, color: "#fff" }}>
+              ▶ Запустить плеер в браузере
+            </div>
+          </button>
+
+          {/* FonMusic Box */}
+          <button onClick={() => select("box")} disabled={selecting} style={{
+            padding: "24px", background: "#0D1B2A", border: "1px solid rgba(201,168,76,0.3)",
+            borderRadius: 20, cursor: "pointer", textAlign: "left", fontFamily: "Georgia, serif",
+            transition: "all 0.2s",
+          }}>
+            <div style={{ display: "flex", alignItems: "flex-start", gap: 16 }}>
+              <div style={{ width: 56, height: 56, borderRadius: 14, background: "rgba(201,168,76,0.15)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 26, flexShrink: 0 }}>
+                📦
+              </div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 17, fontWeight: 700, color: "#fff", marginBottom: 6 }}>
+                  Через FonMusic Box
+                  <span style={{ marginLeft: 8, fontSize: 10, padding: "2px 8px", background: "rgba(201,168,76,0.15)", border: "1px solid rgba(201,168,76,0.3)", borderRadius: 100, color: "#C9A84C" }}>РЕКОМЕНДУЕМ</span>
+                </div>
+                <div style={{ fontSize: 13, color: "#8BA7BE", lineHeight: 1.6, marginBottom: 12 }}>
+                  Небольшая приставка для стабильной работы 24/7. Подключается к аудиосистеме и работает автоматически.
+                </div>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                  {["Работает 24/7", "Автозапуск", "Без компьютера", "Стабильно"].map(f => (
+                    <span key={f} style={{ fontSize: 11, padding: "3px 10px", background: "rgba(201,168,76,0.1)", border: "1px solid rgba(201,168,76,0.2)", borderRadius: 100, color: "#C9A84C" }}>{f}</span>
+                  ))}
+                </div>
+              </div>
+            </div>
+            <div style={{ marginTop: 16, padding: "12px 16px", background: "rgba(201,168,76,0.1)", border: "1px solid rgba(201,168,76,0.3)", borderRadius: 10, textAlign: "center", fontSize: 14, fontWeight: 700, color: "#C9A84C" }}>
+              📦 Подключить FonMusic Box
+            </div>
+          </button>
+        </div>
+
+        <div style={{ textAlign: "center", fontSize: 12, color: "#4a5a6a" }}>
+          Вы сможете изменить способ воспроизведения в настройках кабинета
+        </div>
+      </div>
+    </main>
+  );
+}
+
 function PaywallScreen() {
   return (
     <main style={{ minHeight: "100vh", background: "#080C12", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "Georgia, serif", padding: 20 }}>
@@ -113,7 +219,7 @@ function PaywallScreen() {
 }
 
 export default function DashboardPage() {
-  const [screen, setScreen] = useState<"loading" | "dashboard" | "paywall">("loading");
+  const [screen, setScreen] = useState<"loading" | "setup" | "dashboard" | "paywall">("loading");
   const [client, setClient] = useState<any>(null);
   const [deviceStatus, setDeviceStatus] = useState<any>(null);
   const [stations, setStations] = useState<any[]>([]);
@@ -137,7 +243,6 @@ export default function DashboardPage() {
     initClient(clientId);
   }, []);
 
-  // Обновляем время каждую минуту для таймлайна
   useEffect(() => {
     const interval = setInterval(() => setNow(new Date()), 60000);
     return () => clearInterval(interval);
@@ -148,6 +253,7 @@ export default function DashboardPage() {
     if (!data || data.length === 0) { window.location.href = "/login"; return; }
     const c = data[0];
     setClient(c);
+
     if (c.subscription_status === "expired") { setScreen("paywall"); return; }
     if (c.subscription_status === "demo" && c.demo_expires_at) {
       const days = getDaysLeft(c.demo_expires_at);
@@ -157,9 +263,28 @@ export default function DashboardPage() {
         setScreen("paywall"); return;
       }
     }
+
+    // Показываем экран выбора если playback_target не выбран
+    if (!c.playback_target) {
+      setScreen("setup"); return;
+    }
+
     setScreen("dashboard");
     loadData(c);
     if (c.device_id) loadDeviceStatus(c);
+  };
+
+  const handlePlaybackSelect = (target: string) => {
+    const updated = { ...client, playback_target: target };
+    setClient(updated);
+    // Если выбрал веб — сразу в плеер
+    if (target === "web") {
+      window.location.href = "/player";
+      return;
+    }
+    setScreen("dashboard");
+    loadData(updated);
+    if (updated.device_id) loadDeviceStatus(updated);
   };
 
   useEffect(() => {
@@ -241,8 +366,8 @@ export default function DashboardPage() {
     setSaving(true);
     await sendCommand("restart");
     setSaving(false);
-    setSuccess("Перезапускаем музыку...");
-    setTimeout(() => { setSuccess(""); loadDeviceStatus(); }, 5000);
+    setSuccess("Перезапускаем бокс...");
+    setTimeout(() => { setSuccess(""); loadDeviceStatus(); }, 8000);
   };
 
   const setMood = async (mood: "calm" | "standard" | "energetic") => {
@@ -291,7 +416,6 @@ export default function DashboardPage() {
     setTimeout(() => { setPasswordSuccess(""); setShowChangePassword(false); }, 2000);
   };
 
-  // Получаем текущий слот расписания
   const getCurrentScheduleSlot = () => {
     if (!scheduleItems.length) return null;
     const cur = now.getHours() * 60 + now.getMinutes();
@@ -312,7 +436,10 @@ export default function DashboardPage() {
 
   if (screen === "paywall") return <PaywallScreen />;
 
+  if (screen === "setup") return <PlaybackSetupScreen client={client} onSelect={handlePlaybackSelect} />;
+
   const isAutoMode = client?.music_mode === "automatic";
+  const isBoxMode = client?.playback_target === "box";
   const currentSlot = getCurrentScheduleSlot();
   const nextChangeMin = getNextChangeMinutes(scheduleItems);
   const currentStationLabel = getStationLabel(deviceStatus?.current_station || client?.station_key || "best_of_radio");
@@ -355,59 +482,75 @@ export default function DashboardPage() {
         )}
 
         {/* 1. СТАТУС + СЕЙЧАС ИГРАЕТ */}
-<div style={{ background: "#0D1B2A", border: "1px solid rgba(201,168,76,0.2)", borderRadius: 16, padding: "20px 24px", marginBottom: 20 }}>
-  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 12, marginBottom: 16 }}>
-    <div>
-      <div style={{ fontSize: 11, color: "#C9A84C", letterSpacing: 2, marginBottom: 8 }}>▶ СЕЙЧАС ИГРАЕТ</div>
-      <div style={{ fontSize: 22, fontWeight: 700, color: "#fff", marginBottom: 4 }}>
-        {currentStationLabel.icon} {currentStationLabel.name}
-      </div>
-      <div style={{ fontSize: 13, color: "#8BA7BE", fontStyle: "italic" }}>
-        {deviceStatus?.current_track ? getTrackName(deviceStatus.current_track) : "—"}
-      </div>
-    </div>
-    {deviceStatus && (() => {
-      const status = getDeviceStatus(deviceStatus.updated_at);
-      return (
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 6 }}>
-          <div style={{ padding: "4px 12px", background: status.bg, border: `1px solid ${status.border}`, borderRadius: 100 }}>
-            <span style={{ fontSize: 12, color: status.color }}>{status.level === "online" ? "🟢" : status.level === "noconn" ? "🟡" : "🔴"} {status.label}</span>
+        <div style={{ background: "#0D1B2A", border: "1px solid rgba(201,168,76,0.2)", borderRadius: 16, padding: "20px 24px", marginBottom: 20 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 12, marginBottom: 16 }}>
+            <div>
+              <div style={{ fontSize: 11, color: "#C9A84C", letterSpacing: 2, marginBottom: 8 }}>▶ СЕЙЧАС ИГРАЕТ</div>
+              <div style={{ fontSize: 22, fontWeight: 700, color: "#fff", marginBottom: 4 }}>
+                {currentStationLabel.icon} {currentStationLabel.name}
+              </div>
+              <div style={{ fontSize: 13, color: "#8BA7BE", fontStyle: "italic" }}>
+                {deviceStatus?.current_track ? getTrackName(deviceStatus.current_track) : "—"}
+              </div>
+            </div>
+            {isBoxMode && deviceStatus && (() => {
+              const status = getDeviceStatus(deviceStatus.updated_at);
+              return (
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 6 }}>
+                  <div style={{ padding: "4px 12px", background: status.bg, border: `1px solid ${status.border}`, borderRadius: 100 }}>
+                    <span style={{ fontSize: 12, color: status.color }}>{status.level === "online" ? "🟢" : status.level === "noconn" ? "🟡" : "🔴"} FonMusic Box · {status.label}</span>
+                  </div>
+                  <span style={{ fontSize: 11, color: "#4a5a6a" }}>{status.timeAgo}</span>
+                </div>
+              );
+            })()}
+            {!isBoxMode && (
+              <div style={{ padding: "4px 12px", background: "rgba(59,130,246,0.1)", border: "1px solid rgba(59,130,246,0.3)", borderRadius: 100 }}>
+                <span style={{ fontSize: 12, color: "#3B82F6" }}>🌐 Веб-плеер</span>
+              </div>
+            )}
           </div>
-          <span style={{ fontSize: 11, color: "#4a5a6a" }}>{status.timeAgo}</span>
+          <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: isBoxMode ? 16 : 0 }}>
+            <button onClick={nextTrack} disabled={saving} style={{ padding: "10px 18px", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 10, color: "#fff", fontSize: 13, cursor: "pointer", fontFamily: "Georgia, serif" }}>
+              ⏭ Следующий трек
+            </button>
+            {isBoxMode ? (
+              <button onClick={restartMusic} disabled={saving} style={{ padding: "10px 18px", background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)", borderRadius: 10, color: "#EF4444", fontSize: 13, cursor: "pointer", fontFamily: "Georgia, serif" }}>
+                🔄 Перезапустить бокс
+              </button>
+            ) : (
+              <a href="/player" style={{ padding: "10px 18px", background: "rgba(59,130,246,0.1)", border: "1px solid rgba(59,130,246,0.3)", borderRadius: 10, color: "#3B82F6", fontSize: 13, fontWeight: 700, textDecoration: "none", display: "inline-flex", alignItems: "center" }}>
+                🎧 Открыть плеер
+              </a>
+            )}
+            {/* Переключить режим воспроизведения */}
+            <button onClick={() => setScreen("setup")} style={{ padding: "10px 18px", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 10, color: "#4a5a6a", fontSize: 12, cursor: "pointer", fontFamily: "Georgia, serif" }}>
+              {isBoxMode ? "🌐 Перейти на веб" : "📦 Перейти на бокс"}
+            </button>
+          </div>
+          {/* Громкость — только для бокса */}
+          {isBoxMode && (
+            <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "12px 14px", background: "rgba(255,255,255,0.03)", borderRadius: 10 }}>
+              <span style={{ fontSize: 13, color: "#8BA7BE", flexShrink: 0 }}>🔈</span>
+              <input type="range" min={0} max={100} step={5} defaultValue={70}
+                onMouseUp={async e => {
+                  const vol = parseInt((e.target as HTMLInputElement).value);
+                  await sendCommand("set_volume", { volume: vol });
+                  setSuccess(`Громкость: ${vol}%`);
+                  setTimeout(() => setSuccess(""), 2000);
+                }}
+                onTouchEnd={async e => {
+                  const vol = parseInt((e.target as HTMLInputElement).value);
+                  await sendCommand("set_volume", { volume: vol });
+                }}
+                style={{ flex: 1, accentColor: "#C9A84C", cursor: "pointer" }}
+              />
+              <span style={{ fontSize: 13, color: "#C9A84C", flexShrink: 0 }}>🔊</span>
+              <span style={{ fontSize: 12, color: "#8BA7BE", flexShrink: 0 }}>Громкость бокса</span>
+            </div>
+          )}
         </div>
-      );
-    })()}
-  </div>
-  <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 16 }}>
-    <button onClick={nextTrack} disabled={saving} style={{ padding: "10px 18px", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 10, color: "#fff", fontSize: 13, cursor: "pointer", fontFamily: "Georgia, serif" }}>
-      ⏭ Следующий трек
-    </button>
-    <button onClick={restartMusic} disabled={saving} style={{ padding: "10px 18px", background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)", borderRadius: 10, color: "#EF4444", fontSize: 13, cursor: "pointer", fontFamily: "Georgia, serif" }}>
-      🔄 Перезапустить бокс
-    </button>
-    <a href="/player" style={{ padding: "10px 18px", background: "rgba(201,168,76,0.1)", border: "1px solid rgba(201,168,76,0.3)", borderRadius: 10, color: "#C9A84C", fontSize: 13, fontWeight: 700, textDecoration: "none", display: "inline-flex", alignItems: "center" }}>
-      🎵 Открыть плеер
-    </a>
-  </div>
-  <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "12px 14px", background: "rgba(255,255,255,0.03)", borderRadius: 10 }}>
-  <span style={{ fontSize: 13, color: "#8BA7BE", flexShrink: 0 }}>🔈</span>
-  <input type="range" min={0} max={100} step={5} defaultValue={70}
-    onMouseUp={async e => {
-      const vol = parseInt((e.target as HTMLInputElement).value);
-      await sendCommand("set_volume", { volume: vol });
-      setSuccess(`Громкость: ${vol}%`);
-      setTimeout(() => setSuccess(""), 2000);
-    }}
-    onTouchEnd={async e => {
-      const vol = parseInt((e.target as HTMLInputElement).value);
-      await sendCommand("set_volume", { volume: vol });
-    }}
-    style={{ flex: 1, accentColor: "#C9A84C", cursor: "pointer" }}
-  />
-  <span style={{ fontSize: 13, color: "#C9A84C", flexShrink: 0 }}>🔊</span>
-  <span style={{ fontSize: 12, color: "#8BA7BE", flexShrink: 0 }}>Громкость бокса</span>
-</div>
-</div>
+
         {/* 2. РЕЖИМ МУЗЫКИ */}
         <div style={{ background: "#0D1B2A", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 16, padding: "20px 24px", marginBottom: 20 }}>
           <h2 style={{ fontSize: 15, fontWeight: 700, color: "#fff", marginBottom: 4 }}>🎛️ Режим музыки</h2>
@@ -446,7 +589,7 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* 3. МУЗЫКА ПО ТИПУ ЗАВЕДЕНИЯ (только в авто режиме) */}
+        {/* 3. МУЗЫКА ПО ТИПУ ЗАВЕДЕНИЯ */}
         {isAutoMode && (
           <div style={{ background: "#0D1B2A", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 16, padding: "24px", marginBottom: 20 }}>
             <h2 style={{ fontSize: 16, fontWeight: 700, color: "#fff", marginBottom: 4 }}>🏪 Музыка по типу заведения</h2>
@@ -469,7 +612,7 @@ export default function DashboardPage() {
           </div>
         )}
 
-        {/* 4. МУЗЫКА СЕГОДНЯ (таймлайн) — только в авто режиме */}
+        {/* 4. МУЗЫКА СЕГОДНЯ */}
         {isAutoMode && scheduleItems.length > 0 && (
           <div style={{ background: "#0D1B2A", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 16, padding: "24px", marginBottom: 20 }}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16, flexWrap: "wrap", gap: 8 }}>
@@ -497,9 +640,7 @@ export default function DashboardPage() {
                     <div style={{ width: 2, height: 24, background: isCurrent ? "#C9A84C" : "rgba(255,255,255,0.1)", borderRadius: 1, flexShrink: 0 }} />
                     <div style={{ display: "flex", alignItems: "center", gap: 8, flex: 1 }}>
                       <span style={{ fontSize: 16 }}>{label.icon}</span>
-                      <div>
-                        <div style={{ fontSize: 13, fontWeight: isCurrent ? 700 : 400, color: isCurrent ? "#fff" : "#8BA7BE" }}>{label.name}</div>
-                      </div>
+                      <div style={{ fontSize: 13, fontWeight: isCurrent ? 700 : 400, color: isCurrent ? "#fff" : "#8BA7BE" }}>{label.name}</div>
                     </div>
                     {isCurrent && <div style={{ fontSize: 10, color: "#C9A84C", fontWeight: 700 }}>СЕЙЧАС</div>}
                   </div>
@@ -509,7 +650,7 @@ export default function DashboardPage() {
           </div>
         )}
 
-        {/* 5. АТМОСФЕРА (быстрое переключение) */}
+        {/* 5. БЫСТРАЯ СМЕНА АТМОСФЕРЫ */}
         <div style={{ background: "#0D1B2A", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 16, padding: "20px 24px", marginBottom: 20 }}>
           <h2 style={{ fontSize: 15, fontWeight: 700, color: "#fff", marginBottom: 4 }}>✨ Быстрая смена атмосферы</h2>
           <p style={{ fontSize: 12, color: "#8BA7BE", marginBottom: 16 }}>Изменить настроение заведения прямо сейчас</p>
@@ -532,7 +673,7 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* 6. МУЗЫКА ПО АТМОСФЕРЕ (только в ручном режиме) */}
+        {/* 6. МУЗЫКА ПО АТМОСФЕРЕ (ручной режим) */}
         {!isAutoMode && (
           <div style={{ background: "#0D1B2A", border: "1px solid rgba(59,130,246,0.2)", borderRadius: 16, padding: "24px", marginBottom: 20 }}>
             <h2 style={{ fontSize: 16, fontWeight: 700, color: "#fff", marginBottom: 4 }}>🎵 Музыка по атмосфере</h2>
