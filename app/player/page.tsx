@@ -390,11 +390,25 @@ export default function PlayerPage() {
     const onboardingDone = localStorage.getItem(`fonmusic_onboarding_${clientId}`);
     if (!onboardingDone) setShowOnboarding(true);
     if (c.template_key && c.music_mode !== "manual" && items.length > 0) {
-      scheduleRef.current = items;
-      checkScheduleWithItems(items, station);
-    } else {
-      loadPlaylist(station);
+  scheduleRef.current = items;
+  // Находим текущую станцию по расписанию
+  const cur = new Date().getHours() * 60 + new Date().getMinutes();
+  let scheduleStation = station;
+  for (const item of items) {
+    const s = toMin(item.start_time), e = toMin(item.end_time);
+    const inRange = e < s ? cur >= s || cur < e : cur >= s && cur < e;
+    if (inRange && item.stations?.station_key) {
+      scheduleStation = item.stations.station_key;
+      lastScheduleStation.current = scheduleStation;
+      break;
     }
+  }
+  setCurrentStation(scheduleStation);
+  currentStationRef.current = scheduleStation;
+  loadPlaylist(scheduleStation);
+} else {
+  loadPlaylist(station);
+}
   };
 
   const loadScheduleItems = async (templateKey: string): Promise<any[]> => {
