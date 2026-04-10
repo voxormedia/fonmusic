@@ -562,14 +562,32 @@ export default function PlayerPage() {
               </div>
               <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
                 <div style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12, color: accent, background: `${accent}15`, padding: "4px 14px", borderRadius: 100, border: `1px solid ${accent}30`, transition: "all 1s" }}>
-                  {stObj.icon} Сейчас играет: {stObj.name}
-                  {isAutoMode && <span style={{ color: "#22C55E", marginLeft: 4 }}>· Авто</span>}
-                </div>
-                {isAutoMode && nextSlotSt && minLeft !== null && (
-                  <div style={{ fontSize: 11, color: "#4a5a6a" }}>
-                    По расписанию до {nextSlot ? fmtTime(nextSlot.start_time) : "—"} · следующая → {nextSlotSt.icon} {nextSlotSt.name}
-                  </div>
-                )}
+  {stObj.icon} Сейчас играет: {stObj.name}
+  {isAutoMode
+    ? <span style={{ color: "#22C55E", marginLeft: 4 }}>· Авто</span>
+    : <span style={{ color: "#F59E0B", marginLeft: 4 }}>· Вручную</span>
+  }
+</div>
+{isAutoMode && nextSlotSt && minLeft !== null && (
+  <div style={{ fontSize: 11, color: "#4a5a6a" }}>
+    По расписанию до {nextSlot ? fmtTime(nextSlot.start_time) : "—"} · следующая → {nextSlotSt.icon} {nextSlotSt.name}
+  </div>
+)}
+{!isAutoMode && scheduleItems.length > 0 && nextSlotSt && minLeft !== null && (
+  <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
+    <div style={{ fontSize: 11, color: "#F59E0B" }}>
+      Временно · расписание вернётся в {nextSlot ? fmtTime(nextSlot.start_time) : "—"} → {nextSlotSt.icon} {nextSlotSt.name}
+    </div>
+    <button onClick={async () => {
+      if (clientRef.current) clientRef.current.music_mode = "automatic";
+      await sb(`clients?id=eq.${client.id}`, { method: "PATCH", body: JSON.stringify({ music_mode: "automatic" }) });
+      setClient((prev: any) => ({ ...prev, music_mode: "automatic" }));
+      checkSchedule();
+    }} style={{ fontSize: 11, color: "#22C55E", background: "rgba(34,197,94,0.1)", border: "1px solid rgba(34,197,94,0.2)", borderRadius: 100, padding: "3px 12px", cursor: "pointer", fontFamily: "Georgia, serif" }}>
+      🔄 Вернуться к расписанию
+    </button>
+  </div>
+)}
               </div>
             </div>
           </div>
