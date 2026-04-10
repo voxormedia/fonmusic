@@ -269,9 +269,14 @@ export default function DashboardPage() {
       setScreen("setup"); return;
     }
 
-    setScreen("dashboard");
-    loadData(c);
-    if (c.device_id) loadDeviceStatus(c);
+    // Если web плеер — редиректим на /player
+if (c.playback_target === "web") {
+  window.location.href = "/player";
+  return;
+}
+setScreen("dashboard");
+loadData(c);
+if (c.device_id) loadDeviceStatus(c);
   };
 
   const handlePlaybackSelect = (target: string) => {
