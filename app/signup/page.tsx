@@ -94,7 +94,7 @@ export default function SignupPage() {
     });
 
     localStorage.setItem("fonmusic_client_id", client[0].id);
-    window.location.href = "/dashboard";
+    window.location.href = "/player";
   };
 
   const inputStyle = { padding: "14px 16px", background: "#162435", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, color: "#fff", fontSize: 15, outline: "none", boxSizing: "border-box" as const, width: "100%" };

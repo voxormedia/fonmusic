@@ -46,7 +46,7 @@ export default function LoginPage() {
     localStorage.setItem("fonmusic_client_id", client.id);
 
     if (client.subscription_status === "expired") {
-      window.location.href = "/dashboard";
+      window.location.href = "/player";
       return;
     }
     if (client.subscription_status === "demo" && client.demo_expires_at) {
