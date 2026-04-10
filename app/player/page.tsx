@@ -463,7 +463,7 @@ export default function PlayerPage() {
                 </div>
                 {isAutoMode && nextSlotSt && minLeft !== null && (
                   <div style={{ fontSize: 11, color: "#4a5a6a" }}>
-                    По расписанию до смены ещё {minLeft >= 60 ? `${Math.floor(minLeft / 60)}ч ${minLeft % 60}м` : `${minLeft}м`} · далее {nextSlotSt.icon} {nextSlotSt.name}
+                    По расписанию до {nextSlot ? nextSlot.start_time?.slice(0,5) : "—"} · следующая → {nextSlotSt.icon} {nextSlotSt.name}
                   </div>
                 )}
               </div>
@@ -508,32 +508,55 @@ export default function PlayerPage() {
         </div>
 
         {/* 2. СМЕНИТЬ МУЗЫКУ ПРЯМО СЕЙЧАС */}
-        <div style={{ background: "rgba(255,255,255,0.04)", backdropFilter: "blur(20px)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 18, overflow: "hidden", marginBottom: 10 }}>
-          <div style={{ padding: "16px 20px 12px" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
-              <span style={{ fontSize: 18 }}>🎛️</span>
-              <div>
-                <div style={{ fontSize: 13, fontWeight: 700, color: "#fff" }}>Сменить музыку прямо сейчас</div>
-                <div style={{ fontSize: 11, color: "#8BA7BE" }}>Расписание продолжит работать с следующего слота</div>
-              </div>
-            </div>
+<div style={{ background: "rgba(255,255,255,0.04)", backdropFilter: "blur(20px)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 18, overflow: "hidden", marginBottom: 10 }}>
+  <div style={{ padding: "16px 20px 12px" }}>
+    <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
+      <span style={{ fontSize: 18 }}>🎛️</span>
+      <div>
+        <div style={{ fontSize: 13, fontWeight: 700, color: "#fff" }}>Сменить музыку прямо сейчас</div>
+        <div style={{ fontSize: 11, color: "#8BA7BE" }}>Музыку можно сменить вручную. Расписание продолжит работать автоматически.</div>
+      </div>
+    </div>
 
-            {/* 4 БЫСТРЫЕ КНОПКИ — всегда видны */}
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 10 }}>
-              {QUICK_STATIONS.map(key => {
-                const s = STATIONS.find(st => st.key === key)!;
-                const isActive = currentStation === key;
-                return (
-                  <button key={key} onClick={() => switchStation(key)} style={{ padding: "12px", borderRadius: 12, cursor: "pointer", fontFamily: "Georgia, serif", textAlign: "left", background: isActive ? `${s.accent}15` : "rgba(255,255,255,0.03)", border: `1px solid ${isActive ? `${s.accent}40` : "rgba(255,255,255,0.06)"}`, display: "flex", alignItems: "center", gap: 8 }}>
-                    <span style={{ fontSize: 20 }}>{s.icon}</span>
-                    <div>
-                      <div style={{ fontSize: 12, fontWeight: isActive ? 700 : 400, color: isActive ? s.accent : "#fff" }}>{s.name}</div>
-                      <div style={{ fontSize: 10, color: "#4a5a6a" }}>{s.desc}</div>
-                    </div>
-                  </button>
-                );
-              })}
+    {/* 4 БЫСТРЫЕ КНОПКИ — всегда видны */}
+    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 10 }}>
+      {QUICK_STATIONS.map(key => {
+        const s = STATIONS.find(st => st.key === key)!;
+        const isActive = currentStation === key;
+        return (
+          <button key={key} onClick={() => switchStation(key)} style={{ padding: "12px", borderRadius: 12, cursor: "pointer", fontFamily: "Georgia, serif", textAlign: "left", background: isActive ? `${s.accent}15` : "rgba(255,255,255,0.03)", border: `1px solid ${isActive ? `${s.accent}40` : "rgba(255,255,255,0.06)"}`, display: "flex", alignItems: "center", gap: 8 }}>
+            <span style={{ fontSize: 20 }}>{s.icon}</span>
+            <div>
+              <div style={{ fontSize: 12, fontWeight: isActive ? 700 : 400, color: isActive ? s.accent : "#fff" }}>{s.name}</div>
+              <div style={{ fontSize: 10, color: "#4a5a6a" }}>{s.desc}</div>
             </div>
+          </button>
+        );
+      })}
+    </div>
+
+    <button onClick={() => setShowAllStations(!showAllStations)} style={{ width: "100%", padding: "9px", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 10, cursor: "pointer", fontFamily: "Georgia, serif", fontSize: 12, color: "#8BA7BE" }}>
+      {showAllStations ? "Скрыть ▲" : "Посмотреть все атмосферы ▼"}
+    </button>
+  </div>
+
+  {showAllStations && (
+    <div style={{ borderTop: "1px solid rgba(255,255,255,0.06)", padding: "8px", maxHeight: 280, overflowY: "auto" }}>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6, padding: "4px" }}>
+        {STATIONS.filter(s => !QUICK_STATIONS.includes(s.key)).map(s => {
+          const isActive = currentStation === s.key;
+          return (
+            <button key={s.key} onClick={() => switchStation(s.key)} style={{ padding: "12px", borderRadius: 12, cursor: "pointer", textAlign: "left", fontFamily: "Georgia, serif", background: isActive ? `${s.accent}15` : "rgba(255,255,255,0.03)", border: `1px solid ${isActive ? `${s.accent}40` : "rgba(255,255,255,0.06)"}` }}>
+              <div style={{ fontSize: 20, marginBottom: 4 }}>{s.icon}</div>
+              <div style={{ fontSize: 12, fontWeight: isActive ? 700 : 400, color: isActive ? s.accent : "#fff", marginBottom: 2 }}>{s.name}</div>
+              <div style={{ fontSize: 10, color: "#4a5a6a" }}>{s.desc}</div>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  )}
+</div>
 
             {/* Все атмосферы */}
             <button onClick={() => setShowAllStations(!showAllStations)} style={{ width: "100%", padding: "9px", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 10, cursor: "pointer", fontFamily: "Georgia, serif", fontSize: 12, color: "#8BA7BE" }}>
