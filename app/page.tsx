@@ -96,9 +96,9 @@ function LeadForm({ onSuccess }: { onSuccess?: () => void }) {
           ))}
         </select>
       </div>
-      <button onClick={send} disabled={loading} style={{ width: "100%", padding: "18px", background: "#C9A84C", color: "#080C12", border: "none", borderRadius: 12, fontSize: 17, fontWeight: 700, cursor: "pointer", boxShadow: "0 8px 32px rgba(201,168,76,0.35)" }}>
-        {loading ? "Отправляем..." : "Получить 7 дней бесплатно →"}
-      </button>
+      <a href="/signup" style={{ display: "block", width: "100%", padding: "18px", background: "#C9A84C", color: "#080C12", borderRadius: 12, fontSize: 17, fontWeight: 700, textDecoration: "none", textAlign: "center", boxShadow: "0 8px 32px rgba(201,168,76,0.35)" }}>
+  Получить 7 дней бесплатно →
+</a>
       <div style={{ marginTop: 14, textAlign: "center", fontSize: 13, color: "#8BA7BE" }}>
         или <a href="tel:+998994100910" style={{ color: "#C9A84C", textDecoration: "none" }}>+998 99 410 09 10</a> · <a href="https://t.me/fonmusic2026" style={{ color: "#C9A84C", textDecoration: "none" }}>Telegram</a>
       </div>
