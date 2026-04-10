@@ -498,10 +498,19 @@ export default function PlayerPage() {
   };
 
   const handleOnboardingDone = () => {
-    const clientId = localStorage.getItem("fonmusic_client_id");
-    if (clientId) localStorage.setItem(`fonmusic_onboarding_${clientId}`, "done");
-    setShowOnboarding(false);
-  };
+  const clientId = localStorage.getItem("fonmusic_client_id");
+  if (clientId) localStorage.setItem(`fonmusic_onboarding_${clientId}`, "done");
+  setShowOnboarding(false);
+  // Запускаем музыку сразу после нажатия кнопки пользователем
+  setTimeout(() => {
+    if (audioRef.current && !isPlaying) {
+      audioRef.current.play().catch(() => {});
+      setIsPlaying(true);
+    } else if (!audioRef.current) {
+      loadPlaylist(currentStationRef.current);
+    }
+  }, 100);
+};
 
   const handleTimeUpdate = () => {
     if (audioRef.current) {
