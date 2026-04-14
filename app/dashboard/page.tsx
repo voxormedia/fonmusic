@@ -478,7 +478,25 @@ if (c.device_id) loadDeviceStatus(c);
             ✓ {success}
           </div>
         )}
-
+         {/* ТАРИФ */}
+<div style={{ background: "#0D1B2A", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 16, padding: "16px 24px", marginBottom: 20, display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
+  <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+    <span style={{ fontSize: 20 }}>
+      {client?.plan === "premium" ? "✨" : client?.plan === "standard" ? "⭐" : client?.plan === "basic" ? "☕" : "🎵"}
+    </span>
+    <div>
+      <div style={{ fontSize: 13, fontWeight: 700, color: "#fff" }}>
+        {client?.plan === "premium" ? "Премиум" : client?.plan === "standard" ? "Стандарт" : client?.plan === "basic" ? "Базовый" : "Демо период"}
+      </div>
+      <div style={{ fontSize: 11, color: "#8BA7BE" }}>
+        {client?.plan === "trial" ? `Доступ до ${new Date(client?.trial_until || "").toLocaleDateString("ru-RU")}` : "Активная подписка"}
+      </div>
+    </div>
+  </div>
+  <a href="/pricing" style={{ fontSize: 12, color: "#C9A84C", textDecoration: "none", padding: "6px 14px", border: "1px solid rgba(201,168,76,0.3)", borderRadius: 8 }}>
+    {client?.plan === "trial" ? "Выбрать тариф →" : "Изменить тариф →"}
+  </a>
+</div>
         {daysLeft !== null && daysLeft > 0 && (
           <div style={{ padding: "16px 20px", background: "rgba(201,168,76,0.08)", border: "1px solid rgba(201,168,76,0.2)", borderRadius: 14, marginBottom: 20, display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
             <div style={{ fontSize: 14, color: "#C9A84C" }}>🕐 Тестовый период: осталось <strong>{daysLeft} дней</strong></div>
