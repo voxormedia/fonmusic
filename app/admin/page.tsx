@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 
 const SUPABASE_URL = "https://ovafknvfckdmatrnlecr.supabase.co";
 const SUPABASE_KEY = "sb_publishable_sMrkdTU705Zgw9-Sc12-Ww_XDrl1ASP";
-const ADMIN_PASSWORD = "fonmusic_admin_2026";
+const ADMIN_PASSWORD = "admin_2026";
 
 async function sb(path: string, options?: RequestInit) {
   const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
