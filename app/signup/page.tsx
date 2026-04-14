@@ -70,6 +70,8 @@ export default function SignupPage() {
         business_type: businessType.label,
         subscription_status: "demo",
         demo_expires_at: demoExpires.toISOString(),
+        plan: "trial",
+        trial_until: demoExpires.toISOString(),
         station_key: businessType.station,
         template_key: businessType.template,
         default_template_key: businessType.template,

@@ -348,6 +348,7 @@ export default function PlayerPage() {
   const stObj = STATIONS.find(s => s.key === currentStation) || STATIONS[9];
   const accent = stObj.accent;
   const isAutoMode = client?.music_mode !== "manual" && scheduleRef.current.length > 0;
+  const canUseSchedule = ['standard', 'premium', 'trial'].includes(client?.plan || 'trial');
 
   useEffect(() => {
     if (isPlaying) {
@@ -777,7 +778,7 @@ const station = c.station_key || "best_of_radio";
         </div>
 
         {/* 3. ТАЙМЛАЙН + РЕДАКТОР */}
-        {scheduleItems.length > 0 && (
+        {canUseSchedule && scheduleItems.length > 0 && (
           <div style={{ background: "rgba(255,255,255,0.04)", backdropFilter: "blur(20px)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 18, overflow: "hidden", marginBottom: 10 }}>
             <button onClick={() => { setShowTimeline(!showTimeline); setShowScheduleEditor(false); }} style={{ width: "100%", padding: "16px 20px", background: "transparent", border: "none", cursor: "pointer", fontFamily: "Georgia, serif", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
               <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
@@ -841,7 +842,20 @@ const station = c.station_key || "best_of_radio";
           </div>
         )}
 
-        {/* 4. BOX */}
+        {!canUseSchedule && (
+          <div style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 18, padding: "16px 20px", marginBottom: 10 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <span style={{ fontSize: 18 }}>📅</span>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: "#fff" }}>Автоматическое расписание</div>
+                <div style={{ fontSize: 11, color: "#8BA7BE" }}>Доступно в тарифе <span style={{ color: "#C9A84C" }}>Стандарт</span> и выше</div>
+              </div>
+              <a href="/pricing" style={{ fontSize: 11, color: "#C9A84C", textDecoration: "none", padding: "5px 12px", border: "1px solid rgba(201,168,76,0.3)", borderRadius: 8 }}>Перейти →</a>
+            </div>
+          </div>
+        )}
+
+    {/* 4. BOX */}
 <div style={{ background: "rgba(201,168,76,0.06)", backdropFilter: "blur(20px)", border: "1px solid rgba(201,168,76,0.2)", borderRadius: 18, overflow: "hidden" }}>
   <button onClick={() => setShowBox(!showBox)} style={{ width: "100%", padding: "16px 20px", background: "transparent", border: "none", cursor: "pointer", fontFamily: "Georgia, serif", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
     <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
