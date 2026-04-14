@@ -132,7 +132,11 @@ export default function AdminPage() {
             style={{ width: "100%", padding: "14px 16px", background: "#0D1B2A", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, color: "#fff", fontSize: 15, outline: "none", marginBottom: 12, boxSizing: "border-box" }}
           />
           <button
-            onClick={() => password === ADMIN_PASSWORD && setAuthed(true)}
+            onClick={() => {
+  if (password === ADMIN_PASSWORD) {
+    setAuthed(true);
+  }
+}}
             style={{ width: "100%", padding: "14px", background: "#C9A84C", border: "none", borderRadius: 10, color: "#080C12", fontSize: 15, fontWeight: 700, cursor: "pointer", fontFamily: "Georgia, serif" }}
           >
             Войти
