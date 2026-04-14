@@ -323,9 +323,9 @@ export default function Home() {
                     </div>
                   ))}
                 </div>
-                <a href="/pricing" style={{ display: "block", textAlign: "center", padding: "13px"
-                  Начать бесплатно →
-                </a>
+                <a href="/pricing" style={{ display: "block", textAlign: "center", padding: "13px", borderRadius: 10, background: plan.highlight ? "#C9A84C" : "rgba(201,168,76,0.1)", border: plan.highlight ? "none" : "1px solid rgba(201,168,76,0.3)", color: plan.highlight ? "#080C12" : "#C9A84C", fontSize: 14, fontWeight: 700, textDecoration: "none" }}>
+  Начать бесплатно →
+</a>
               </div>
             ))}
           </div>
