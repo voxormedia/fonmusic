@@ -171,7 +171,7 @@ export default function Home() {
           <div style={{ display: "flex", gap: 28, fontSize: 14 }}>
             <a href="#how" style={{ color: "#8BA7BE", textDecoration: "none" }}>Как работает</a>
             <a href="#demo" style={{ color: "#8BA7BE", textDecoration: "none" }}>Демо</a>
-            <a href="#pricing" style={{ color: "#8BA7BE", textDecoration: "none" }}>Тарифы</a>
+            <a href="/pricing" style={{ color: "#8BA7BE", textDecoration: "none" }}>Тарифы</a>
             <a href="/license" style={{ color: "#8BA7BE", textDecoration: "none" }}>Лицензия</a>
           </div>
         )}
@@ -323,7 +323,7 @@ export default function Home() {
                     </div>
                   ))}
                 </div>
-                <a href="#trial" style={{ display: "block", textAlign: "center", padding: "13px", borderRadius: 10, background: plan.highlight ? "#C9A84C" : "rgba(201,168,76,0.1)", border: plan.highlight ? "none" : "1px solid rgba(201,168,76,0.3)", color: plan.highlight ? "#080C12" : "#C9A84C", fontSize: 14, fontWeight: 700, textDecoration: "none" }}>
+                <a href="/pricing" style={{ display: "block", textAlign: "center", padding: "13px"
                   Начать бесплатно →
                 </a>
               </div>
@@ -347,7 +347,7 @@ export default function Home() {
                 <div style={{ fontSize: 28, fontWeight: 700, color: "#fff" }}>$70</div>
                 <div style={{ fontSize: 12, color: "#8BA7BE" }}>единоразовая покупка</div>
               </div>
-              <a href="#trial" style={{ padding: "13px 24px", background: "#C9A84C", color: "#080C12", borderRadius: 10, fontSize: 14, fontWeight: 700, textDecoration: "none" }}>
+              <a href="https://t.me/fonmusic2026" target="_blank" style={{ padding: "13px 24px", background: "#C9A84C", color: "#080C12", borderRadius: 10, fontSize: 14, fontWeight: 700, textDecoration: "none" }}>
                 Заказать Box →
               </a>
             </div>
@@ -440,7 +440,7 @@ export default function Home() {
               {[
                 { label: "Как работает", href: "#how" },
                 { label: "Демо", href: "#demo" },
-                { label: "Тарифы", href: "#pricing" },
+                { label: "Тарифы", href: "/pricing" },
                 { label: "Войти в кабинет", href: "/dashboard" },
               ].map(l => (
                 <div key={l.label} style={{ marginBottom: 8 }}>
