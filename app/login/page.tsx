@@ -103,8 +103,31 @@ export default function LoginPage() {
   </div>
 )}
 {typeof window !== "undefined" && new URLSearchParams(window.location.search).get("error") === "device_limit" && (
-  <div style={{ padding: "10px 16px", background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", borderRadius: 8, fontSize: 13, color: "#EF4444", marginBottom: 16 }}>
-    Этот аккаунт уже используется на другом устройстве. Обратитесь в поддержку для добавления устройства.
+  <div style={{ padding: "14px 16px", background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.3)", borderRadius: 10, marginBottom: 16 }}>
+    <div style={{ fontSize: 13, color: "#EF4444", fontWeight: 700, marginBottom: 6 }}>
+      Аккаунт уже используется на другом устройстве
+    </div>
+    <div style={{ fontSize: 12, color: "#8BA7BE", marginBottom: 12, lineHeight: 1.5 }}>
+      Если хотите запустить музыку здесь — старое устройство будет отключено автоматически.
+    </div>
+    <button onClick={async () => {
+      const clientId = localStorage.getItem("fonmusic_client_id");
+      if (!clientId) return;
+      const headers = {
+        "apikey": "sb_publishable_sMrkdTU705Zgw9-Sc12-Ww_XDrl1ASP",
+        "Authorization": "Bearer sb_publishable_sMrkdTU705Zgw9-Sc12-Ww_XDrl1ASP",
+        "Content-Type": "application/json",
+        "Prefer": "return=representation",
+      };
+      // Удаляем все старые устройства
+      await fetch(`https://ovafknvfckdmatrnlecr.supabase.co/rest/v1/player_devices?client_id=eq.${clientId}`, { method: "DELETE", headers });
+      // Генерируем новый player_id
+      const newPlayerId = `player_${Math.random().toString(36).slice(2, 10)}`;
+      localStorage.setItem("fonmusic_player_id", newPlayerId);
+      window.location.href = "/player";
+    }} style={{ width: "100%", padding: "11px", background: "#EF4444", border: "none", borderRadius: 8, color: "#fff", fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "Georgia, serif" }}>
+      Запустить здесь →
+    </button>
   </div>
 )}
               <button onClick={login} disabled={loading} style={{ width: "100%", padding: "15px", background: "#C9A84C", border: "none", borderRadius: 10, color: "#080C12", fontSize: 15, fontWeight: 700, cursor: "pointer", marginBottom: 16 }}>

@@ -626,7 +626,15 @@ const station = c.station_key || "best_of_radio";
           <button onClick={() => setShowOnboarding(true)} style={{ fontSize: 11, color: "#4a5a6a", background: "transparent", border: "none", cursor: "pointer", fontFamily: "Georgia, serif" }}>
             Как это работает?
           </button>
-          <button onClick={() => { localStorage.removeItem("fonmusic_client_id"); window.location.href = "/login"; }} style={{ fontSize: 12, color: "#8BA7BE", background: "transparent", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, padding: "6px 14px", cursor: "pointer", fontFamily: "Georgia, serif" }}>
+          <button onClick={async () => {
+  const playerId = localStorage.getItem("fonmusic_player_id");
+  const clientId = localStorage.getItem("fonmusic_client_id");
+  if (playerId && clientId) {
+    await sb(`player_devices?player_id=eq.${playerId}&client_id=eq.${clientId}`, { method: "DELETE" });
+  }
+  localStorage.removeItem("fonmusic_client_id");
+  window.location.href = "/login";
+}}
   Выйти
 </button>
         </div>
