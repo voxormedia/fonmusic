@@ -634,7 +634,7 @@ const station = c.station_key || "best_of_radio";
   }
   localStorage.removeItem("fonmusic_client_id");
   window.location.href = "/login";
-}}
+}} style={{ fontSize: 12, color: "#8BA7BE", background: "transparent", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, padding: "6px 14px", cursor: "pointer", fontFamily: "Georgia, serif" }}>
   Выйти
 </button>
         </div>
