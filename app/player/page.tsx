@@ -380,8 +380,42 @@ export default function PlayerPage() {
     const c = data[0];
     if (c.subscription_status === "expired") { window.location.href = "/dashboard"; return; }
     setClient(c);
-    clientRef.current = c;
-    const station = c.station_key || "best_of_radio";
+clientRef.current = c;
+
+// Проверка устройства
+let playerId = localStorage.getItem("fonmusic_player_id");
+if (!playerId) {
+  playerId = `player_${Math.random().toString(36).slice(2, 10)}`;
+  localStorage.setItem("fonmusic_player_id", playerId);
+}
+
+// Проверяем сколько устройств уже активно
+const devices = await sb(`player_devices?client_id=eq.${c.id}&select=*`);
+const maxDevices = c.max_devices || 1;
+const existingDevice = devices?.find((d: any) => d.player_id === playerId);
+
+if (!existingDevice) {
+  if (devices && devices.length >= maxDevices) {
+    setLoading(false);
+    window.location.href = "/login?error=device_limit";
+    return;
+  }
+  await sb("player_devices", {
+    method: "POST",
+    body: JSON.stringify({
+      client_id: c.id,
+      player_id: playerId,
+      device_name: "Веб-плеер",
+    }),
+  });
+} else {
+  await sb(`player_devices?id=eq.${existingDevice.id}`, {
+    method: "PATCH",
+    body: JSON.stringify({ last_seen: new Date().toISOString() }),
+  });
+}
+
+const station = c.station_key || "best_of_radio";
     setCurrentStation(station);
     currentStationRef.current = station;
     let items: any[] = [];

@@ -98,10 +98,15 @@ export default function LoginPage() {
                   placeholder="Пароль" style={inputStyle} />
               </div>
               {error && (
-                <div style={{ padding: "10px 16px", background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", borderRadius: 8, fontSize: 13, color: "#EF4444", marginBottom: 16 }}>
-                  {error}
-                </div>
-              )}
+  <div style={{ padding: "10px 16px", background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", borderRadius: 8, fontSize: 13, color: "#EF4444", marginBottom: 16 }}>
+    {error}
+  </div>
+)}
+{typeof window !== "undefined" && new URLSearchParams(window.location.search).get("error") === "device_limit" && (
+  <div style={{ padding: "10px 16px", background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", borderRadius: 8, fontSize: 13, color: "#EF4444", marginBottom: 16 }}>
+    Этот аккаунт уже используется на другом устройстве. Обратитесь в поддержку для добавления устройства.
+  </div>
+)}
               <button onClick={login} disabled={loading} style={{ width: "100%", padding: "15px", background: "#C9A84C", border: "none", borderRadius: 10, color: "#080C12", fontSize: 15, fontWeight: 700, cursor: "pointer", marginBottom: 16 }}>
                 {loading ? "Входим..." : "Войти"}
               </button>
