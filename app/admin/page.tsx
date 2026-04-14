@@ -1,10 +1,9 @@
 "use client";
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
 
 const SUPABASE_URL = "https://ovafknvfckdmatrnlecr.supabase.co";
 const SUPABASE_KEY = "sb_publishable_sMrkdTU705Zgw9-Sc12-Ww_XDrl1ASP";
-const ADMIN_PASSWORD = "1234";
+const ADMIN_PASSWORD = "fonmusic_admin_2026";
 
 async function sb(path: string, options?: RequestInit) {
   const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
@@ -13,6 +12,7 @@ async function sb(path: string, options?: RequestInit) {
       "apikey": SUPABASE_KEY,
       "Authorization": `Bearer ${SUPABASE_KEY}`,
       "Content-Type": "application/json",
+      "Prefer": "return=representation",
       ...(options?.headers || {}),
     },
   });
@@ -21,384 +21,290 @@ async function sb(path: string, options?: RequestInit) {
   return text ? JSON.parse(text) : null;
 }
 
-function getDeviceStatus(updatedAt: string) {
-  const updated = new Date(updatedAt + "Z");
+function getDaysLeft(expiresAt: string): number {
+  if (!expiresAt) return 0;
   const now = new Date();
-  const diffMin = Math.floor((now.getTime() - updated.getTime()) / 60000);
-  const diffSec = Math.floor((now.getTime() - updated.getTime()) / 1000);
-  const timeAgo = diffSec < 60 ? `${diffSec} сек назад` : `${diffMin} мин назад`;
-  if (diffMin < 2) return { label: "Онлайн", color: "#22C55E", bg: "rgba(34,197,94,0.1)", border: "rgba(34,197,94,0.3)", dot: "🟢", timeAgo };
-  if (diffMin < 10) return { label: "Нет связи", color: "#F59E0B", bg: "rgba(245,158,11,0.1)", border: "rgba(245,158,11,0.3)", dot: "🟡", timeAgo };
-  return { label: "Недоступно", color: "#EF4444", bg: "rgba(239,68,68,0.1)", border: "rgba(239,68,68,0.3)", dot: "🔴", timeAgo };
+  const expires = new Date(expiresAt);
+  return Math.max(0, Math.ceil((expires.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)));
 }
 
-const STATION_NAMES: Record<string, string> = {
-  cozy_coffee: "☕ Coffee Mood",
-  cocktail_dinner: "🍽️ Dinner & Lounge",
-  cool_calm: "🎵 Calm Atmosphere",
-  lounge: "🏨 Lounge Flow",
-  luxury: "✨ Premium Mood",
-  shopping_vibes: "🛍️ Retail Energy",
-  spa_garden: "💆 Spa Relax",
-  workout: "💪 Active Energy",
-  on_the_rocks: "🎸 Bar Mood",
-  best_of_radio: "⭐ All Day Mix",
-};
+function formatDate(dateStr: string): string {
+  if (!dateStr) return "—";
+  return new Date(dateStr).toLocaleDateString("ru-RU");
+}
 
-const STATUS_COLORS: Record<string, { color: string, bg: string, label: string }> = {
-  active: { color: "#22C55E", bg: "rgba(34,197,94,0.1)", label: "Активный" },
-  demo: { color: "#F59E0B", bg: "rgba(245,158,11,0.1)", label: "Демо" },
-  expired: { color: "#EF4444", bg: "rgba(239,68,68,0.1)", label: "Истёк" },
-};
-
-const EMPTY_CLIENT = {
-  name: "", phone: "", password: "", device_id: "",
-  subscription_status: "demo", demo_expires_at: "",
+const PLAN_LABELS: Record<string, { label: string, color: string }> = {
+  trial:    { label: "Демо",     color: "#C9A84C" },
+  basic:    { label: "Базовый",  color: "#8BA7BE" },
+  standard: { label: "Стандарт", color: "#22C55E" },
+  premium:  { label: "Премиум",  color: "#A78BFA" },
 };
 
 export default function AdminPage() {
-  const router = useRouter();
   const [authed, setAuthed] = useState(false);
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
   const [clients, setClients] = useState<any[]>([]);
-  const [devices, setDevices] = useState<any[]>([]);
-  const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState<"overview" | "clients" | "devices">("overview");
-  const [showAddClient, setShowAddClient] = useState(false);
-  const [savingClient, setSavingClient] = useState(false);
-  const [addClientError, setAddClientError] = useState("");
-  const [addClientSuccess, setAddClientSuccess] = useState("");
-  const [newClient, setNewClient] = useState(EMPTY_CLIENT);
+  const [search, setSearch] = useState("");
+  const [filterPlan, setFilterPlan] = useState("all");
+  const [saving, setSaving] = useState<string | null>(null);
+  const [success, setSuccess] = useState("");
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const a = sessionStorage.getItem("fonmusic_admin");
-      if (a === "true") { setAuthed(true); loadData(); }
-    }
-  }, []);
+    if (authed) loadClients();
+  }, [authed]);
 
-  const login = () => {
-    if (password === ADMIN_PASSWORD) {
-      sessionStorage.setItem("fonmusic_admin", "true");
-      setAuthed(true);
-      loadData();
-    } else {
-      setError("Неверный пароль");
-    }
-  };
-
-  const loadData = async () => {
+  const loadClients = async () => {
     setLoading(true);
-    const [c, d] = await Promise.all([
-      sb("clients?select=*&order=created_at.desc"),
-      sb("device_status?select=*&order=updated_at.desc"),
-    ]);
-    if (c) setClients(c);
-    if (d) setDevices(d);
+    const data = await sb("clients?select=*&order=created_at.desc");
+    if (data) setClients(data);
     setLoading(false);
   };
 
-  const createClient = async () => {
-    if (!newClient.name || !newClient.password) {
-      setAddClientError("Название и пароль обязательны!");
-      return;
-    }
-    setSavingClient(true);
-    setAddClientError("");
-    const body: any = {
-      name: newClient.name,
-      phone: newClient.phone || null,
-      password: newClient.password,
-      device_id: newClient.device_id || null,
-      subscription_status: newClient.subscription_status,
-      station_key: "best_of_radio",
-      music_mode: "automatic",
-    };
-    if (newClient.demo_expires_at) body.demo_expires_at = newClient.demo_expires_at;
-    const res = await sb("clients", {
-      method: "POST",
-      headers: { "Prefer": "return=representation" },
-      body: JSON.stringify(body),
-    });
-    setSavingClient(false);
-    if (res) {
-      setAddClientSuccess(`Клиент "${newClient.name}" создан!`);
-      setNewClient(EMPTY_CLIENT);
-      setTimeout(() => { setAddClientSuccess(""); setShowAddClient(false); }, 2000);
-      loadData();
+  const updatePlan = async (clientId: string, plan: string) => {
+    setSaving(clientId);
+    const extra: any = { plan };
+    if (plan === "trial") {
+      const trialUntil = new Date();
+      trialUntil.setDate(trialUntil.getDate() + 7);
+      extra.trial_until = trialUntil.toISOString();
+      extra.demo_expires_at = trialUntil.toISOString();
+      extra.subscription_status = "demo";
     } else {
-      setAddClientError("Ошибка создания клиента!");
+      extra.subscription_status = "active";
     }
+    await sb(`clients?id=eq.${clientId}`, { method: "PATCH", body: JSON.stringify(extra) });
+    setClients(prev => prev.map(c => c.id === clientId ? { ...c, ...extra } : c));
+    setSaving(null);
+    setSuccess("Тариф обновлён");
+    setTimeout(() => setSuccess(""), 2000);
   };
+
+  const extendDemo = async (clientId: string, days: number) => {
+    setSaving(clientId);
+    const newExpiry = new Date();
+    newExpiry.setDate(newExpiry.getDate() + days);
+    const extra = {
+      demo_expires_at: newExpiry.toISOString(),
+      trial_until: newExpiry.toISOString(),
+      subscription_status: "demo",
+      plan: "trial",
+    };
+    await sb(`clients?id=eq.${clientId}`, { method: "PATCH", body: JSON.stringify(extra) });
+    setClients(prev => prev.map(c => c.id === clientId ? { ...c, ...extra } : c));
+    setSaving(null);
+    setSuccess(`Демо продлён на ${days} дней`);
+    setTimeout(() => setSuccess(""), 2000);
+  };
+
+  const toggleStatus = async (clientId: string, currentStatus: string) => {
+    setSaving(clientId);
+    const newStatus = currentStatus === "expired" ? "demo" : "expired";
+    await sb(`clients?id=eq.${clientId}`, { method: "PATCH", body: JSON.stringify({ subscription_status: newStatus }) });
+    setClients(prev => prev.map(c => c.id === clientId ? { ...c, subscription_status: newStatus } : c));
+    setSaving(null);
+    setSuccess("Статус изменён");
+    setTimeout(() => setSuccess(""), 2000);
+  };
+
+  const filtered = clients.filter(c => {
+    const matchSearch = !search || c.name?.toLowerCase().includes(search.toLowerCase()) || c.phone?.includes(search);
+    const matchPlan = filterPlan === "all" || c.plan === filterPlan;
+    return matchSearch && matchPlan;
+  });
 
   if (!authed) {
     return (
       <main style={{ minHeight: "100vh", background: "#080C12", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "Georgia, serif" }}>
-        <div style={{ width: "100%", maxWidth: 380, padding: 40, background: "#0D1B2A", border: "1px solid rgba(201,168,76,0.2)", borderRadius: 20, margin: 20 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 32 }}>
-            <div style={{ width: 5, height: 22, background: "#C9A84C", borderRadius: 2 }} />
-            <span style={{ fontSize: 18, fontWeight: 700, color: "#fff" }}>FonMusic Admin</span>
+        <div style={{ width: "100%", maxWidth: 360, padding: 20 }}>
+          <div style={{ textAlign: "center", marginBottom: 32 }}>
+            <div style={{ display: "inline-flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
+              <div style={{ width: 4, height: 20, background: "#C9A84C", borderRadius: 2 }} />
+              <span style={{ fontSize: 18, fontWeight: 700, color: "#fff" }}>FonMusic Admin</span>
+            </div>
           </div>
-          <input type="password" value={password} onChange={e => setPassword(e.target.value)}
-            onKeyDown={e => e.key === "Enter" && login()}
+          <input
+            type="password"
+            value={password}
+            onChange={e => setPassword(e.target.value)}
+            onKeyDown={e => e.key === "Enter" && password === ADMIN_PASSWORD && setAuthed(true)}
             placeholder="Пароль администратора"
-            style={{ width: "100%", padding: "14px 16px", background: "#162435", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, color: "#fff", fontSize: 15, outline: "none", boxSizing: "border-box", marginBottom: 12 }} />
-          {error && <div style={{ fontSize: 13, color: "#EF4444", marginBottom: 12 }}>{error}</div>}
-          <button onClick={login} style={{ width: "100%", padding: "14px", background: "#C9A84C", border: "none", borderRadius: 10, color: "#080C12", fontSize: 15, fontWeight: 700, cursor: "pointer" }}>
+            style={{ width: "100%", padding: "14px 16px", background: "#0D1B2A", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, color: "#fff", fontSize: 15, outline: "none", marginBottom: 12, boxSizing: "border-box" }}
+          />
+          <button
+            onClick={() => password === ADMIN_PASSWORD && setAuthed(true)}
+            style={{ width: "100%", padding: "14px", background: "#C9A84C", border: "none", borderRadius: 10, color: "#080C12", fontSize: 15, fontWeight: 700, cursor: "pointer", fontFamily: "Georgia, serif" }}
+          >
             Войти
           </button>
+          {password && password !== ADMIN_PASSWORD && (
+            <div style={{ marginTop: 10, fontSize: 13, color: "#EF4444", textAlign: "center" }}>Неверный пароль</div>
+          )}
         </div>
       </main>
     );
   }
 
-  const totalClients = clients.length;
-  const activeClients = clients.filter(c => c.subscription_status === "active").length;
-  const demoClients = clients.filter(c => c.subscription_status === "demo").length;
-  const expiredClients = clients.filter(c => c.subscription_status === "expired").length;
-  const onlineDevices = devices.filter(d => getDeviceStatus(d.updated_at).label === "Онлайн").length;
-  const offlineDevices = devices.length - onlineDevices;
-  const problemDevices = devices.filter(d => getDeviceStatus(d.updated_at).label !== "Онлайн");
-
-  const filteredClients = clients.filter(c =>
-    !search ||
-    c.name?.toLowerCase().includes(search.toLowerCase()) ||
-    c.phone?.includes(search) ||
-    c.device_id?.includes(search)
-  );
-
-  const filteredDevices = devices.filter(d =>
-    !search || d.device_id?.includes(search)
-  );
-
-  const stats = [
-    { label: "Всего клиентов", value: totalClients, color: "#C9A84C" },
-    { label: "Активных", value: activeClients, color: "#22C55E" },
-    { label: "Демо", value: demoClients, color: "#F59E0B" },
-    { label: "Истёкших", value: expiredClients, color: "#EF4444" },
-    { label: "Онлайн", value: onlineDevices, color: "#22C55E" },
-    { label: "Офлайн", value: offlineDevices, color: "#EF4444" },
-  ];
-
-  const inputStyle = { padding: "11px 14px", background: "#162435", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, color: "#fff", fontSize: 13, outline: "none", width: "100%", boxSizing: "border-box" as const };
-
   return (
     <main style={{ minHeight: "100vh", background: "#080C12", fontFamily: "Georgia, serif", color: "#E8EFF5" }}>
-      <header style={{ padding: "18px 24px", borderBottom: "1px solid rgba(201,168,76,0.15)", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <div style={{ width: 5, height: 22, background: "#C9A84C", borderRadius: 2 }} />
-          <span style={{ fontSize: 18, fontWeight: 700, color: "#fff" }}>FonMusic Admin</span>
-          <span style={{ fontSize: 11, color: "#8BA7BE", padding: "2px 8px", background: "rgba(255,255,255,0.06)", borderRadius: 100 }}>Backoffice</span>
+      <nav style={{ padding: "16px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: "1px solid rgba(201,168,76,0.15)" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <div style={{ width: 4, height: 18, background: "#C9A84C", borderRadius: 2 }} />
+          <span style={{ fontSize: 16, fontWeight: 700, color: "#fff" }}>FonMusic Admin</span>
         </div>
-        <div style={{ display: "flex", gap: 10 }}>
-          <button onClick={loadData} style={{ padding: "7px 14px", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, color: "#8BA7BE", fontSize: 12, cursor: "pointer", fontFamily: "Georgia, serif" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <span style={{ fontSize: 12, color: "#4a5a6a" }}>Клиентов: {clients.length}</span>
+          <button onClick={loadClients} style={{ padding: "6px 14px", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, color: "#8BA7BE", fontSize: 12, cursor: "pointer", fontFamily: "Georgia, serif" }}>
             🔄 Обновить
           </button>
-          <button onClick={() => { sessionStorage.removeItem("fonmusic_admin"); setAuthed(false); }} style={{ padding: "7px 14px", background: "transparent", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, color: "#8BA7BE", fontSize: 12, cursor: "pointer", fontFamily: "Georgia, serif" }}>
-            Выйти
-          </button>
         </div>
-      </header>
+      </nav>
 
-      <div style={{ padding: "0 24px", borderBottom: "1px solid rgba(255,255,255,0.06)", display: "flex", gap: 4 }}>
-        {[
-          { key: "overview", label: "Обзор" },
-          { key: "clients", label: `Клиенты (${totalClients})` },
-          { key: "devices", label: `Устройства (${devices.length})` },
-        ].map(tab => (
-          <button key={tab.key} onClick={() => setActiveTab(tab.key as any)} style={{
-            padding: "14px 20px", background: "transparent", border: "none",
-            borderBottom: `2px solid ${activeTab === tab.key ? "#C9A84C" : "transparent"}`,
-            color: activeTab === tab.key ? "#C9A84C" : "#8BA7BE",
-            fontSize: 14, fontWeight: activeTab === tab.key ? 700 : 400,
-            cursor: "pointer", fontFamily: "Georgia, serif",
-          }}>{tab.label}</button>
-        ))}
-      </div>
+      <div style={{ maxWidth: 1100, margin: "0 auto", padding: "24px 20px" }}>
 
-      <div style={{ maxWidth: 1100, margin: "0 auto", padding: "28px 20px" }}>
-        <input value={search} onChange={e => setSearch(e.target.value)}
-          placeholder="🔍 Поиск по названию, телефону, device ID..."
-          style={{ width: "100%", padding: "12px 16px", background: "#0D1B2A", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 10, color: "#fff", fontSize: 14, outline: "none", boxSizing: "border-box", marginBottom: 24 }} />
-
-        {loading && <div style={{ textAlign: "center", color: "#8BA7BE", padding: 40 }}>⏳ Загрузка...</div>}
-
-        {/* ОБЗОР */}
-        {activeTab === "overview" && (
-          <>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 12, marginBottom: 28 }}>
-              {stats.map(s => (
-                <div key={s.label} style={{ background: "#0D1B2A", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 14, padding: "20px 16px", textAlign: "center" }}>
-                  <div style={{ fontSize: 32, fontWeight: 700, color: s.color, marginBottom: 4 }}>{s.value}</div>
-                  <div style={{ fontSize: 12, color: "#8BA7BE" }}>{s.label}</div>
-                </div>
-              ))}
-            </div>
-
-            {problemDevices.length > 0 && (
-              <div style={{ background: "#0D1B2A", border: "1px solid rgba(239,68,68,0.2)", borderRadius: 16, padding: "20px", marginBottom: 24 }}>
-                <h2 style={{ fontSize: 15, fontWeight: 700, color: "#EF4444", marginBottom: 16 }}>⚠️ Проблемные устройства ({problemDevices.length})</h2>
-                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                  {problemDevices.map(d => {
-                    const status = getDeviceStatus(d.updated_at);
-                    const client = clients.find(c => c.device_id === d.device_id);
-                    return (
-                      <div key={d.device_id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 16px", background: "#162435", borderRadius: 10, flexWrap: "wrap", gap: 8 }}>
-                        <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-                          <span style={{ fontSize: 14, fontWeight: 700, color: "#fff" }}>{d.device_id}</span>
-                          {client && <span style={{ fontSize: 12, color: "#8BA7BE" }}>{client.name}</span>}
-                        </div>
-                        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                          <span style={{ fontSize: 12, color: status.color }}>{status.dot} {status.label} · {status.timeAgo}</span>
-                          <button onClick={() => router.push(`/admin/devices/${d.device_id}`)} style={{ padding: "5px 12px", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 6, color: "#8BA7BE", fontSize: 11, cursor: "pointer", fontFamily: "Georgia, serif" }}>
-                            Открыть
-                          </button>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-
-            <div style={{ background: "#0D1B2A", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 16, padding: "20px" }}>
-              <h2 style={{ fontSize: 15, fontWeight: 700, color: "#fff", marginBottom: 16 }}>👥 Последние клиенты</h2>
-              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                {clients.slice(0, 10).map(c => {
-                  const st = STATUS_COLORS[c.subscription_status] || STATUS_COLORS.expired;
-                  const dev = devices.find(d => d.device_id === c.device_id);
-                  const devStatus = dev ? getDeviceStatus(dev.updated_at) : null;
-                  return (
-                    <div key={c.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 16px", background: "#162435", borderRadius: 10, flexWrap: "wrap", gap: 8 }}>
-                      <div style={{ flex: 1, minWidth: 200 }}>
-                        <div style={{ fontSize: 14, fontWeight: 700, color: "#fff", marginBottom: 2 }}>{c.name}</div>
-                        <div style={{ fontSize: 12, color: "#8BA7BE" }}>{c.phone} · {STATION_NAMES[c.station_key] || c.station_key || "—"}</div>
-                      </div>
-                      <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
-                        <span style={{ fontSize: 11, padding: "3px 10px", background: st.bg, color: st.color, borderRadius: 100 }}>{st.label}</span>
-                        {devStatus && <span style={{ fontSize: 11, color: devStatus.color }}>{devStatus.dot} {devStatus.label}</span>}
-                        <button onClick={() => router.push(`/admin/clients/${c.id}`)} style={{ padding: "5px 12px", background: "rgba(201,168,76,0.1)", border: "1px solid rgba(201,168,76,0.3)", borderRadius: 6, color: "#C9A84C", fontSize: 11, cursor: "pointer", fontFamily: "Georgia, serif" }}>
-                          Открыть →
-                        </button>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          </>
-        )}
-
-        {/* КЛИЕНТЫ */}
-        {activeTab === "clients" && (
-          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-
-            {/* ФОРМА ДОБАВЛЕНИЯ */}
-            <div style={{ background: "#0D1B2A", border: "1px solid rgba(201,168,76,0.2)", borderRadius: 16, overflow: "hidden" }}>
-              <button onClick={() => setShowAddClient(!showAddClient)} style={{
-                width: "100%", padding: "16px 20px", background: "transparent", border: "none",
-                cursor: "pointer", fontFamily: "Georgia, serif",
-                display: "flex", alignItems: "center", justifyContent: "space-between",
-              }}>
-                <span style={{ fontSize: 14, fontWeight: 700, color: "#C9A84C" }}>➕ Добавить клиента</span>
-                <span style={{ color: "#C9A84C" }}>{showAddClient ? "▲" : "▼"}</span>
-              </button>
-              {showAddClient && (
-                <div style={{ padding: "0 20px 20px", borderTop: "1px solid rgba(201,168,76,0.1)" }}>
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginTop: 16 }}>
-                    <input value={newClient.name} onChange={e => setNewClient({...newClient, name: e.target.value})}
-                      placeholder="Название заведения *" style={inputStyle} />
-                    <input value={newClient.phone} onChange={e => {
-                      let val = e.target.value.replace(/\D/g, "");
-                      if (val.startsWith("998")) val = val.slice(3);
-                      if (val.length > 9) val = val.slice(0, 9);
-                      setNewClient({...newClient, phone: val ? "+998" + val : ""});
-                    }} placeholder="99 410 09 10" style={inputStyle} />
-                    <input value={newClient.password} onChange={e => setNewClient({...newClient, password: e.target.value})}
-                      placeholder="Пароль *" style={inputStyle} />
-                    <input value={newClient.device_id} onChange={e => setNewClient({...newClient, device_id: e.target.value})}
-                      placeholder="Device ID (напр. TOX3_8C3532)" style={inputStyle} />
-                    <select value={newClient.subscription_status} onChange={e => setNewClient({...newClient, subscription_status: e.target.value})}
-                      style={inputStyle}>
-                      <option value="demo">Демо</option>
-                      <option value="active">Активный</option>
-                    </select>
-                    <input value={newClient.demo_expires_at} onChange={e => setNewClient({...newClient, demo_expires_at: e.target.value})}
-                      type="date" placeholder="Дата окончания демо" style={inputStyle} />
-                  </div>
-                  {addClientError && <div style={{ fontSize: 13, color: "#EF4444", marginTop: 10 }}>{addClientError}</div>}
-                  {addClientSuccess && <div style={{ fontSize: 13, color: "#22C55E", marginTop: 10 }}>✓ {addClientSuccess}</div>}
-                  <button onClick={createClient} disabled={savingClient} style={{
-                    marginTop: 12, padding: "12px 24px", background: "#C9A84C", border: "none",
-                    borderRadius: 8, color: "#080C12", fontSize: 13, fontWeight: 700,
-                    cursor: "pointer", fontFamily: "Georgia, serif",
-                  }}>
-                    {savingClient ? "Создаём..." : "Создать клиента"}
-                  </button>
-                </div>
-              )}
-            </div>
-
-            {/* СПИСОК КЛИЕНТОВ */}
-            <div style={{ background: "#0D1B2A", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 16, padding: "20px" }}>
-              <h2 style={{ fontSize: 15, fontWeight: 700, color: "#fff", marginBottom: 16 }}>👥 Все клиенты ({filteredClients.length})</h2>
-              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                {filteredClients.map(c => {
-                  const st = STATUS_COLORS[c.subscription_status] || STATUS_COLORS.expired;
-                  const dev = devices.find(d => d.device_id === c.device_id);
-                  const devStatus = dev ? getDeviceStatus(dev.updated_at) : null;
-                  return (
-                    <div key={c.id} style={{ padding: "16px", background: "#162435", borderRadius: 12, display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10 }}>
-                      <div style={{ flex: 1, minWidth: 200 }}>
-                        <div style={{ fontSize: 14, fontWeight: 700, color: "#fff", marginBottom: 4 }}>{c.name}</div>
-                        <div style={{ fontSize: 12, color: "#8BA7BE", marginBottom: 2 }}>{c.phone}</div>
-                        <div style={{ fontSize: 11, color: "#4a5a6a" }}>{c.device_id || "Нет устройства"} · {STATION_NAMES[c.station_key] || "—"}</div>
-                      </div>
-                      <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
-                        <span style={{ fontSize: 11, padding: "3px 10px", background: st.bg, color: st.color, borderRadius: 100 }}>{st.label}</span>
-                        {devStatus && <span style={{ fontSize: 11, color: devStatus.color }}>{devStatus.dot} {devStatus.label}</span>}
-                        {!devStatus && <span style={{ fontSize: 11, color: "#4a5a6a" }}>⚪ Нет устройства</span>}
-                        <button onClick={() => router.push(`/admin/clients/${c.id}`)} style={{ padding: "6px 14px", background: "rgba(201,168,76,0.1)", border: "1px solid rgba(201,168,76,0.3)", borderRadius: 6, color: "#C9A84C", fontSize: 12, cursor: "pointer", fontFamily: "Georgia, serif" }}>
-                          Открыть →
-                        </button>
-                      </div>
-                    </div>
-                  );
-                })}
-                {filteredClients.length === 0 && <div style={{ textAlign: "center", color: "#8BA7BE", padding: 20 }}>Клиентов не найдено</div>}
-              </div>
-            </div>
+        {success && (
+          <div style={{ padding: "10px 16px", background: "rgba(34,197,94,0.1)", border: "1px solid rgba(34,197,94,0.3)", borderRadius: 8, fontSize: 13, color: "#22C55E", marginBottom: 16 }}>
+            ✓ {success}
           </div>
         )}
 
-        {/* УСТРОЙСТВА */}
-        {activeTab === "devices" && (
-          <div style={{ background: "#0D1B2A", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 16, padding: "20px" }}>
-            <h2 style={{ fontSize: 15, fontWeight: 700, color: "#fff", marginBottom: 16 }}>📱 Все устройства ({filteredDevices.length})</h2>
-            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-              {filteredDevices.map(d => {
-                const status = getDeviceStatus(d.updated_at);
-                const client = clients.find(c => c.device_id === d.device_id);
-                return (
-                  <div key={d.device_id} style={{ padding: "16px", background: "#162435", borderRadius: 12, display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10 }}>
+        {/* СТАТИСТИКА */}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12, marginBottom: 24 }}>
+          {[
+            { label: "Всего клиентов", value: clients.length, color: "#8BA7BE" },
+            { label: "На демо", value: clients.filter(c => c.plan === "trial").length, color: "#C9A84C" },
+            { label: "Платные", value: clients.filter(c => ["basic","standard","premium"].includes(c.plan)).length, color: "#22C55E" },
+            { label: "Истёкшие", value: clients.filter(c => c.subscription_status === "expired").length, color: "#EF4444" },
+          ].map(stat => (
+            <div key={stat.label} style={{ background: "#0D1B2A", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 12, padding: "16px 20px" }}>
+              <div style={{ fontSize: 28, fontWeight: 700, color: stat.color }}>{stat.value}</div>
+              <div style={{ fontSize: 12, color: "#8BA7BE" }}>{stat.label}</div>
+            </div>
+          ))}
+        </div>
+
+        {/* ФИЛЬТРЫ */}
+        <div style={{ display: "flex", gap: 10, marginBottom: 16, flexWrap: "wrap" }}>
+          <input
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder="Поиск по имени или телефону..."
+            style={{ flex: 1, minWidth: 200, padding: "10px 14px", background: "#0D1B2A", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, color: "#fff", fontSize: 13, outline: "none" }}
+          />
+          <select
+            value={filterPlan}
+            onChange={e => setFilterPlan(e.target.value)}
+            style={{ padding: "10px 14px", background: "#0D1B2A", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, color: "#fff", fontSize: 13, outline: "none" }}
+          >
+            <option value="all">Все тарифы</option>
+            <option value="trial">Демо</option>
+            <option value="basic">Базовый</option>
+            <option value="standard">Стандарт</option>
+            <option value="premium">Премиум</option>
+          </select>
+        </div>
+
+        {/* СПИСОК */}
+        {loading ? (
+          <div style={{ textAlign: "center", padding: 40, color: "#8BA7BE" }}>⏳ Загрузка...</div>
+        ) : (
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {filtered.map(c => {
+              const plan = PLAN_LABELS[c.plan] || { label: c.plan || "—", color: "#8BA7BE" };
+              const daysLeft = c.demo_expires_at ? getDaysLeft(c.demo_expires_at) : null;
+              const isExpired = c.subscription_status === "expired";
+
+              return (
+                <div key={c.id} style={{ background: "#0D1B2A", border: `1px solid ${isExpired ? "rgba(239,68,68,0.2)" : "rgba(255,255,255,0.06)"}`, borderRadius: 14, padding: "16px 20px" }}>
+                  <div style={{ display: "flex", alignItems: "flex-start", gap: 16, flexWrap: "wrap" }}>
+
+                    {/* Инфо */}
                     <div style={{ flex: 1, minWidth: 200 }}>
-                      <div style={{ fontSize: 14, fontWeight: 700, color: "#fff", marginBottom: 4 }}>{d.device_id}</div>
-                      <div style={{ fontSize: 12, color: "#8BA7BE", marginBottom: 2 }}>{client?.name || "Клиент не найден"}</div>
-                      <div style={{ fontSize: 11, color: "#4a5a6a" }}>{STATION_NAMES[d.current_station] || d.current_station || "—"} · {status.timeAgo} · {d.cache_size_mb || 0}MB кэш</div>
+                      <div style={{ fontSize: 15, fontWeight: 700, color: "#fff", marginBottom: 4 }}>{c.name}</div>
+                      <div style={{ fontSize: 12, color: "#8BA7BE", marginBottom: 2 }}>📞 {c.phone} · 🔑 {c.password}</div>
+                      <div style={{ fontSize: 12, color: "#8BA7BE", marginBottom: 2 }}>🏢 {c.business_type}</div>
+                      <div style={{ fontSize: 11, color: "#4a5a6a" }}>Зарегистрирован: {formatDate(c.created_at)}</div>
                     </div>
-                    <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                      <span style={{ fontSize: 12, color: status.color, padding: "3px 10px", background: status.bg, borderRadius: 100 }}>{status.dot} {status.label}</span>
-                      <button onClick={() => router.push(`/admin/devices/${d.device_id}`)} style={{ padding: "6px 14px", background: "rgba(201,168,76,0.1)", border: "1px solid rgba(201,168,76,0.3)", borderRadius: 6, color: "#C9A84C", fontSize: 12, cursor: "pointer", fontFamily: "Georgia, serif" }}>
-                        Открыть →
+
+                    {/* Статус */}
+                    <div style={{ minWidth: 160 }}>
+                      <div style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "4px 10px", background: `${plan.color}20`, border: `1px solid ${plan.color}40`, borderRadius: 100, marginBottom: 6 }}>
+                        <span style={{ fontSize: 11, fontWeight: 700, color: plan.color }}>{plan.label}</span>
+                      </div>
+                      {isExpired && (
+                        <div style={{ fontSize: 11, color: "#EF4444", marginBottom: 4 }}>❌ Доступ заблокирован</div>
+                      )}
+                      {c.plan === "trial" && daysLeft !== null && (
+                        <div style={{ fontSize: 11, color: daysLeft <= 2 ? "#EF4444" : "#C9A84C" }}>
+                          ⏱ Осталось: {daysLeft} дн. (до {formatDate(c.demo_expires_at)})
+                        </div>
+                      )}
+                      <div style={{ fontSize: 11, color: "#4a5a6a", marginTop: 4 }}>
+                        {c.playback_target === "box" ? "📦 Box" : "🌐 Веб-плеер"}
+                      </div>
+                    </div>
+
+                    {/* Действия */}
+                    <div style={{ display: "flex", flexDirection: "column", gap: 6, minWidth: 200 }}>
+                      <div style={{ fontSize: 11, color: "#4a5a6a", marginBottom: 2 }}>Изменить тариф:</div>
+                      <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
+                        {["trial", "basic", "standard", "premium"].map(p => (
+                          <button
+                            key={p}
+                            onClick={() => updatePlan(c.id, p)}
+                            disabled={saving === c.id || c.plan === p}
+                            style={{
+                              padding: "4px 8px", borderRadius: 6, cursor: c.plan === p ? "default" : "pointer",
+                              fontFamily: "Georgia, serif", fontSize: 10, fontWeight: 700,
+                              background: c.plan === p ? `${PLAN_LABELS[p]?.color}30` : "rgba(255,255,255,0.05)",
+                              border: `1px solid ${c.plan === p ? `${PLAN_LABELS[p]?.color}60` : "rgba(255,255,255,0.1)"}`,
+                              color: c.plan === p ? PLAN_LABELS[p]?.color : "#8BA7BE",
+                            }}
+                          >
+                            {PLAN_LABELS[p]?.label}
+                          </button>
+                        ))}
+                      </div>
+
+                      {(c.plan === "trial" || isExpired) && (
+                        <>
+                          <div style={{ fontSize: 11, color: "#4a5a6a", marginTop: 4 }}>Продлить демо:</div>
+                          <div style={{ display: "flex", gap: 4 }}>
+                            {[7, 14, 30].map(days => (
+                              <button
+                                key={days}
+                                onClick={() => extendDemo(c.id, days)}
+                                disabled={saving === c.id}
+                                style={{ padding: "4px 8px", borderRadius: 6, cursor: "pointer", fontFamily: "Georgia, serif", fontSize: 10, background: "rgba(201,168,76,0.1)", border: "1px solid rgba(201,168,76,0.3)", color: "#C9A84C" }}
+                              >
+                                +{days} дней
+                              </button>
+                            ))}
+                          </div>
+                        </>
+                      )}
+
+                      <button
+                        onClick={() => toggleStatus(c.id, c.subscription_status)}
+                        disabled={saving === c.id}
+                        style={{
+                          padding: "5px 10px", borderRadius: 6, cursor: "pointer", fontFamily: "Georgia, serif", fontSize: 11, marginTop: 2,
+                          background: isExpired ? "rgba(34,197,94,0.1)" : "rgba(239,68,68,0.1)",
+                          border: `1px solid ${isExpired ? "rgba(34,197,94,0.3)" : "rgba(239,68,68,0.3)"}`,
+                          color: isExpired ? "#22C55E" : "#EF4444",
+                        }}
+                      >
+                        {isExpired ? "✓ Восстановить доступ" : "✗ Заблокировать"}
                       </button>
                     </div>
                   </div>
-                );
-              })}
-              {filteredDevices.length === 0 && <div style={{ textAlign: "center", color: "#8BA7BE", padding: 20 }}>Устройств не найдено</div>}
-            </div>
+                </div>
+              );
+            })}
+
+            {filtered.length === 0 && (
+              <div style={{ textAlign: "center", padding: 40, color: "#8BA7BE" }}>Клиентов не найдено</div>
+            )}
           </div>
         )}
       </div>
