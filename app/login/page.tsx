@@ -60,8 +60,8 @@ export default function LoginPage() {
     setError("");
 
     const data = await sb(
-      `clients?phone=eq.${phone}&password=eq.${encodeURIComponent(password)}&select=*`
-    );
+  `clients?phone=eq.${encodeURIComponent(phone)}&password=eq.${encodeURIComponent(password)}&select=*`
+);
     setLoading(false);
 
     if (!data || data.length === 0) {
