@@ -363,10 +363,12 @@ export default function PlayerPage() {
   }, [isPlaying]);
 
   useEffect(() => {
-    const clientId = localStorage.getItem("fonmusic_client_id");
-    if (!clientId) { window.location.href = "/login"; return; }
-    initClient(clientId);
-  }, []);
+  const clientId = localStorage.getItem("fonmusic_client_id");
+  if (!clientId) { window.location.href = "/login"; return; }
+  const params = new URLSearchParams(window.location.search);
+  const locationId = params.get("location_id");
+  initClient(clientId, locationId || undefined);
+}, []);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -375,8 +377,23 @@ export default function PlayerPage() {
     return () => clearInterval(interval);
   }, []);
 
-  const initClient = async (clientId: string) => {
-    const data = await sb(`clients?id=eq.${clientId}&select=*`);
+  const initClient = async (clientId: string, locationId?: string) => {
+  const data = await sb(`clients?id=eq.${clientId}&select=*`);
+  if (!data || data.length === 0) { window.location.href = "/login"; return; }
+  const c = data[0];
+  if (c.subscription_status === "expired") { window.location.href = "/dashboard"; return; }
+
+  // Загружаем данные точки если есть location_id
+  let locationData = null;
+  if (locationId) {
+    const loc = await sb(`locations?id=eq.${locationId}&client_id=eq.${c.id}&select=*`);
+    if (loc && loc.length > 0) locationData = loc[0];
+  }
+
+  // Используем данные точки или клиента
+  const effectiveData = locationData || c;
+  setClient({ ...c, ...effectiveData, _locationId: locationId });
+  clientRef.current = { ...c, ...effectiveData, _locationId: locationId };
     if (!data || data.length === 0) { window.location.href = "/login"; return; }
     const c = data[0];
     if (c.subscription_status === "expired") { window.location.href = "/dashboard"; return; }
