@@ -35,13 +35,40 @@ export default function LoginPage() {
   const [forgotPhone, setForgotPhone] = useState("");
   const [forgotSent, setForgotSent] = useState(false);
 
+  const inputStyle = {
+    padding: "14px 16px",
+    background: "#162435",
+    border: "1px solid rgba(255,255,255,0.1)",
+    borderRadius: 10,
+    color: "#fff",
+    fontSize: 15,
+    outline: "none",
+    boxSizing: "border-box" as const,
+    width: "100%",
+  };
+
+  const formatPhone = (raw: string) => {
+    let val = raw.replace(/\D/g, "");
+    if (val.startsWith("998")) val = val.slice(3);
+    if (val.length > 9) val = val.slice(0, 9);
+    return val ? "+998" + val : "";
+  };
+
   const login = async () => {
-  if (!phone || !password) return;
-  setLoading(true);
-  setError("");
-  const data = await sb(`clients?phone=eq.${phone}&password=eq.${encodeURIComponent(password)}&select=*`);
-  setLoading(false);
-  if (!data || data.length === 0) { setError("Неверный телефон или пароль");
+    if (!phone || !password) return;
+    setLoading(true);
+    setError("");
+
+    const data = await sb(
+      `clients?phone=eq.${phone}&password=eq.${encodeURIComponent(password)}&select=*`
+    );
+    setLoading(false);
+
+    if (!data || data.length === 0) {
+      setError("Неверный телефон или пароль");
+      return;
+    }
+
     const client = data[0];
     localStorage.setItem("fonmusic_client_id", client.id);
 
@@ -53,124 +80,212 @@ export default function LoginPage() {
     if (client.subscription_status === "demo" && client.demo_expires_at) {
       const days = getDaysLeft(client.demo_expires_at);
       if (days <= 0) {
-        await sb(`clients?id=eq.${client.id}`, { method: "PATCH", body: JSON.stringify({ subscription_status: "expired" }) });
+        await sb(`clients?id=eq.${client.id}`, {
+          method: "PATCH",
+          body: JSON.stringify({ subscription_status: "expired" }),
+        });
         window.location.href = "/dashboard";
         return;
       }
     }
 
-    // box -> dashboard, web или null -> player
-    if (client.playback_target === "box") {
-      window.location.href = "/dashboard";
-    } else {
-      window.location.href = "/player";
-    }
+    window.location.href = "/dashboard";
   };
 
-  const inputStyle = {
-    padding: "14px 16px", background: "#162435",
-    border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10,
-    color: "#fff", fontSize: 15, outline: "none",
-    boxSizing: "border-box" as const, width: "100%"
+  const sendForgotRequest = async () => {
+    if (!forgotPhone) return;
+    const data = await sb(
+      `clients?phone=eq.${forgotPhone}&select=name,phone,password`
+    );
+    const text =
+      data && data.length > 0
+        ? `🔑 Запрос на восстановление пароля!\n\n🏢 ${data[0].name}\n📞 ${data[0].phone}\n🔑 Пароль: ${data[0].password}`
+        : `🔑 Запрос пароля от неизвестного номера: ${forgotPhone}`;
+    await fetch(
+      `https://api.telegram.org/bot8572453029:AAGacP96un1FuPOcj6hmc708pOBv7nYPIiI/sendMessage`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ chat_id: "500210645", text }),
+      }
+    );
+    setForgotSent(true);
   };
 
   return (
-    <main style={{ minHeight: "100vh", background: "#080C12", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "Georgia, serif", padding: 20 }}>
+    <main
+      style={{
+        minHeight: "100vh",
+        background: "#080C12",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        fontFamily: "Georgia, serif",
+        padding: 20,
+      }}
+    >
       <div style={{ width: "100%", maxWidth: 420 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 40, justifyContent: "center" }}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            marginBottom: 40,
+            justifyContent: "center",
+          }}
+        >
           <div style={{ width: 5, height: 22, background: "#C9A84C", borderRadius: 2 }} />
-          <a href="/" style={{ fontSize: 20, fontWeight: 700, color: "#fff", textDecoration: "none" }}>FonMusic</a>
+          <a href="/" style={{ fontSize: 20, fontWeight: 700, color: "#fff", textDecoration: "none" }}>
+            FonMusic
+          </a>
         </div>
-        <div style={{ background: "#0D1B2A", border: "1px solid rgba(201,168,76,0.2)", borderRadius: 24, padding: 40, boxShadow: "0 40px 80px rgba(0,0,0,0.5)" }}>
+
+        <div
+          style={{
+            background: "#0D1B2A",
+            border: "1px solid rgba(201,168,76,0.2)",
+            borderRadius: 24,
+            padding: 40,
+            boxShadow: "0 40px 80px rgba(0,0,0,0.5)",
+          }}
+        >
           {!showForgot ? (
             <>
-              <h1 style={{ fontSize: 24, fontWeight: 700, color: "#fff", marginBottom: 8 }}>Вход в кабинет</h1>
-              <p style={{ fontSize: 14, color: "#8BA7BE", marginBottom: 32 }}>Войдите чтобы управлять музыкой</p>
+              <h1 style={{ fontSize: 24, fontWeight: 700, color: "#fff", marginBottom: 8 }}>
+                Вход в кабинет
+              </h1>
+              <p style={{ fontSize: 14, color: "#8BA7BE", marginBottom: 32 }}>
+                Войдите чтобы управлять музыкой
+              </p>
+
               <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 24 }}>
-                <input value={phone} onChange={e => {
-                  let val = e.target.value.replace(/\D/g, "");
-                  if (val.startsWith("998")) val = val.slice(3);
-                  if (val.length > 9) val = val.slice(0, 9);
-                  setPhone(val ? "+998" + val : "");
-                }} placeholder="99 410 09 10" type="tel" style={inputStyle} />
-                <input type="password" value={password} onChange={e => setPassword(e.target.value)}
-                  onKeyDown={e => e.key === "Enter" && login()}
-                  placeholder="Пароль" style={inputStyle} />
+                <input
+                  value={phone}
+                  onChange={(e) => setPhone(formatPhone(e.target.value))}
+                  placeholder="99 410 09 10"
+                  type="tel"
+                  style={inputStyle}
+                />
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && login()}
+                  placeholder="Пароль"
+                  style={inputStyle}
+                />
               </div>
+
               {error && (
-  <div style={{ padding: "10px 16px", background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", borderRadius: 8, fontSize: 13, color: "#EF4444", marginBottom: 16 }}>
-    {error}
-  </div>
-)}
-{typeof window !== "undefined" && new URLSearchParams(window.location.search).get("error") === "device_limit" && (
-  <div style={{ padding: "14px 16px", background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.3)", borderRadius: 10, marginBottom: 16 }}>
-    <div style={{ fontSize: 13, color: "#EF4444", fontWeight: 700, marginBottom: 6 }}>
-      Аккаунт уже используется на другом устройстве
-    </div>
-    <div style={{ fontSize: 12, color: "#8BA7BE", marginBottom: 12, lineHeight: 1.5 }}>
-      Если хотите запустить музыку здесь — старое устройство будет отключено автоматически.
-    </div>
-    <button onClick={async () => {
-      const clientId = localStorage.getItem("fonmusic_client_id");
-      if (!clientId) return;
-      const headers = {
-        "apikey": "sb_publishable_sMrkdTU705Zgw9-Sc12-Ww_XDrl1ASP",
-        "Authorization": "Bearer sb_publishable_sMrkdTU705Zgw9-Sc12-Ww_XDrl1ASP",
-        "Content-Type": "application/json",
-        "Prefer": "return=representation",
-      };
-      // Удаляем все старые устройства
-      await fetch(`https://ovafknvfckdmatrnlecr.supabase.co/rest/v1/player_devices?client_id=eq.${clientId}`, { method: "DELETE", headers });
-      // Генерируем новый player_id
-      const newPlayerId = `player_${Math.random().toString(36).slice(2, 10)}`;
-      localStorage.setItem("fonmusic_player_id", newPlayerId);
-      window.location.href = "/player";
-    }} style={{ width: "100%", padding: "11px", background: "#EF4444", border: "none", borderRadius: 8, color: "#fff", fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "Georgia, serif" }}>
-      Запустить здесь →
-    </button>
-  </div>
-)}
-              <button onClick={login} disabled={loading} style={{ width: "100%", padding: "15px", background: "#C9A84C", border: "none", borderRadius: 10, color: "#080C12", fontSize: 15, fontWeight: 700, cursor: "pointer", marginBottom: 16 }}>
+                <div
+                  style={{
+                    padding: "10px 16px",
+                    background: "rgba(239,68,68,0.1)",
+                    border: "1px solid rgba(239,68,68,0.3)",
+                    borderRadius: 8,
+                    fontSize: 13,
+                    color: "#EF4444",
+                    marginBottom: 16,
+                  }}
+                >
+                  {error}
+                </div>
+              )}
+
+              <button
+                onClick={login}
+                disabled={loading}
+                style={{
+                  width: "100%",
+                  padding: "15px",
+                  background: "#C9A84C",
+                  border: "none",
+                  borderRadius: 10,
+                  color: "#080C12",
+                  fontSize: 15,
+                  fontWeight: 700,
+                  cursor: "pointer",
+                  marginBottom: 16,
+                  fontFamily: "Georgia, serif",
+                }}
+              >
                 {loading ? "Входим..." : "Войти"}
               </button>
+
               <div style={{ display: "flex", flexDirection: "column", gap: 10, textAlign: "center" }}>
-                <button onClick={() => setShowForgot(true)} style={{ background: "none", border: "none", color: "#8BA7BE", fontSize: 13, cursor: "pointer", fontFamily: "Georgia, serif" }}>
+                <button
+                  onClick={() => setShowForgot(true)}
+                  style={{
+                    background: "none",
+                    border: "none",
+                    color: "#8BA7BE",
+                    fontSize: 13,
+                    cursor: "pointer",
+                    fontFamily: "Georgia, serif",
+                  }}
+                >
                   Забыли пароль?
                 </button>
                 <div style={{ borderTop: "1px solid rgba(255,255,255,0.06)", paddingTop: 16 }}>
                   <span style={{ fontSize: 13, color: "#8BA7BE" }}>Нет аккаунта? </span>
-                  <a href="/signup" style={{ fontSize: 13, color: "#C9A84C", textDecoration: "none", fontWeight: 700 }}>Начать бесплатно →</a>
+                  <a
+                    href="/signup"
+                    style={{ fontSize: 13, color: "#C9A84C", textDecoration: "none", fontWeight: 700 }}
+                  >
+                    Начать бесплатно →
+                  </a>
                 </div>
-                <a href="/" style={{ fontSize: 13, color: "#4a5a6a", textDecoration: "none" }}>← На главную</a>
+                <a href="/" style={{ fontSize: 13, color: "#4a5a6a", textDecoration: "none" }}>
+                  ← На главную
+                </a>
               </div>
             </>
           ) : (
             <>
-              <h1 style={{ fontSize: 20, fontWeight: 700, color: "#fff", marginBottom: 8 }}>Восстановление пароля</h1>
+              <h1 style={{ fontSize: 20, fontWeight: 700, color: "#fff", marginBottom: 8 }}>
+                Восстановление пароля
+              </h1>
               {!forgotSent ? (
                 <>
-                  <p style={{ fontSize: 13, color: "#8BA7BE", marginBottom: 20 }}>Введите ваш номер телефона — администратор свяжется с вами</p>
-                  <input value={forgotPhone} onChange={e => {
-                    let val = e.target.value.replace(/\D/g, "");
-                    if (val.startsWith("998")) val = val.slice(3);
-                    if (val.length > 9) val = val.slice(0, 9);
-                    setForgotPhone(val ? "+998" + val : "");
-                  }} placeholder="99 410 09 10" style={{ ...inputStyle, marginBottom: 12 }} />
-                  <button onClick={async () => {
-                    if (!forgotPhone) return;
-                    const data = await sb(`clients?phone=eq.${phone}&password=eq.${encodeURIComponent(password)}&select=*`);
-                    const text = data && data.length > 0
-                      ? `🔑 Запрос на восстановление пароля!\n\n🏢 ${data[0].name}\n📞 ${data[0].phone}\n🔑 Пароль: ${data[0].password}`
-                      : `🔑 Запрос пароля от неизвестного номера: ${forgotPhone}`;
-                    await fetch(`https://api.telegram.org/bot8572453029:AAGacP96un1FuPOcj6hmc708pOBv7nYPIiI/sendMessage`, {
-                      method: "POST", headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({ chat_id: "500210645", text })
-                    });
-                    setForgotSent(true);
-                  }} style={{ width: "100%", padding: "13px", background: "#C9A84C", border: "none", borderRadius: 10, color: "#080C12", fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: "Georgia, serif", marginBottom: 10 }}>
+                  <p style={{ fontSize: 13, color: "#8BA7BE", marginBottom: 20 }}>
+                    Введите ваш номер телефона — администратор свяжется с вами
+                  </p>
+                  <input
+                    value={forgotPhone}
+                    onChange={(e) => setForgotPhone(formatPhone(e.target.value))}
+                    placeholder="99 410 09 10"
+                    style={{ ...inputStyle, marginBottom: 12 }}
+                  />
+                  <button
+                    onClick={sendForgotRequest}
+                    style={{
+                      width: "100%",
+                      padding: "13px",
+                      background: "#C9A84C",
+                      border: "none",
+                      borderRadius: 10,
+                      color: "#080C12",
+                      fontSize: 14,
+                      fontWeight: 700,
+                      cursor: "pointer",
+                      fontFamily: "Georgia, serif",
+                      marginBottom: 10,
+                    }}
+                  >
                     Отправить запрос
                   </button>
-                  <button onClick={() => setShowForgot(false)} style={{ background: "none", border: "none", color: "#8BA7BE", fontSize: 13, cursor: "pointer", fontFamily: "Georgia, serif", width: "100%" }}>
+                  <button
+                    onClick={() => setShowForgot(false)}
+                    style={{
+                      background: "none",
+                      border: "none",
+                      color: "#8BA7BE",
+                      fontSize: 13,
+                      cursor: "pointer",
+                      fontFamily: "Georgia, serif",
+                      width: "100%",
+                    }}
+                  >
                     ← Назад
                   </button>
                 </>
@@ -178,8 +293,24 @@ export default function LoginPage() {
                 <div style={{ textAlign: "center", paddingTop: 16 }}>
                   <div style={{ fontSize: 40, marginBottom: 12 }}>✅</div>
                   <div style={{ fontSize: 15, color: "#fff", marginBottom: 8 }}>Запрос отправлен!</div>
-                  <div style={{ fontSize: 13, color: "#8BA7BE", marginBottom: 20 }}>Администратор свяжется с вами в ближайшее время</div>
-                  <button onClick={() => { setShowForgot(false); setForgotSent(false); setForgotPhone(""); }} style={{ background: "none", border: "none", color: "#C9A84C", fontSize: 13, cursor: "pointer", fontFamily: "Georgia, serif" }}>
+                  <div style={{ fontSize: 13, color: "#8BA7BE", marginBottom: 20 }}>
+                    Администратор свяжется с вами в ближайшее время
+                  </div>
+                  <button
+                    onClick={() => {
+                      setShowForgot(false);
+                      setForgotSent(false);
+                      setForgotPhone("");
+                    }}
+                    style={{
+                      background: "none",
+                      border: "none",
+                      color: "#C9A84C",
+                      fontSize: 13,
+                      cursor: "pointer",
+                      fontFamily: "Georgia, serif",
+                    }}
+                  >
                     ← Назад к входу
                   </button>
                 </div>
