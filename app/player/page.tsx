@@ -394,12 +394,7 @@ export default function PlayerPage() {
   const effectiveData = locationData || c;
   setClient({ ...c, ...effectiveData, _locationId: locationId });
   clientRef.current = { ...c, ...effectiveData, _locationId: locationId };
-    if (!data || data.length === 0) { window.location.href = "/login"; return; }
-    const c = data[0];
-    if (c.subscription_status === "expired") { window.location.href = "/dashboard"; return; }
-    setClient(c);
-clientRef.current = c;
-
+    
 // Проверка устройства
 let playerId = localStorage.getItem("fonmusic_player_id");
 if (!playerId) {
