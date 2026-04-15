@@ -39,7 +39,7 @@ export default function LoginPage() {
     if (!phone || !password) return;
     setLoading(true);
     setError("");
-    const data = await sb(`clients?phone=eq.${encodeURIComponent(phone)}&password=eq.${password}&select=*`);
+    const data = await sb(`clients?phone=eq.${phone}&password=eq.${encodeURIComponent(password)}&select=*`);
     setLoading(false);
     if (!data || data.length === 0) { setError("Неверный телефон или пароль"); return; }
     const client = data[0];
