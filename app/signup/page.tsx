@@ -85,6 +85,20 @@ export default function SignupPage() {
       setLoading(false);
       return;
     }
+    
+    // Создаём первую точку
+await sb("locations", {
+  method: "POST",
+  body: JSON.stringify({
+    client_id: client[0].id,
+    name: name,
+    device_type: "web",
+    station_key: businessType.station,
+    template_key: businessType.template,
+    default_template_key: businessType.template,
+    music_mode: "automatic",
+  }),
+});
 
     // Уведомление в Telegram
     await fetch(`https://api.telegram.org/bot8572453029:AAGacP96un1FuPOcj6hmc708pOBv7nYPIiI/sendMessage`, {
