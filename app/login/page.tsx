@@ -158,7 +158,7 @@ export default function LoginPage() {
                   }} placeholder="99 410 09 10" style={{ ...inputStyle, marginBottom: 12 }} />
                   <button onClick={async () => {
                     if (!forgotPhone) return;
-                    const data = await sb(`clients?phone=eq.${phone}&password=eq.${password}&select=*`);
+                    const data = await sb(`clients?phone=eq.${phone}&password=eq.${encodeURIComponent(password)}&select=*`);
                     const text = data && data.length > 0
                       ? `🔑 Запрос на восстановление пароля!\n\n🏢 ${data[0].name}\n📞 ${data[0].phone}\n🔑 Пароль: ${data[0].password}`
                       : `🔑 Запрос пароля от неизвестного номера: ${forgotPhone}`;
