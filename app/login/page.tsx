@@ -36,12 +36,12 @@ export default function LoginPage() {
   const [forgotSent, setForgotSent] = useState(false);
 
   const login = async () => {
-    if (!phone || !password) return;
-    setLoading(true);
-    setError("");
-    const data = await sb(`clients?phone=eq.${phone}&password=eq.${encodeURIComponent(password)}&select=*`);
-    setLoading(false);
-    if (!data || data.length === 0) { setError("Неверный телефон или пароль"); return; }
+  if (!phone || !password) return;
+  setLoading(true);
+  setError("");
+  const data = await sb(`clients?phone=eq.${phone}&password=eq.${encodeURIComponent(password)}&select=*`);
+  setLoading(false);
+  if (!data || data.length === 0) { setError("Неверный телефон или пароль");
     const client = data[0];
     localStorage.setItem("fonmusic_client_id", client.id);
 
