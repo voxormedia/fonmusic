@@ -404,7 +404,7 @@ if (!playerId) {
 
 // Проверяем сколько устройств уже активно
 const devices = await sb(`player_devices?client_id=eq.${c.id}&select=*`);
-const maxDevices = c.max_devices || 10;
+const maxDevices = c.max_devices ?? 3;
 const existingDevice = devices?.find((d: any) => d.player_id === playerId);
 
 if (!existingDevice) {
