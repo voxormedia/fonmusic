@@ -402,9 +402,13 @@ if (!playerId) {
   localStorage.setItem("fonmusic_player_id", playerId);
 }
 
-// Проверяем сколько устройств уже активно
+// Удаляем неактивные устройства (не обновлялись более 15 минут)
+const cutoff = new Date(Date.now() - 15 * 60 * 1000).toISOString();
+await sb(`player_devices?client_id=eq.${c.id}&last_seen=lt.${cutoff}`, { method: "DELETE" });
+
+// Проверяем активные устройства
 const devices = await sb(`player_devices?client_id=eq.${c.id}&select=*`);
-const maxDevices = c.max_devices ?? 3;
+const maxDevices = c.max_devices ?? 1;
 const existingDevice = devices?.find((d: any) => d.player_id === playerId);
 
 if (!existingDevice) {
@@ -419,6 +423,7 @@ if (!existingDevice) {
       client_id: c.id,
       player_id: playerId,
       device_name: "Веб-плеер",
+      last_seen: new Date().toISOString(),
     }),
   });
 } else {
@@ -427,6 +432,18 @@ if (!existingDevice) {
     body: JSON.stringify({ last_seen: new Date().toISOString() }),
   });
 }
+
+// Heartbeat каждые 60 секунд
+setInterval(async () => {
+  const pid = localStorage.getItem("fonmusic_player_id");
+  const cid = localStorage.getItem("fonmusic_client_id");
+  if (pid && cid) {
+    await sb(`player_devices?player_id=eq.${pid}&client_id=eq.${cid}`, {
+      method: "PATCH",
+      body: JSON.stringify({ last_seen: new Date().toISOString() }),
+    });
+  }
+}, 60000);
 
 const station = c.station_key || "best_of_radio";
     setCurrentStation(station);
