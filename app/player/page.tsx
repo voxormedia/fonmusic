@@ -813,12 +813,7 @@ const station = c.station_key || "best_of_radio";
               <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                 <span style={{ fontSize: 18 }}>📅</span>
                 <div style={{ textAlign: "left" }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: "#fff" }}>Как меняется музыка в течение дня</div>
-                    <button onClick={e => { e.stopPropagation(); setShowTimeline(true); setShowScheduleEditor(!showScheduleEditor); }} style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 6, cursor: "pointer", fontSize: 11, color: "#8BA7BE", padding: "2px 8px", fontFamily: "Georgia, serif" }}>
-                      ✏️ Изменить
-                    </button>
-                  </div>
+                <div style={{ fontSize: 13, fontWeight: 700, color: "#fff", marginBottom: 4 }}>Как меняется музыка в течение дня</div>
                   <div style={{ fontSize: 11, color: "#22C55E" }}>Автоматическое расписание · активно</div>
                 </div>
               </div>
@@ -826,10 +821,13 @@ const station = c.station_key || "best_of_radio";
             </button>
 
             {showTimeline && (
-              <div style={{ borderTop: "1px solid rgba(255,255,255,0.06)", padding: "12px 16px" }}>
-                <div style={{ fontSize: 12, color: "#22C55E", marginBottom: 10 }}>
-                  🔄 Музыка автоматически меняется в течение дня
-                </div>
+  <div style={{ borderTop: "1px solid rgba(255,255,255,0.06)", padding: "12px 16px" }}>
+    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+      <div style={{ fontSize: 12, color: "#22C55E" }}>🔄 Музыка автоматически меняется в течение дня</div>
+      <button onClick={() => setShowScheduleEditor(!showScheduleEditor)} style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 6, cursor: "pointer", fontSize: 11, color: "#8BA7BE", padding: "4px 10px", fontFamily: "Georgia, serif", flexShrink: 0 }}>
+        ✏️ Изменить
+      </button>
+    </div>
 
                 {!showScheduleEditor ? (
                   <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
