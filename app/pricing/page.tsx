@@ -8,16 +8,10 @@ const PLANS = [
     key: "basic",
     name: "Базовый",
     price: "499 000",
-    desc: "Для небольших заведений",
+    desc: "Для одного небольшого заведения",
     popular: false,
-    features: [
-      "1 заведение",
-      "Все музыкальные атмосферы",
-      "Веб-плеер",
-      "Ручное переключение музыки",
-    ],
+    features: ["1 точка", "Все музыкальные атмосферы", "Веб-плеер", "Ручное переключение музыки"],
     missing: ["Автоматическое расписание"],
-    cta: "Попробовать бесплатно",
     ctaHref: "/signup",
     accent: "#8BA7BE",
     box: false,
@@ -26,17 +20,10 @@ const PLANS = [
     key: "standard",
     name: "Стандарт",
     price: "699 000",
-    desc: "Оптимально для кафе, магазинов и салонов",
+    desc: "Оптимальный тариф для кафе, магазинов, салонов и фитнес-клубов",
     popular: true,
-    features: [
-      "1 заведение",
-      "Все музыкальные атмосферы",
-      "Веб-плеер",
-      "Автоматическое расписание музыки",
-      "Удалённое управление",
-    ],
+    features: ["1 точка", "Все музыкальные атмосферы", "Веб-плеер", "Автоматическое расписание музыки", "Удалённое управление"],
     missing: [],
-    cta: "Выбрать Стандарт",
     ctaHref: "/signup?plan=standard",
     accent: "#C9A84C",
     box: true,
@@ -45,16 +32,10 @@ const PLANS = [
     key: "premium",
     name: "Премиум",
     price: "999 000",
-    desc: "Для сетей кафе, ресторанов, магазинов, фитнес-центров, салонов красоты и других сетевых заведений",
+    desc: "Для сетей кафе, ресторанов, магазинов, фитнес-клубов и салонов красоты",
     popular: false,
-    features: [
-      "1 заведение включено",
-      "Все функции тарифа Стандарт",
-      "Централизованное управление сетью",
-      "Приоритетная поддержка",
-    ],
+    features: ["1 точка включена", "Все функции тарифа Стандарт", "Централизованное управление сетью", "Приоритетная поддержка"],
     missing: [],
-    cta: "Выбрать Премиум",
     ctaHref: "/signup?plan=premium",
     accent: "#A78BFA",
     box: true,
@@ -62,7 +43,7 @@ const PLANS = [
 ];
 
 const COMPARE = [
-  { label: "Количество заведений", basic: "1", standard: "1", premium: "∞" },
+  { label: "Количество точек", basic: "1", standard: "1", premium: "∞" },
   { label: "Все атмосферы", basic: true, standard: true, premium: true },
   { label: "Веб-плеер", basic: true, standard: true, premium: true },
   { label: "Автоматическое расписание", basic: false, standard: true, premium: true },
@@ -74,7 +55,7 @@ const COMPARE = [
 const FAQS = [
   { q: "Можно ли использовать без FonMusic Box?", a: "Да, музыка работает через веб-плеер на любом устройстве — компьютере, планшете или телефоне." },
   { q: "Нужно ли покупать устройство сразу?", a: "Нет, FonMusic Box подключается по желанию в любой момент. Начните с веб-плеера." },
-  { q: "Можно ли сначала попробовать?", a: "Да, демо-период — 10 дней. Все функции доступны без ограничений." },
+  { q: "Можно ли сначала попробовать?", a: "Да, демо-период — 7 дней. Все функции доступны без ограничений." },
   { q: "Один аккаунт для нескольких филиалов?", a: "Да, в тарифе Премиум можно добавлять дополнительные заведения по 599 000 сум/мес." },
 ];
 
@@ -97,27 +78,30 @@ export default function PricingPage() {
       </nav>
 
       {/* HERO */}
-      <section style={{ textAlign: "center", padding: "80px 20px 60px", position: "relative" }}>
+      <section style={{ textAlign: "center", padding: "80px 20px 40px", position: "relative" }}>
         <div style={{ position: "absolute", top: 0, left: "50%", transform: "translateX(-50%)", width: 600, height: 300, borderRadius: "50%", background: "radial-gradient(circle, rgba(201,168,76,0.08) 0%, transparent 70%)", pointerEvents: "none" }} />
         <div style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "5px 14px", background: "rgba(201,168,76,0.1)", border: "1px solid rgba(201,168,76,0.3)", borderRadius: 100, fontSize: 11, color: "#C9A84C", letterSpacing: "0.1em", marginBottom: 24 }}>
-          ♪ ЛИЦЕНЗИРОВАННАЯ МУЗЫКА ДЛЯ БИЗНЕСА
+          ♪ ЛИЦЕНЗИРОВАННАЯ МУЗЫКА ДЛЯ БИЗНЕСА — ОТ 499 000 СУМ В МЕСЯЦ
         </div>
-        <h1 style={{ fontSize: 48, fontWeight: 700, color: "#fff", marginBottom: 16, lineHeight: 1.15 }}>
-          Тарифы FonMusic
-        </h1>
-        <p style={{ fontSize: 18, color: "#8BA7BE", marginBottom: 8, maxWidth: 520, margin: "0 auto 8px" }}>
+        <h1 style={{ fontSize: 48, fontWeight: 700, color: "#fff", marginBottom: 16, lineHeight: 1.15 }}>Тарифы FonMusic</h1>
+        <p style={{ fontSize: 18, color: "#8BA7BE", maxWidth: 520, margin: "0 auto 8px" }}>
           Выберите подходящий тариф — от одной точки до сети филиалов
         </p>
-        <p style={{ fontSize: 13, color: "#4a5a6a", marginBottom: 0 }}>
+        <p style={{ fontSize: 13, color: "#4a5a6a", marginTop: 8 }}>
           Лицензированная музыка для бизнеса · Без рекламы · Официальный сертификат
         </p>
       </section>
+
+      {/* NOTE */}
+      <div style={{ textAlign: "center", padding: "16px 20px 32px", fontSize: 13, color: "#8BA7BE" }}>
+        1 точка = 1 устройство воспроизведения: веб-плеер или FonMusic Box
+      </div>
 
       {/* PRICING CARDS */}
       <section style={{ padding: "0 20px 60px", maxWidth: 1000, margin: "0 auto" }}>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16, alignItems: "start" }}>
           {PLANS.map((plan) => (
-            <div key={plan.key} style={{ position: "relative", borderRadius: 20, padding: plan.popular ? "32px 24px" : "28px 24px", background: plan.popular ? "linear-gradient(135deg, #0D1B2A, #162435)" : "#0D1B2A", border: `2px solid ${plan.popular ? plan.accent : "rgba(255,255,255,0.06)"}`, boxShadow: plan.popular ? `0 0 40px ${plan.accent}20` : "none", transition: "all 0.3s" }}>
+            <div key={plan.key} style={{ position: "relative", borderRadius: 20, padding: plan.popular ? "32px 24px" : "28px 24px", background: plan.popular ? "linear-gradient(135deg, #0D1B2A, #162435)" : "#0D1B2A", border: `2px solid ${plan.popular ? plan.accent : "rgba(255,255,255,0.06)"}`, boxShadow: plan.popular ? `0 0 40px ${plan.accent}20` : "none" }}>
               {plan.popular && (
                 <div style={{ position: "absolute", top: -14, left: "50%", transform: "translateX(-50%)", background: plan.accent, color: "#080C12", padding: "4px 16px", borderRadius: 100, fontSize: 11, fontWeight: 700, whiteSpace: "nowrap" }}>
                   ⭐ Самый популярный
@@ -126,8 +110,8 @@ export default function PricingPage() {
 
               <div style={{ marginBottom: 20 }}>
                 <div style={{ fontSize: 13, color: plan.accent, fontWeight: 700, marginBottom: 6, letterSpacing: "0.05em" }}>{plan.name.toUpperCase()}</div>
-                <div style={{ fontSize: 32, fontWeight: 700, color: "#fff", marginBottom: 4 }}>{plan.price}</div>
-                <div style={{ fontSize: 12, color: "#4a5a6a", marginBottom: 10 }}>сум / месяц</div>
+                <div style={{ fontSize: 32, fontWeight: 700, color: "#fff", marginBottom: 2 }}>{plan.price}</div>
+                <div style={{ fontSize: 12, color: "#4a5a6a", marginBottom: 10 }}>сум / месяц · за 1 точку</div>
                 <div style={{ fontSize: 13, color: "#8BA7BE", lineHeight: 1.5 }}>{plan.desc}</div>
               </div>
 
@@ -146,7 +130,6 @@ export default function PricingPage() {
                 ))}
               </div>
 
-              {/* BOX BLOCK */}
               {plan.box && (
                 <div style={{ background: "rgba(201,168,76,0.06)", border: "1px solid rgba(201,168,76,0.15)", borderRadius: 12, padding: "12px 14px", marginBottom: 16 }}>
                   <div style={{ fontSize: 11, color: "#C9A84C", fontWeight: 700, marginBottom: 4 }}>📦 FonMusic Box (по желанию)</div>
@@ -156,7 +139,6 @@ export default function PricingPage() {
                 </div>
               )}
 
-              {/* PREMIUM EXTRA */}
               {plan.key === "premium" && (
                 <div style={{ background: "rgba(167,139,250,0.06)", border: "1px solid rgba(167,139,250,0.15)", borderRadius: 12, padding: "12px 14px", marginBottom: 16 }}>
                   <div style={{ fontSize: 11, color: "#A78BFA", fontWeight: 700, marginBottom: 6 }}>Дополнительные заведения</div>
@@ -169,16 +151,14 @@ export default function PricingPage() {
                 </div>
               )}
 
-              <a href={plan.ctaHref} style={{ display: "block", textAlign: "center", padding: "14px", borderRadius: 12, background: plan.popular ? plan.accent : "rgba(255,255,255,0.06)", border: plan.popular ? "none" : `1px solid ${plan.accent}40`, color: plan.popular ? "#080C12" : plan.accent, fontSize: 14, fontWeight: 700, textDecoration: "none", transition: "all 0.2s" }}>
-                {plan.cta}
+              <a href={plan.ctaHref} style={{ display: "block", textAlign: "center", padding: "14px", borderRadius: 12, background: plan.popular ? plan.accent : "rgba(255,255,255,0.06)", border: plan.popular ? "none" : `1px solid ${plan.accent}40`, color: plan.popular ? "#080C12" : plan.accent, fontSize: 14, fontWeight: 700, textDecoration: "none", marginBottom: 8 }}>
+                Попробовать бесплатно
               </a>
+              <div style={{ textAlign: "center", fontSize: 11, color: "#4a5a6a" }}>
+                7 дней бесплатно · без обязательств
+              </div>
             </div>
           ))}
-        </div>
-
-        {/* NOTE */}
-        <div style={{ textAlign: "center", marginTop: 24, fontSize: 13, color: "#4a5a6a" }}>
-          1 заведение = 1 устройство воспроизведения (веб-плеер или FonMusic Box) · Демо-период 10 дней — все функции без ограничений
         </div>
       </section>
 
@@ -186,7 +166,6 @@ export default function PricingPage() {
       <section style={{ padding: "0 20px 60px", maxWidth: 800, margin: "0 auto" }}>
         <h2 style={{ fontSize: 28, fontWeight: 700, color: "#fff", textAlign: "center", marginBottom: 32 }}>Сравнение тарифов</h2>
         <div style={{ background: "#0D1B2A", borderRadius: 16, overflow: "hidden", border: "1px solid rgba(255,255,255,0.06)" }}>
-          {/* Header */}
           <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr 1fr 1fr", padding: "16px 20px", borderBottom: "1px solid rgba(255,255,255,0.06)", background: "rgba(255,255,255,0.02)" }}>
             <div style={{ fontSize: 12, color: "#4a5a6a" }}>Функция</div>
             {["Базовый", "Стандарт", "Премиум"].map((p, i) => (
@@ -231,10 +210,13 @@ export default function PricingPage() {
 
       {/* BOX BLOCK */}
       <section style={{ padding: "0 20px 60px", maxWidth: 800, margin: "0 auto" }}>
-        <div style={{ background: "linear-gradient(135deg, #0D1B2A, #162435)", border: "1px solid rgba(201,168,76,0.25)", borderRadius: 20, padding: "40px 32px", display: "flex", gap: 40, alignItems: "center" }}>
-          <div style={{ flex: 1 }}>
+        <div style={{ background: "linear-gradient(135deg, #0D1B2A, #162435)", border: "1px solid rgba(201,168,76,0.25)", borderRadius: 20, padding: "40px 32px", display: "flex", gap: 40, alignItems: "center", flexWrap: "wrap" }}>
+          <div style={{ flex: 1, minWidth: 260 }}>
             <div style={{ fontSize: 11, color: "#C9A84C", letterSpacing: "0.1em", marginBottom: 10 }}>FONMUSIC BOX</div>
-            <h2 style={{ fontSize: 26, fontWeight: 700, color: "#fff", marginBottom: 12 }}>Музыка 24/7 без компьютера</h2>
+            <h2 style={{ fontSize: 26, fontWeight: 700, color: "#fff", marginBottom: 12 }}>Музыка 24/7 без компьютера и браузера</h2>
+            <p style={{ fontSize: 13, color: "#8BA7BE", lineHeight: 1.7, marginBottom: 16 }}>
+              FonMusic Box — маленькое устройство, которое подключается к аудиосистеме заведения и автоматически запускает музыку.
+            </p>
             <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 20 }}>
               {[
                 { icon: "📡", text: "Работает круглосуточно без перерывов" },
@@ -248,7 +230,8 @@ export default function PricingPage() {
               ))}
             </div>
             <div style={{ fontSize: 14, color: "#C9A84C", fontWeight: 700, marginBottom: 4 }}>750 000 сум</div>
-            <div style={{ fontSize: 12, color: "#22C55E", marginBottom: 20 }}>или бесплатно при оплате подписки за 3 месяца</div>
+            <div style={{ fontSize: 12, color: "#22C55E", marginBottom: 4 }}>или бесплатно при оплате подписки за 3 месяца</div>
+            <div style={{ fontSize: 11, color: "#4a5a6a", marginBottom: 20 }}>FonMusic Box является опцией. Можно использовать сервис через веб-плеер без покупки устройства.</div>
             <a href="https://t.me/fonmusic2026" target="_blank" style={{ display: "inline-block", padding: "13px 24px", background: "#C9A84C", color: "#080C12", borderRadius: 10, fontSize: 14, fontWeight: 700, textDecoration: "none" }}>
               Подключить FonMusic Box →
             </a>
@@ -264,13 +247,14 @@ export default function PricingPage() {
         <div style={{ background: "radial-gradient(ellipse at center, rgba(201,168,76,0.08) 0%, transparent 70%)", padding: "48px 32px", borderRadius: 20, border: "1px solid rgba(201,168,76,0.15)" }}>
           <div style={{ fontSize: 48, marginBottom: 16 }}>🎵</div>
           <h2 style={{ fontSize: 30, fontWeight: 700, color: "#fff", marginBottom: 12 }}>
-            Попробуйте FonMusic <span style={{ color: "#C9A84C" }}>бесплатно 10 дней</span>
+            Попробуйте FonMusic <span style={{ color: "#C9A84C" }}>бесплатно 7 дней</span>
           </h2>
-          <p style={{ fontSize: 14, color: "#8BA7BE", lineHeight: 1.7, marginBottom: 28 }}>
-            Во время пробного периода доступны все функции — все атмосферы, расписание, управление. Без карты, без обязательств.
+          <p style={{ fontSize: 14, color: "#8BA7BE", lineHeight: 1.7, marginBottom: 8 }}>
+            Во время демо-периода все функции доступны бесплатно 7 дней. После демо вы можете выбрать подходящий тариф.
           </p>
+          <p style={{ fontSize: 13, color: "#4a5a6a", marginBottom: 28 }}>Без карты, без обязательств.</p>
           <a href="/signup" style={{ display: "inline-block", padding: "18px 40px", background: "#C9A84C", color: "#080C12", borderRadius: 12, fontSize: 17, fontWeight: 700, textDecoration: "none", boxShadow: "0 8px 32px rgba(201,168,76,0.3)" }}>
-            Начать демо →
+            Начать 7 дней бесплатно →
           </a>
         </div>
       </section>
@@ -309,11 +293,6 @@ export default function PricingPage() {
       <style>{`
         * { margin: 0; padding: 0; box-sizing: border-box; }
         html, body { overflow-x: hidden; }
-        @media (max-width: 768px) {
-          .pricing-grid { grid-template-columns: 1fr !important; }
-          .box-block { flex-direction: column !important; }
-          .box-img { width: 100% !important; max-width: 200px; margin: 0 auto; }
-        }
       `}</style>
     </main>
   );
