@@ -32,19 +32,22 @@ async function sb(path: string, options?: RequestInit) {
   return text ? JSON.parse(text) : null;
 }
 
+function generatePassword(): string {
+  return Math.floor(1000 + Math.random() * 9000).toString();
+}
+
 export default function SignupPage() {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
-  const [password, setPassword] = useState("");
   const [businessType, setBusinessType] = useState(BUSINESS_TYPES[0]);
   const [agreed, setAgreed] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
   const register = async () => {
-    if (!name || !phone || !password) { setError("Заполните все поля"); return; }
+    if (!name || !phone) { setError("Заполните все поля"); return; }
     if (!agreed) { setError("Примите условия оферты"); return; }
-    if (password.length < 4) { setError("Пароль должен быть не менее 4 символов"); return; }
+    if (phone.length < 12) { setError("Введите корректный номер телефона"); return; }
 
     setLoading(true);
     setError("");
@@ -56,6 +59,9 @@ export default function SignupPage() {
       setLoading(false);
       return;
     }
+
+    // Генерируем 4-значный пароль
+    const password = generatePassword();
 
     // Создаём клиента
     const demoExpires = new Date();
@@ -85,20 +91,31 @@ export default function SignupPage() {
       setLoading(false);
       return;
     }
-    
+
     // Создаём первую точку
-await sb("locations", {
-  method: "POST",
-  body: JSON.stringify({
-    client_id: client[0].id,
-    name: name,
-    device_type: "web",
-    station_key: businessType.station,
-    template_key: businessType.template,
-    default_template_key: businessType.template,
-    music_mode: "automatic",
-  }),
-});
+    await sb("locations", {
+      method: "POST",
+      body: JSON.stringify({
+        client_id: client[0].id,
+        name: name,
+        device_type: "web",
+        station_key: businessType.station,
+        template_key: businessType.template,
+        default_template_key: businessType.template,
+        music_mode: "automatic",
+      }),
+    });
+
+    // Отправляем SMS с паролем
+    try {
+      await fetch("/api/send-sms", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone, password, name }),
+      });
+    } catch {
+      // SMS не критично — продолжаем
+    }
 
     // Уведомление в Telegram
     await fetch(`https://api.telegram.org/bot8572453029:AAGacP96un1FuPOcj6hmc708pOBv7nYPIiI/sendMessage`, {
@@ -106,12 +123,12 @@ await sb("locations", {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         chat_id: "500210645",
-        text: `🎉 Новая регистрация FonMusic!\n\n🏢 ${name}\n📞 ${phone}\n🍽 ${businessType.label}\n🔑 Пароль: ${password}\n\n✅ Аккаунт создан автоматически`,
+        text: `🎉 Новая регистрация FonMusic!\n\n🏢 ${name}\n📞 ${phone}\n🍽 ${businessType.label}\n🔑 Пароль: ${password}\n📱 SMS отправлен\n\n✅ Аккаунт создан автоматически`,
       }),
     });
 
     localStorage.setItem("fonmusic_client_id", client[0].id);
-    window.location.href = "/player";
+    window.location.href = "/dashboard";
   };
 
   const inputStyle = { padding: "14px 16px", background: "#162435", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, color: "#fff", fontSize: 15, outline: "none", boxSizing: "border-box" as const, width: "100%" };
@@ -120,7 +137,6 @@ await sb("locations", {
     <main style={{ minHeight: "100vh", background: "#080C12", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "Georgia, serif", padding: 20 }}>
       <div style={{ width: "100%", maxWidth: 460 }}>
 
-        {/* LOGO */}
         <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 40, justifyContent: "center" }}>
           <div style={{ width: 5, height: 22, background: "#C9A84C", borderRadius: 2 }} />
           <a href="/" style={{ fontSize: 20, fontWeight: 700, color: "#fff", textDecoration: "none" }}>FonMusic</a>
@@ -157,15 +173,14 @@ await sb("locations", {
               }} placeholder="99 410 09 10" type="tel" style={inputStyle} />
             </div>
 
-            <div>
-              <div style={{ fontSize: 12, color: "#8BA7BE", marginBottom: 6 }}>Пароль *</div>
-              <input type="password" value={password} onChange={e => setPassword(e.target.value)}
-                placeholder="Минимум 4 символа" style={inputStyle} />
+            {/* Инфо о пароле */}
+            <div style={{ padding: "12px 14px", background: "rgba(34,197,94,0.06)", border: "1px solid rgba(34,197,94,0.15)", borderRadius: 10 }}>
+              <div style={{ fontSize: 12, color: "#22C55E", fontWeight: 700, marginBottom: 2 }}>📱 Пароль придёт в SMS</div>
+              <div style={{ fontSize: 11, color: "#8BA7BE" }}>После регистрации на ваш номер придёт 4-значный пароль для входа в кабинет.</div>
             </div>
 
           </div>
 
-          {/* Оферта */}
           <div style={{ display: "flex", alignItems: "flex-start", gap: 10, marginBottom: 20, padding: "12px 14px", background: "rgba(255,255,255,0.03)", borderRadius: 10 }}>
             <input type="checkbox" checked={agreed} onChange={e => setAgreed(e.target.checked)}
               style={{ marginTop: 2, cursor: "pointer", width: 16, height: 16, flexShrink: 0 }} />
@@ -183,7 +198,7 @@ await sb("locations", {
             </div>
           )}
 
-          <button onClick={register} disabled={loading} style={{ width: "100%", padding: "16px", background: "#C9A84C", border: "none", borderRadius: 10, color: "#080C12", fontSize: 16, fontWeight: 700, cursor: "pointer", marginBottom: 16, boxShadow: "0 8px 24px rgba(201,168,76,0.3)" }}>
+          <button onClick={register} disabled={loading} style={{ width: "100%", padding: "16px", background: "#C9A84C", border: "none", borderRadius: 10, color: "#080C12", fontSize: 16, fontWeight: 700, cursor: "pointer", marginBottom: 16, boxShadow: "0 8px 24px rgba(201,168,76,0.3)", fontFamily: "Georgia, serif" }}>
             {loading ? "Создаём аккаунт..." : "Начать 7 дней бесплатно →"}
           </button>
 
@@ -196,7 +211,6 @@ await sb("locations", {
           </div>
         </div>
 
-        {/* Что будет после */}
         <div style={{ marginTop: 20, padding: "16px 20px", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 14 }}>
           <div style={{ fontSize: 12, color: "#8BA7BE", marginBottom: 10 }}>После регистрации вы получите:</div>
           {["🎵 Готовую музыкальную программу для вашего бизнеса", "📅 Автоматическое расписание по времени дня", "📄 Официальный сертификат лицензии"].map(f => (
