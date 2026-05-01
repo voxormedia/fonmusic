@@ -46,6 +46,17 @@ const BUSINESS_TYPES = [
   { icon: "🎸", label: "Бар", type: "bar" },
 ];
 
+function normalizePlaylist(raw: unknown): string[] {
+  if (!Array.isArray(raw)) return [];
+  return raw
+    .map((track) => {
+      if (typeof track === "string") return track;
+      if (track && typeof track === "object" && "f" in track && typeof track.f === "string") return track.f;
+      return "";
+    })
+    .filter(Boolean);
+}
+
 function LeadModal({ onClose, onSuccess }: { onClose: () => void; onSuccess: () => void }) {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
@@ -209,7 +220,7 @@ function DemoPlayer() {
     try {
       const encodedFolder = station.folder.replace(/ /g, "%20");
       const res = await fetch(`${BASE_URL}/${encodedFolder}/playlist.json`);
-      const tracks: string[] = await res.json();
+      const tracks = normalizePlaylist(await res.json());
       const shuffled = tracks.sort(() => Math.random() - 0.5).slice(0, 50);
       setPlaylist(shuffled);
       setTrackIndex(0);
@@ -267,7 +278,7 @@ function DemoPlayer() {
     try {
       const encodedFolder = station.folder.replace(/ /g, "%20");
       const res = await fetch(`${BASE_URL}/${encodedFolder}/playlist.json`);
-      const tracks: string[] = await res.json();
+      const tracks = normalizePlaylist(await res.json());
       const shuffled = tracks.sort(() => Math.random() - 0.5).slice(0, 50);
       setPlaylist(shuffled);
       setTrackIndex(0);
@@ -325,8 +336,8 @@ function DemoPlayer() {
     <main style={{ minHeight: "100vh", background: "#080C12", fontFamily: "Georgia, serif", color: "#E8EFF5" }}>
       <audio
         ref={audioRef}
-        onEnded={() => { const next = (trackIndex + 1) % playlist.length; playTrack(next); }}
-        onError={() => { const next = (trackIndex + 1) % playlist.length; setTimeout(() => playTrack(next), 2000); }}
+        onEnded={() => { if (playlist.length) { const next = (trackIndex + 1) % playlist.length; playTrack(next); } }}
+        onError={() => { if (playlist.length) { const next = (trackIndex + 1) % playlist.length; setTimeout(() => playTrack(next), 2000); } }}
       />
 
       {showModal && <LeadModal onClose={() => setShowModal(false)} onSuccess={() => setShowModal(false)} />}
