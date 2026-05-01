@@ -1,9 +1,8 @@
 "use client";
 import { useState, useEffect } from "react";
 
-const SUPABASE_URL = "https://ovafknvfckdmatrnlecr.supabase.co";
-const SUPABASE_KEY = "sb_publishable_sMrkdTU705Zgw9-Sc12-Ww_XDrl1ASP";
-const ADMIN_PASSWORD = "admin_2026";
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
+const SUPABASE_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
 
 async function sb(path: string, options?: RequestInit) {
   const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
@@ -49,6 +48,7 @@ export default function AdminPage() {
   const [filterPlan, setFilterPlan] = useState("all");
   const [saving, setSaving] = useState<string | null>(null);
   const [success, setSuccess] = useState("");
+  const [authError, setAuthError] = useState("");
 
   useEffect(() => {
     if (authed) loadClients();
@@ -113,6 +113,21 @@ export default function AdminPage() {
     return matchSearch && matchPlan;
   });
 
+  const adminLogin = async () => {
+    setAuthError("");
+    const res = await fetch("/api/admin/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ password }),
+    });
+    if (!res.ok) {
+      setAuthError("Неверный пароль");
+      return;
+    }
+    sessionStorage.setItem("fonmusic_admin", "1");
+    setAuthed(true);
+  };
+
   if (!authed) {
     return (
       <main style={{ minHeight: "100vh", background: "#080C12", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "Georgia, serif" }}>
@@ -127,22 +142,20 @@ export default function AdminPage() {
             type="password"
             value={password}
             onChange={e => setPassword(e.target.value)}
-            onKeyDown={e => e.key === "Enter" && password === ADMIN_PASSWORD && setAuthed(true)}
+            onKeyDown={e => e.key === "Enter" && adminLogin()}
             placeholder="Пароль администратора"
             style={{ width: "100%", padding: "14px 16px", background: "#0D1B2A", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, color: "#fff", fontSize: 15, outline: "none", marginBottom: 12, boxSizing: "border-box" }}
           />
           <button
             onClick={() => {
-  if (password === ADMIN_PASSWORD) {
-    setAuthed(true);
-  }
+  adminLogin();
 }}
             style={{ width: "100%", padding: "14px", background: "#C9A84C", border: "none", borderRadius: 10, color: "#080C12", fontSize: 15, fontWeight: 700, cursor: "pointer", fontFamily: "Georgia, serif" }}
           >
             Войти
           </button>
-          {password && password !== ADMIN_PASSWORD && (
-            <div style={{ marginTop: 10, fontSize: 13, color: "#EF4444", textAlign: "center" }}>Неверный пароль</div>
+          {authError && (
+            <div style={{ marginTop: 10, fontSize: 13, color: "#EF4444", textAlign: "center" }}>{authError}</div>
           )}
         </div>
       </main>

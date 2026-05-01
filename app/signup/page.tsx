@@ -1,8 +1,8 @@
 "use client";
 import { useState } from "react";
 
-const SUPABASE_URL = "https://ovafknvfckdmatrnlecr.supabase.co";
-const SUPABASE_KEY = "sb_publishable_sMrkdTU705Zgw9-Sc12-Ww_XDrl1ASP";
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
+const SUPABASE_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
 
 const BUSINESS_TYPES = [
   { label: "Кафе / кофейня", template: "cafe_standard", station: "cozy_coffee" },
@@ -42,12 +42,51 @@ export default function SignupPage() {
   const [businessType, setBusinessType] = useState(BUSINESS_TYPES[0]);
   const [agreed, setAgreed] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [smsLoading, setSmsLoading] = useState(false);
+  const [smsSent, setSmsSent] = useState(false);
+  const [smsCode, setSmsCode] = useState("");
+  const [phoneVerified, setPhoneVerified] = useState(false);
   const [error, setError] = useState("");
+
+  const sendSmsCode = async () => {
+    if (phone.length < 12) { setError("Введите корректный номер телефона"); return; }
+    setSmsLoading(true);
+    setError("");
+    const res = await fetch("/api/sms/send-code", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ phone }),
+    });
+    setSmsLoading(false);
+    if (!res.ok) {
+      setError("Не удалось отправить код. Попробуйте ещё раз.");
+      return;
+    }
+    setSmsSent(true);
+  };
+
+  const verifySmsCode = async () => {
+    if (smsCode.length !== 4) { setError("Введите 4-значный код из SMS"); return; }
+    setSmsLoading(true);
+    setError("");
+    const res = await fetch("/api/sms/verify-code", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ phone, code: smsCode }),
+    });
+    setSmsLoading(false);
+    if (!res.ok) {
+      setError("Неверный или просроченный код.");
+      return;
+    }
+    setPhoneVerified(true);
+  };
 
   const register = async () => {
     if (!name || !phone) { setError("Заполните все поля"); return; }
     if (!agreed) { setError("Примите условия оферты"); return; }
     if (phone.length < 12) { setError("Введите корректный номер телефона"); return; }
+    if (!phoneVerified) { setError("Подтвердите телефон SMS-кодом"); return; }
 
     setLoading(true);
     setError("");
@@ -117,13 +156,14 @@ export default function SignupPage() {
       // SMS не критично — продолжаем
     }
 
-    // Уведомление в Telegram
-    await fetch(`https://api.telegram.org/bot8572453029:AAGacP96un1FuPOcj6hmc708pOBv7nYPIiI/sendMessage`, {
+    await fetch("/api/telegram", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        chat_id: "500210645",
-        text: `🎉 Новая регистрация FonMusic!\n\n🏢 ${name}\n📞 ${phone}\n🍽 ${businessType.label}\n🔑 Пароль: ${password}\n📱 SMS отправлен\n\n✅ Аккаунт создан автоматически`,
+        type: "signup",
+        name,
+        phone,
+        businessType: businessType.label,
       }),
     });
 
@@ -170,13 +210,33 @@ export default function SignupPage() {
                 if (val.startsWith("998")) val = val.slice(3);
                 if (val.length > 9) val = val.slice(0, 9);
                 setPhone(val ? "+998" + val : "");
+                setPhoneVerified(false);
+                setSmsSent(false);
+                setSmsCode("");
               }} placeholder="99 410 09 10" type="tel" style={inputStyle} />
             </div>
 
-            {/* Инфо о пароле */}
-            <div style={{ padding: "12px 14px", background: "rgba(34,197,94,0.06)", border: "1px solid rgba(34,197,94,0.15)", borderRadius: 10 }}>
-              <div style={{ fontSize: 12, color: "#22C55E", fontWeight: 700, marginBottom: 2 }}>📱 Пароль придёт в SMS</div>
-              <div style={{ fontSize: 11, color: "#8BA7BE" }}>После регистрации на ваш номер придёт 4-значный пароль для входа в кабинет.</div>
+            <div style={{ padding: "12px 14px", background: phoneVerified ? "rgba(34,197,94,0.06)" : "rgba(255,255,255,0.03)", border: `1px solid ${phoneVerified ? "rgba(34,197,94,0.15)" : "rgba(255,255,255,0.08)"}`, borderRadius: 10 }}>
+              <div style={{ fontSize: 12, color: phoneVerified ? "#22C55E" : "#8BA7BE", fontWeight: 700, marginBottom: 8 }}>
+                {phoneVerified ? "Телефон подтверждён" : "Подтвердите телефон"}
+              </div>
+              {!phoneVerified && (
+                <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                  {!smsSent ? (
+                    <button onClick={sendSmsCode} disabled={smsLoading || phone.length < 12} style={{ flex: 1, padding: "10px", background: "#C9A84C", border: "none", borderRadius: 8, color: "#080C12", fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "Georgia, serif" }}>
+                      {smsLoading ? "Отправляем..." : "Получить код"}
+                    </button>
+                  ) : (
+                    <>
+                      <input value={smsCode} onChange={e => setSmsCode(e.target.value.replace(/\D/g, "").slice(0, 4))} placeholder="Код из SMS" inputMode="numeric" style={{ ...inputStyle, flex: 1, minWidth: 120 }} />
+                      <button onClick={verifySmsCode} disabled={smsLoading || smsCode.length !== 4} style={{ padding: "10px 14px", background: "#C9A84C", border: "none", borderRadius: 8, color: "#080C12", fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "Georgia, serif" }}>
+                        {smsLoading ? "..." : "Проверить"}
+                      </button>
+                    </>
+                  )}
+                </div>
+              )}
+              <div style={{ fontSize: 11, color: "#8BA7BE", marginTop: 8 }}>Код действует 10 минут.</div>
             </div>
 
           </div>
@@ -198,8 +258,8 @@ export default function SignupPage() {
             </div>
           )}
 
-          <button onClick={register} disabled={loading} style={{ width: "100%", padding: "16px", background: "#C9A84C", border: "none", borderRadius: 10, color: "#080C12", fontSize: 16, fontWeight: 700, cursor: "pointer", marginBottom: 16, boxShadow: "0 8px 24px rgba(201,168,76,0.3)", fontFamily: "Georgia, serif" }}>
-            {loading ? "Создаём аккаунт..." : "Начать 7 дней бесплатно →"}
+          <button onClick={register} disabled={loading || !phoneVerified} style={{ width: "100%", padding: "16px", background: phoneVerified ? "#C9A84C" : "rgba(255,255,255,0.08)", border: "none", borderRadius: 10, color: phoneVerified ? "#080C12" : "#8BA7BE", fontSize: 16, fontWeight: 700, cursor: phoneVerified ? "pointer" : "not-allowed", marginBottom: 16, boxShadow: phoneVerified ? "0 8px 24px rgba(201,168,76,0.3)" : "none", fontFamily: "Georgia, serif" }}>
+            {loading ? "Создаём аккаунт..." : phoneVerified ? "Начать 7 дней бесплатно →" : "Сначала подтвердите телефон"}
           </button>
 
           <div style={{ textAlign: "center", display: "flex", flexDirection: "column", gap: 8 }}>

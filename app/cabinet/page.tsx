@@ -1,8 +1,8 @@
 "use client";
 import { useState, useEffect } from "react";
 
-const SUPABASE_URL = "https://ovafknvfckdmatrnlecr.supabase.co";
-const SUPABASE_KEY = "sb_publishable_sMrkdTU705Zgw9-Sc12-Ww_XDrl1ASP";
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
+const SUPABASE_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
 
 async function sb(path: string, options?: RequestInit) {
   const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {

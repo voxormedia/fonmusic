@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const ESKIZ_EMAIL = "jsmedia@mail.ru";
-const ESKIZ_PASSWORD = "Ahmadik2007";
+const ESKIZ_EMAIL = process.env.ESKIZ_EMAIL || "";
+const ESKIZ_PASSWORD = process.env.ESKIZ_PASSWORD || "";
+const ESKIZ_FROM = process.env.ESKIZ_FROM || "4546";
 
 async function getEskizToken(): Promise<string | null> {
+  if (!ESKIZ_EMAIL || !ESKIZ_PASSWORD) return null;
   try {
     const res = await fetch("https://notify.eskiz.uz/api/auth/login", {
       method: "POST",
@@ -44,7 +46,7 @@ export async function POST(req: NextRequest) {
       body: JSON.stringify({
         mobile_phone: cleanPhone,
         message,
-        from: "4546",
+        from: ESKIZ_FROM,
       }),
     });
 
@@ -55,7 +57,7 @@ export async function POST(req: NextRequest) {
     } else {
       return NextResponse.json({ error: "SMS send failed", details: smsData }, { status: 500 });
     }
-  } catch (err) {
+  } catch {
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }

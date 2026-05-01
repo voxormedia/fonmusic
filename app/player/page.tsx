@@ -1,8 +1,8 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
 
-const SUPABASE_URL = "https://ovafknvfckdmatrnlecr.supabase.co";
-const SUPABASE_KEY = "sb_publishable_sMrkdTU705Zgw9-Sc12-Ww_XDrl1ASP";
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
+const SUPABASE_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
 const BASE_URL = "https://pub-b2c1411547b247808cb42732bb122560.r2.dev";
 
 const STATION_FOLDERS: Record<string, string> = {
@@ -132,7 +132,7 @@ function ScheduleEditor({ client, scheduleItems, accent, onSave, onCancel }: any
         "Prefer": "return=representation",
       };
 
-      const customKey = `custom_${client.id}`;
+      const customKey = client._locationId ? `custom_${client.id}_${client._locationId}` : `custom_${client.id}`;
       let templateId: number;
 
       const existing = await fetch(`${SUPABASE_URL}/rest/v1/schedule_templates?template_key=eq.${customKey}&select=id`, { headers });
@@ -152,7 +152,8 @@ function ScheduleEditor({ client, scheduleItems, accent, onSave, onCancel }: any
         });
         const tmplData = await tmplRes.json();
         templateId = tmplData[0].id;
-        await fetch(`${SUPABASE_URL}/rest/v1/clients?id=eq.${client.id}`, {
+        const ownerPath = client._locationId ? `locations?id=eq.${client._locationId}` : `clients?id=eq.${client.id}`;
+        await fetch(`${SUPABASE_URL}/rest/v1/${ownerPath}`, {
           method: "PATCH", headers,
           body: JSON.stringify({ template_key: customKey }),
         });
@@ -231,10 +232,11 @@ function ScheduleEditor({ client, scheduleItems, accent, onSave, onCancel }: any
           "Prefer": "return=representation",
         };
         const defaultKey = client.default_template_key || "cafe_standard";
-await fetch(`${SUPABASE_URL}/rest/v1/clients?id=eq.${client.id}`, {
-  method: "PATCH", headers,
-  body: JSON.stringify({ template_key: defaultKey, music_mode: "automatic" }),
-});
+        const ownerPath = client._locationId ? `locations?id=eq.${client._locationId}` : `clients?id=eq.${client.id}`;
+        await fetch(`${SUPABASE_URL}/rest/v1/${ownerPath}`, {
+          method: "PATCH", headers,
+          body: JSON.stringify({ template_key: defaultKey, music_mode: "automatic" }),
+        });
         onCancel();
         window.location.reload();
       }} style={{ width: "100%", marginTop: 6, padding: "9px", background: "transparent", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 10, color: "#4a5a6a", fontSize: 11, cursor: "pointer", fontFamily: "Georgia, serif" }}>
@@ -390,10 +392,17 @@ export default function PlayerPage() {
     if (loc && loc.length > 0) locationData = loc[0];
   }
 
-  // Используем данные точки или клиента
+  // Используем настройки точки, но сохраняем id аккаунта клиента.
   const effectiveData = locationData || c;
-  setClient({ ...c, ...effectiveData, _locationId: locationId });
-  clientRef.current = { ...c, ...effectiveData, _locationId: locationId };
+  const mergedClient = {
+    ...c,
+    ...effectiveData,
+    id: c.id,
+    _locationId: locationData?.id || null,
+    location_name: locationData?.name,
+  };
+  setClient(mergedClient);
+  clientRef.current = mergedClient;
     
 // Проверка устройства
 let playerId = localStorage.getItem("fonmusic_player_id");
@@ -407,7 +416,8 @@ const cutoff = new Date(Date.now() - 15 * 60 * 1000).toISOString();
 await sb(`player_devices?client_id=eq.${c.id}&last_seen=lt.${cutoff}`, { method: "DELETE" });
 
 // Проверяем активные устройства
-const devices = await sb(`player_devices?client_id=eq.${c.id}&select=*`);
+const deviceScope = locationData?.id ? `location_id=eq.${locationData.id}` : `client_id=eq.${c.id}`;
+const devices = await sb(`player_devices?${deviceScope}&select=*`);
 const maxDevices = c.max_devices ?? 1;
 const existingDevice = devices?.find((d: any) => d.player_id === playerId);
 
@@ -420,8 +430,9 @@ if (!existingDevice) {
   await sb("player_devices", {
     method: "POST",
     body: JSON.stringify({
-      client_id: c.id,
-      player_id: playerId,
+	      client_id: c.id,
+	      location_id: locationData?.id || null,
+	      player_id: playerId,
       device_name: "Веб-плеер",
       last_seen: new Date().toISOString(),
     }),
@@ -438,22 +449,23 @@ setInterval(async () => {
   const pid = localStorage.getItem("fonmusic_player_id");
   const cid = localStorage.getItem("fonmusic_client_id");
   if (pid && cid) {
-    await sb(`player_devices?player_id=eq.${pid}&client_id=eq.${cid}`, {
+    const locationFilter = clientRef.current?._locationId ? `&location_id=eq.${clientRef.current._locationId}` : "";
+    await sb(`player_devices?player_id=eq.${pid}&client_id=eq.${cid}${locationFilter}`, {
       method: "PATCH",
       body: JSON.stringify({ last_seen: new Date().toISOString() }),
     });
   }
 }, 60000);
 
-const station = c.station_key || "best_of_radio";
+const station = effectiveData.station_key || "best_of_radio";
     setCurrentStation(station);
     currentStationRef.current = station;
     let items: any[] = [];
-    if (c.template_key) items = await loadScheduleItems(c.template_key);
+    if (effectiveData.template_key) items = await loadScheduleItems(effectiveData.template_key);
     setLoading(false);
     const onboardingDone = localStorage.getItem(`fonmusic_onboarding_${clientId}`);
     if (!onboardingDone) setShowOnboarding(true);
-    if (c.template_key && c.music_mode !== "manual" && items.length > 0) {
+    if (effectiveData.template_key && effectiveData.music_mode !== "manual" && items.length > 0) {
   scheduleRef.current = items;
   // Находим текущую станцию по расписанию
   const cur = new Date().getHours() * 60 + new Date().getMinutes();
@@ -569,7 +581,8 @@ const station = c.station_key || "best_of_radio";
     setIsPlaying(false); setShowAllStations(false); setIsLoadingTrack(true);
     setProgress(0); setCurrentTime(0); lastScheduleStation.current = stationKey;
     if (clientRef.current) clientRef.current.music_mode = "manual";
-    await sb(`clients?id=eq.${client.id}`, { method: "PATCH", body: JSON.stringify({ station_key: stationKey, music_mode: "manual" }) });
+    const ownerPath = client._locationId ? `locations?id=eq.${client._locationId}` : `clients?id=eq.${client.id}`;
+    await sb(ownerPath, { method: "PATCH", body: JSON.stringify({ station_key: stationKey, music_mode: "manual" }) });
     setClient((prev: any) => ({ ...prev, music_mode: "manual", station_key: stationKey }));
     const folder = STATION_FOLDERS[stationKey] || "Best Of Radio";
     try {
@@ -710,7 +723,8 @@ const station = c.station_key || "best_of_radio";
     </div>
     <button onClick={async () => {
       if (clientRef.current) clientRef.current.music_mode = "automatic";
-      await sb(`clients?id=eq.${client.id}`, { method: "PATCH", body: JSON.stringify({ music_mode: "automatic" }) });
+      const ownerPath = client._locationId ? `locations?id=eq.${client._locationId}` : `clients?id=eq.${client.id}`;
+      await sb(ownerPath, { method: "PATCH", body: JSON.stringify({ music_mode: "automatic" }) });
       setClient((prev: any) => ({ ...prev, music_mode: "automatic" }));
       checkSchedule();
     }} style={{ fontSize: 11, color: "#22C55E", background: "rgba(34,197,94,0.1)", border: "1px solid rgba(34,197,94,0.2)", borderRadius: 100, padding: "3px 12px", cursor: "pointer", fontFamily: "Georgia, serif" }}>

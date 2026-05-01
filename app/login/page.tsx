@@ -1,8 +1,8 @@
 "use client";
 import { useState } from "react";
 
-const SUPABASE_URL = "https://ovafknvfckdmatrnlecr.supabase.co";
-const SUPABASE_KEY = "sb_publishable_sMrkdTU705Zgw9-Sc12-Ww_XDrl1ASP";
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
+const SUPABASE_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
 
 async function sb(path: string, options?: RequestInit) {
   const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
@@ -94,21 +94,11 @@ export default function LoginPage() {
 
   const sendForgotRequest = async () => {
     if (!forgotPhone) return;
-    const data = await sb(
-      `clients?phone=eq.${forgotPhone}&select=name,phone,password`
-    );
-    const text =
-      data && data.length > 0
-        ? `🔑 Запрос на восстановление пароля!\n\n🏢 ${data[0].name}\n📞 ${data[0].phone}\n🔑 Пароль: ${data[0].password}`
-        : `🔑 Запрос пароля от неизвестного номера: ${forgotPhone}`;
-    await fetch(
-      `https://api.telegram.org/bot8572453029:AAGacP96un1FuPOcj6hmc708pOBv7nYPIiI/sendMessage`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ chat_id: "500210645", text }),
-      }
-    );
+    await fetch("/api/telegram", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ type: "forgot-password", phone: forgotPhone }),
+    });
     setForgotSent(true);
   };
 
