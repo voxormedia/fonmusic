@@ -59,7 +59,7 @@ export async function POST(req: NextRequest) {
       },
       body: JSON.stringify({
         mobile_phone: cleanPhone,
-        message: `FonMusic: kod tasdiqlash uchun ${code}`,
+        message: `Код подтверждения для регистрации на сайте Fonmusic.uz: ${code}`,
         from: ESKIZ_FROM,
       }),
     });
