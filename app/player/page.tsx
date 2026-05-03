@@ -246,82 +246,10 @@ function ScheduleEditor({ client, scheduleItems, accent, onSave, onCancel }: any
   );
 }
 
-// ===== ОНБОРДИНГ =====
-function OnboardingScreen({ client, scheduleItems, currentStation, onDone }: any) {
-  const st = STATIONS.find(s => s.key === currentStation) || STATIONS[9];
-  const nextSlot = getNextSlot(scheduleItems);
-  const nextSt = nextSlot ? STATIONS.find(s => s.key === nextSlot.stations?.station_key) : null;
-  const minLeft = getMinLeft(scheduleItems);
-  const hasSchedule = scheduleItems.length > 0;
-
-  return (
-    <main style={{ minHeight: "100vh", background: "#070B14", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "Georgia, serif", padding: 20, position: "relative", overflow: "hidden" }}>
-      <div style={{ position: "fixed", inset: 0, pointerEvents: "none" }}>
-        <div style={{ position: "absolute", top: "-20%", left: "-10%", width: "60%", height: "60%", borderRadius: "50%", background: `radial-gradient(circle, ${st.color2}60 0%, transparent 70%)` }} />
-        <div style={{ position: "absolute", bottom: "-10%", right: "-10%", width: "50%", height: "50%", borderRadius: "50%", background: `radial-gradient(circle, ${st.color1}40 0%, transparent 70%)` }} />
-      </div>
-      <div style={{ width: "100%", maxWidth: 480, position: "relative", zIndex: 10 }}>
-        <div style={{ textAlign: "center", marginBottom: 32 }}>
-          <div style={{ display: "inline-flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
-            <div style={{ width: 4, height: 20, background: st.accent, borderRadius: 2 }} />
-            <span style={{ fontSize: 20, fontWeight: 700, color: "#fff" }}>FonMusic</span>
-          </div>
-          <h1 style={{ fontSize: 26, fontWeight: 700, color: "#fff", marginBottom: 8 }}>Добро пожаловать, {client.name}! 🎵</h1>
-          <p style={{ fontSize: 14, color: "#8BA7BE", lineHeight: 1.7 }}>Музыка уже подобрана для вашего заведения</p>
-        </div>
-
-        <div style={{ background: "rgba(255,255,255,0.05)", backdropFilter: "blur(20px)", border: `1px solid ${st.accent}30`, borderRadius: 20, padding: "24px", marginBottom: 12 }}>
-          <div style={{ fontSize: 11, color: "#8BA7BE", letterSpacing: "0.1em", marginBottom: 12 }}>СЕЙЧАС ИГРАЕТ</div>
-          <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: hasSchedule ? 16 : 0 }}>
-            <div style={{ width: 56, height: 56, borderRadius: 14, background: `linear-gradient(135deg, ${st.color1}, ${st.color2})`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 26, border: `1px solid ${st.accent}40`, flexShrink: 0 }}>
-              {st.icon}
-            </div>
-            <div>
-              <div style={{ fontSize: 18, fontWeight: 700, color: "#fff", marginBottom: 4 }}>{st.name}</div>
-              <div style={{ fontSize: 13, color: "#8BA7BE" }}>{st.desc}</div>
-            </div>
-          </div>
-          {hasSchedule && nextSt && minLeft !== null && (
-            <div style={{ padding: "10px 14px", background: "rgba(255,255,255,0.04)", borderRadius: 10, border: "1px solid rgba(255,255,255,0.06)" }}>
-              <div style={{ fontSize: 11, color: "#8BA7BE", marginBottom: 4 }}>
-                Следующая смена через {minLeft >= 60 ? `${Math.floor(minLeft / 60)}ч ${minLeft % 60}м` : `${minLeft} мин`}
-              </div>
-              <div style={{ fontSize: 13, color: "#fff", display: "flex", alignItems: "center", gap: 6 }}>
-                <span>{nextSt.icon}</span><span>{nextSt.name}</span>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {hasSchedule && (
-          <div style={{ background: "rgba(34,197,94,0.06)", border: "1px solid rgba(34,197,94,0.15)", borderRadius: 14, padding: "14px 16px", marginBottom: 12 }}>
-            <div style={{ fontSize: 13, color: "#22C55E", fontWeight: 700, marginBottom: 4 }}>🔄 Музыка меняется автоматически</div>
-            <div style={{ fontSize: 12, color: "#8BA7BE", lineHeight: 1.6 }}>
-              В течение дня музыка сама переключается под время суток. Вам ничего не нужно делать.
-            </div>
-          </div>
-        )}
-
-        <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 14, padding: "14px 16px", marginBottom: 24 }}>
-          <div style={{ fontSize: 12, color: "#8BA7BE", lineHeight: 1.6 }}>
-            💡 Хотите другую музыку прямо сейчас? Нажмите <span style={{ color: "#fff" }}>"Сменить музыку"</span> в плеере. Расписание продолжит работать с следующей смены.
-          </div>
-        </div>
-
-        <button onClick={onDone} style={{ width: "100%", padding: "18px", background: st.accent, border: "none", borderRadius: 14, color: "#070B14", fontSize: 16, fontWeight: 700, cursor: "pointer", fontFamily: "Georgia, serif", boxShadow: `0 8px 32px ${st.accent}40` }}>
-          Понятно, запустить музыку →
-        </button>
-        <div style={{ textAlign: "center", marginTop: 12, fontSize: 12, color: "#4a5a6a" }}>Этот экран можно открыть снова — кнопка "Как это работает?"</div>
-      </div>
-    </main>
-  );
-}
-
 // ===== ГЛАВНЫЙ ПЛЕЕР =====
 export default function PlayerPage() {
   const [client, setClient] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [showOnboarding, setShowOnboarding] = useState(false);
   const [playlist, setPlaylist] = useState<string[]>([]);
   const [currentTrack, setCurrentTrack] = useState("");
   const [trackIndex, setTrackIndex] = useState(0);
@@ -463,8 +391,6 @@ const station = effectiveData.station_key || "best_of_radio";
     let items: any[] = [];
     if (effectiveData.template_key) items = await loadScheduleItems(effectiveData.template_key);
     setLoading(false);
-    const onboardingDone = localStorage.getItem(`fonmusic_onboarding_${clientId}`);
-    if (!onboardingDone) setShowOnboarding(true);
     if (effectiveData.template_key && effectiveData.music_mode !== "manual" && items.length > 0) {
   scheduleRef.current = items;
   // Находим текущую станцию по расписанию
@@ -596,21 +522,6 @@ const station = effectiveData.station_key || "best_of_radio";
     } catch { setIsLoadingTrack(false); }
   };
 
-  const handleOnboardingDone = () => {
-  const clientId = localStorage.getItem("fonmusic_client_id");
-  if (clientId) localStorage.setItem(`fonmusic_onboarding_${clientId}`, "done");
-  setShowOnboarding(false);
-  // Запускаем музыку сразу после нажатия кнопки пользователем
-  setTimeout(() => {
-    if (audioRef.current && !isPlaying) {
-      audioRef.current.play().catch(() => {});
-      setIsPlaying(true);
-    } else if (!audioRef.current) {
-      loadPlaylist(currentStationRef.current);
-    }
-  }, 100);
-};
-
   const handleTimeUpdate = () => {
     if (audioRef.current) {
       setCurrentTime(audioRef.current.currentTime);
@@ -637,15 +548,6 @@ const station = effectiveData.station_key || "best_of_radio";
     </main>
   );
 
-  if (showOnboarding) return <OnboardingScreen client={client} scheduleItems={scheduleItems} currentStation={currentStation} onDone={() => {
-  const clientId = localStorage.getItem("fonmusic_client_id");
-  if (clientId) localStorage.setItem(`fonmusic_onboarding_${clientId}`, "done");
-  setShowOnboarding(false);
-  if (audioRef.current) {
-    audioRef.current.play().catch(() => {});
-    setIsPlaying(true);
-  }
-}} />;
   return (
     <main style={{ minHeight: "100vh", fontFamily: "Georgia, serif", color: "#E8EFF5", position: "relative", overflow: "hidden", background: "#070B14" }}>
       <audio ref={audioRef} onTimeUpdate={handleTimeUpdate} onLoadedMetadata={handleTimeUpdate}
@@ -666,9 +568,6 @@ const station = effectiveData.station_key || "best_of_radio";
           <span style={{ fontSize: 16, fontWeight: 700, color: "#fff" }}>FonMusic</span>
         </div>
         <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-          <button onClick={() => setShowOnboarding(true)} style={{ fontSize: 11, color: "#4a5a6a", background: "transparent", border: "none", cursor: "pointer", fontFamily: "Georgia, serif" }}>
-            Как это работает?
-          </button>
           <button onClick={async () => {
   const playerId = localStorage.getItem("fonmusic_player_id");
   const clientId = localStorage.getItem("fonmusic_client_id");
