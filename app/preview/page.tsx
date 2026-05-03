@@ -41,14 +41,14 @@ const STATIONS = [
 
 const BUSINESS_STATION_KEYS = ["cozy_coffee", "cocktail_dinner", "shopping_vibes", "spa_garden", "workout", "on_the_rocks", "lounge", "luxury", "cool_calm", "best_of_radio"];
 const GENRE_PLAYLISTS = [
-  { key: "genre_jazz", name: "Jazz", desc: "627 треков", icon: "🎷", color1: "#102033", color2: "#21415F", accent: "#60A5FA" },
-  { key: "genre_chillout", name: "Chillout", desc: "674 трека", icon: "🌙", color1: "#101827", color2: "#27385F", accent: "#8BA7BE" },
-  { key: "genre_deep_house", name: "Deep House", desc: "157 треков", icon: "🌃", color1: "#111729", color2: "#1E3A5F", accent: "#3B82F6" },
-  { key: "genre_lofi", name: "Lo-fi", desc: "243 трека", icon: "🎧", color1: "#172018", color2: "#31523A", accent: "#22C55E" },
+  { key: "genre_jazz", name: "Jazz", desc: "633 трека", icon: "🎷", color1: "#102033", color2: "#21415F", accent: "#60A5FA" },
+  { key: "genre_chillout", name: "Chillout", desc: "682 трека", icon: "🌙", color1: "#101827", color2: "#27385F", accent: "#8BA7BE" },
+  { key: "genre_deep_house", name: "Deep House", desc: "161 трек", icon: "🌃", color1: "#111729", color2: "#1E3A5F", accent: "#3B82F6" },
+  { key: "genre_lofi", name: "Lo-fi", desc: "247 треков", icon: "🎧", color1: "#172018", color2: "#31523A", accent: "#22C55E" },
   { key: "genre_bossa_nova", name: "Bossa Nova", desc: "59 треков", icon: "🌴", color1: "#1F1A0A", color2: "#5A4315", accent: "#C9A84C" },
-  { key: "genre_ambient", name: "Ambient", desc: "459 треков", icon: "☁️", color1: "#0E1D22", color2: "#26525F", accent: "#06B6D4" },
-  { key: "genre_smooth_jazz", name: "Smooth Jazz", desc: "251 трек", icon: "🎺", color1: "#1A1200", color2: "#4A3500", accent: "#F59E0B" },
-  { key: "genre_pop", name: "Pop", desc: "1794 трека", icon: "✨", color1: "#211026", color2: "#5B2866", accent: "#EC4899" },
+  { key: "genre_ambient", name: "Ambient", desc: "469 треков", icon: "☁️", color1: "#0E1D22", color2: "#26525F", accent: "#06B6D4" },
+  { key: "genre_smooth_jazz", name: "Smooth Jazz", desc: "252 трека", icon: "🎺", color1: "#1A1200", color2: "#4A3500", accent: "#F59E0B" },
+  { key: "genre_pop", name: "Pop", desc: "1802 трека", icon: "✨", color1: "#211026", color2: "#5B2866", accent: "#EC4899" },
 ];
 
 const GENRE_STATIONS = GENRE_PLAYLISTS.map(g => ({ ...g, desc: "Жанровая подборка" }));
@@ -562,18 +562,17 @@ const station = effectiveData.station_key || "best_of_radio";
               <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                 <span style={{ fontSize: 18 }}>📅</span>
                 <div style={{ textAlign: "left" }}>
-                <div style={{ fontSize: 13, fontWeight: 700, color: "#fff", marginBottom: 4 }}>Как меняется музыка в течение дня</div>
-                  <div style={{ fontSize: 11, color: "#22C55E" }}>Автоматическое расписание · активно</div>
+                <div style={{ fontSize: 15, fontWeight: 700, color: "#fff" }}>Расписание</div>
                 </div>
               </div>
-              <span style={{ color: accent, fontSize: 11 }}>LIVE</span>
+              <span style={{ color: "#8BA7BE", fontSize: 12, fontWeight: 700 }}>Просмотр</span>
             </div>
 
             {showTimeline && (
   <div style={{ borderTop: "1px solid rgba(255,255,255,0.06)", padding: "12px 16px" }}>
     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
-      <div style={{ fontSize: 12, color: "#22C55E" }}>🔄 Музыка автоматически меняется в течение дня</div>
-      <div style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 6, fontSize: 11, color: "#8BA7BE", padding: "4px 10px", flexShrink: 0 }}>
+      <div style={{ fontSize: 13, color: "#8BA7BE" }}>Сегодня</div>
+      <div style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, fontSize: 12, color: "#8BA7BE", padding: "5px 10px", flexShrink: 0 }}>
         Только просмотр
       </div>
     </div>
@@ -585,15 +584,15 @@ const station = effectiveData.station_key || "best_of_radio";
                     const isCurrent = currentSlot === item;
                     return (
                       <div key={i} style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 12px", borderRadius: 10, background: isCurrent ? `${accent}12` : "rgba(255,255,255,0.02)", border: `1px solid ${isCurrent ? `${accent}40` : "rgba(255,255,255,0.04)"}`, transition: "all 0.3s" }}>
-                        <div style={{ width: 40, flexShrink: 0 }}>
-                          <div style={{ fontSize: 12, fontWeight: 700, color: isCurrent ? accent : "#8BA7BE" }}>{fmtTime(item.start_time)}</div>
+                        <div style={{ width: 44, flexShrink: 0 }}>
+                          <div style={{ fontSize: 14, fontWeight: 700, color: isCurrent ? accent : "#8BA7BE" }}>{fmtTime(item.start_time)}</div>
                         </div>
                         <div style={{ width: 2, height: 20, background: isCurrent ? accent : "rgba(255,255,255,0.1)", borderRadius: 1, flexShrink: 0 }} />
                         <span style={{ fontSize: 16 }}>{st?.icon || "🎵"}</span>
                         <div style={{ flex: 1 }}>
-                          <div style={{ fontSize: 13, fontWeight: isCurrent ? 700 : 400, color: isCurrent ? "#fff" : "#8BA7BE" }}>{st?.name || stKey}</div>
+                          <div style={{ fontSize: 14, fontWeight: isCurrent ? 700 : 400, color: isCurrent ? "#fff" : "#8BA7BE" }}>{st?.name || stKey}</div>
                         </div>
-                        {isCurrent && <div style={{ fontSize: 10, color: accent, fontWeight: 700 }}>СЕЙЧАС</div>}
+                        {isCurrent && <div style={{ fontSize: 11, color: accent, fontWeight: 700 }}>Сейчас</div>}
                       </div>
                     );
                   })}

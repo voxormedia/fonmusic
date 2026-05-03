@@ -47,14 +47,14 @@ const STATIONS = [
 
 const BUSINESS_STATION_KEYS = ["cozy_coffee", "cocktail_dinner", "shopping_vibes", "spa_garden", "workout", "on_the_rocks", "lounge", "luxury", "cool_calm", "best_of_radio"];
 const GENRE_PLAYLISTS = [
-  { key: "genre_jazz", name: "Jazz", desc: "627 треков", icon: "🎷", color1: "#102033", color2: "#21415F", accent: "#60A5FA" },
-  { key: "genre_chillout", name: "Chillout", desc: "674 трека", icon: "🌙", color1: "#101827", color2: "#27385F", accent: "#8BA7BE" },
-  { key: "genre_deep_house", name: "Deep House", desc: "157 треков", icon: "🌃", color1: "#111729", color2: "#1E3A5F", accent: "#3B82F6" },
-  { key: "genre_lofi", name: "Lo-fi", desc: "243 трека", icon: "🎧", color1: "#172018", color2: "#31523A", accent: "#22C55E" },
+  { key: "genre_jazz", name: "Jazz", desc: "633 трека", icon: "🎷", color1: "#102033", color2: "#21415F", accent: "#60A5FA" },
+  { key: "genre_chillout", name: "Chillout", desc: "682 трека", icon: "🌙", color1: "#101827", color2: "#27385F", accent: "#8BA7BE" },
+  { key: "genre_deep_house", name: "Deep House", desc: "161 трек", icon: "🌃", color1: "#111729", color2: "#1E3A5F", accent: "#3B82F6" },
+  { key: "genre_lofi", name: "Lo-fi", desc: "247 треков", icon: "🎧", color1: "#172018", color2: "#31523A", accent: "#22C55E" },
   { key: "genre_bossa_nova", name: "Bossa Nova", desc: "59 треков", icon: "🌴", color1: "#1F1A0A", color2: "#5A4315", accent: "#C9A84C" },
-  { key: "genre_ambient", name: "Ambient", desc: "459 треков", icon: "☁️", color1: "#0E1D22", color2: "#26525F", accent: "#06B6D4" },
-  { key: "genre_smooth_jazz", name: "Smooth Jazz", desc: "251 трек", icon: "🎺", color1: "#1A1200", color2: "#4A3500", accent: "#F59E0B" },
-  { key: "genre_pop", name: "Pop", desc: "1794 трека", icon: "✨", color1: "#211026", color2: "#5B2866", accent: "#EC4899" },
+  { key: "genre_ambient", name: "Ambient", desc: "469 треков", icon: "☁️", color1: "#0E1D22", color2: "#26525F", accent: "#06B6D4" },
+  { key: "genre_smooth_jazz", name: "Smooth Jazz", desc: "252 трека", icon: "🎺", color1: "#1A1200", color2: "#4A3500", accent: "#F59E0B" },
+  { key: "genre_pop", name: "Pop", desc: "1802 трека", icon: "✨", color1: "#211026", color2: "#5B2866", accent: "#EC4899" },
 ];
 
 const GENRE_STATIONS = GENRE_PLAYLISTS.map(g => ({ ...g, desc: "Жанровая подборка" }));
@@ -102,6 +102,21 @@ function toMin(time: string) {
 
 function fmtTime(time: string) { return time.slice(0, 5); }
 
+function normalizeScheduleSlots(slots: any[]) {
+  const cleanSlots = slots
+    .map((slot) => ({
+      ...slot,
+      start_time: `${(slot.start_time || "00:00").slice(0, 5)}:00`,
+      selected_station_key: slot.selected_station_key || slot.stations?.station_key || "best_of_radio",
+    }))
+    .sort((a, b) => toMin(a.start_time) - toMin(b.start_time));
+
+  return cleanSlots.map((slot, index) => ({
+    ...slot,
+    end_time: cleanSlots[(index + 1) % cleanSlots.length]?.start_time || "23:59:00",
+  }));
+}
+
 function fmtSec(sec: number) {
   if (!sec || isNaN(sec)) return "0:00";
   return `${Math.floor(sec / 60)}:${Math.floor(sec % 60).toString().padStart(2, "0")}`;
@@ -144,10 +159,10 @@ function getCurrentSlot(items: any[]) {
 
 // ===== РЕДАКТОР РАСПИСАНИЯ =====
 function ScheduleEditor({ client, scheduleItems, accent, onSave, onCancel }: any) {
-  const [slots, setSlots] = useState(scheduleItems.map((item: any) => ({
+  const [slots, setSlots] = useState(normalizeScheduleSlots(scheduleItems.map((item: any) => ({
     ...item,
     selected_station_key: item.stations?.station_key || "best_of_radio",
-  })));
+  }))));
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
@@ -155,6 +170,14 @@ function ScheduleEditor({ client, scheduleItems, accent, onSave, onCancel }: any
     setSaving(true);
     setError("");
     try {
+      const normalizedSlots = normalizeScheduleSlots(slots);
+      const uniqueTimes = new Set(normalizedSlots.map((slot: any) => slot.start_time));
+      if (uniqueTimes.size !== normalizedSlots.length) {
+        setError("Есть одинаковое время. Измените один из слотов.");
+        setSaving(false);
+        return;
+      }
+
       const headers = {
         "apikey": SUPABASE_KEY,
         "Authorization": `Bearer ${SUPABASE_KEY}`,
@@ -189,7 +212,7 @@ function ScheduleEditor({ client, scheduleItems, accent, onSave, onCancel }: any
         });
       }
 
-      const newSlots = slots.map((slot: any) => ({
+      const newSlots = normalizedSlots.map((slot: any) => ({
         template_id: templateId,
         start_time: slot.start_time,
         end_time: slot.end_time,
@@ -201,7 +224,7 @@ function ScheduleEditor({ client, scheduleItems, accent, onSave, onCancel }: any
         body: JSON.stringify(newSlots),
       });
 
-      const updatedItems = slots.map((slot: any) => ({
+      const updatedItems = normalizedSlots.map((slot: any) => ({
         ...slot,
         stations: { station_key: slot.selected_station_key },
       }));
@@ -215,16 +238,34 @@ function ScheduleEditor({ client, scheduleItems, accent, onSave, onCancel }: any
 
   return (
     <div>
-      <div style={{ fontSize: 12, color: "#8BA7BE", marginBottom: 12 }}>
-        Выберите атмосферу для каждого временного слота:
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+        <div style={{ fontSize: 13, color: "#8BA7BE" }}>
+          Время и музыка
+        </div>
+        <button
+          onClick={() => setSlots(normalizeScheduleSlots([...slots, {
+            start_time: "12:00:00",
+            end_time: "13:00:00",
+            selected_station_key: "best_of_radio",
+          }]))}
+          style={{ padding: "7px 10px", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 9, color: "#fff", fontSize: 13, cursor: "pointer", fontFamily: "Georgia, serif" }}
+        >
+          + Слот
+        </button>
       </div>
       <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 16 }}>
         {slots.map((slot: any, i: number) => (
           <div key={i} style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <div style={{ fontSize: 12, fontWeight: 700, color: accent, width: 44, flexShrink: 0 }}>
-              {fmtTime(slot.start_time)}
-            </div>
-            <div style={{ width: 2, height: 20, background: "rgba(255,255,255,0.1)", borderRadius: 1, flexShrink: 0 }} />
+            <input
+              type="time"
+              value={fmtTime(slot.start_time)}
+              onChange={e => {
+                const updated = [...slots];
+                updated[i] = { ...updated[i], start_time: `${e.target.value}:00` };
+                setSlots(updated);
+              }}
+              style={{ width: 92, padding: "8px 10px", background: "#162435", border: `1px solid ${accent}40`, borderRadius: 10, color: "#fff", fontSize: 14, fontWeight: 700, outline: "none", fontFamily: "Georgia, serif" }}
+            />
             <select
               value={slot.selected_station_key}
               onChange={e => {
@@ -238,20 +279,28 @@ function ScheduleEditor({ client, scheduleItems, accent, onSave, onCancel }: any
                 <option key={s.key} value={s.key}>{s.icon} {s.name}</option>
               ))}
             </select>
+            {slots.length > 1 && (
+              <button
+                onClick={() => setSlots(slots.filter((_: any, index: number) => index !== i))}
+                style={{ width: 34, height: 34, borderRadius: 9, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", color: "#8BA7BE", cursor: "pointer", fontSize: 14 }}
+              >
+                ×
+              </button>
+            )}
           </div>
         ))}
       </div>
       {error && <div style={{ fontSize: 12, color: "#EF4444", marginBottom: 10 }}>{error}</div>}
       <div style={{ display: "flex", gap: 8 }}>
         <button onClick={save} disabled={saving} style={{ flex: 1, padding: "11px", background: accent, border: "none", borderRadius: 10, color: "#070B14", fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "Georgia, serif" }}>
-          {saving ? "Сохраняем..." : "✓ Сохранить расписание"}
+          {saving ? "Сохраняем..." : "Сохранить"}
         </button>
         <button onClick={onCancel} style={{ padding: "11px 16px", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, color: "#8BA7BE", fontSize: 13, cursor: "pointer", fontFamily: "Georgia, serif" }}>
          Отмена
         </button>
       </div>
       <div style={{ fontSize: 11, color: "#4a5a6a", marginTop: 8, textAlign: "center" }}>
-        Изменения сохранятся и будут работать автоматически
+        Применится к этой точке
       </div>
       <button onClick={async () => {
         if (!confirm("Вернуться к стандартному расписанию для вашего типа заведения?")) return;
@@ -270,7 +319,7 @@ function ScheduleEditor({ client, scheduleItems, accent, onSave, onCancel }: any
         onCancel();
         window.location.reload();
       }} style={{ width: "100%", marginTop: 6, padding: "9px", background: "transparent", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 10, color: "#4a5a6a", fontSize: 11, cursor: "pointer", fontFamily: "Georgia, serif" }}>
-        ↩ Вернуться к стандартному расписанию
+        Стандартное расписание
       </button>
     </div>
   );
@@ -837,19 +886,18 @@ const station = effectiveData.station_key || "best_of_radio";
               <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                 <span style={{ fontSize: 18 }}>📅</span>
                 <div style={{ textAlign: "left" }}>
-                <div style={{ fontSize: 13, fontWeight: 700, color: "#fff", marginBottom: 4 }}>Как меняется музыка в течение дня</div>
-                  <div style={{ fontSize: 11, color: "#22C55E" }}>Автоматическое расписание · активно</div>
+                <div style={{ fontSize: 15, fontWeight: 700, color: "#fff" }}>Расписание</div>
                 </div>
               </div>
-              <span style={{ color: accent, fontSize: 11 }}>LIVE</span>
+              <span style={{ color: "#22C55E", fontSize: 12, fontWeight: 700 }}>Авто</span>
             </div>
 
             {showTimeline && (
   <div style={{ borderTop: "1px solid rgba(255,255,255,0.06)", padding: "12px 16px" }}>
     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
-      <div style={{ fontSize: 12, color: "#22C55E" }}>🔄 Музыка автоматически меняется в течение дня</div>
-      <button onClick={() => setShowScheduleEditor(!showScheduleEditor)} style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 6, cursor: "pointer", fontSize: 11, color: "#8BA7BE", padding: "4px 10px", fontFamily: "Georgia, serif", flexShrink: 0 }}>
-        ✏️ Изменить
+      <div style={{ fontSize: 13, color: "#8BA7BE" }}>{showScheduleEditor ? "Редактирование" : "Сегодня"}</div>
+      <button onClick={() => setShowScheduleEditor(!showScheduleEditor)} style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, cursor: "pointer", fontSize: 13, color: "#fff", padding: "6px 12px", fontFamily: "Georgia, serif", flexShrink: 0 }}>
+        {showScheduleEditor ? "Готово" : "Изменить"}
       </button>
     </div>
 
@@ -861,15 +909,15 @@ const station = effectiveData.station_key || "best_of_radio";
                       const isCurrent = currentSlot === item;
                       return (
                         <div key={i} style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 12px", borderRadius: 10, background: isCurrent ? `${accent}12` : "rgba(255,255,255,0.02)", border: `1px solid ${isCurrent ? `${accent}40` : "rgba(255,255,255,0.04)"}`, transition: "all 0.3s" }}>
-                          <div style={{ width: 40, flexShrink: 0 }}>
-                            <div style={{ fontSize: 12, fontWeight: 700, color: isCurrent ? accent : "#8BA7BE" }}>{fmtTime(item.start_time)}</div>
+                          <div style={{ width: 44, flexShrink: 0 }}>
+                            <div style={{ fontSize: 14, fontWeight: 700, color: isCurrent ? accent : "#8BA7BE" }}>{fmtTime(item.start_time)}</div>
                           </div>
                           <div style={{ width: 2, height: 20, background: isCurrent ? accent : "rgba(255,255,255,0.1)", borderRadius: 1, flexShrink: 0 }} />
                           <span style={{ fontSize: 16 }}>{st?.icon || "🎵"}</span>
                           <div style={{ flex: 1 }}>
-                            <div style={{ fontSize: 13, fontWeight: isCurrent ? 700 : 400, color: isCurrent ? "#fff" : "#8BA7BE" }}>{st?.name || stKey}</div>
+                            <div style={{ fontSize: 14, fontWeight: isCurrent ? 700 : 400, color: isCurrent ? "#fff" : "#8BA7BE" }}>{st?.name || stKey}</div>
                           </div>
-                          {isCurrent && <div style={{ fontSize: 10, color: accent, fontWeight: 700 }}>СЕЙЧАС</div>}
+                          {isCurrent && <div style={{ fontSize: 11, color: accent, fontWeight: 700 }}>Сейчас</div>}
                         </div>
                       );
                     })}
