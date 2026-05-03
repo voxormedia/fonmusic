@@ -204,7 +204,13 @@ export default function DashboardPage() {
 
   useEffect(() => {
     const clientId = localStorage.getItem("fonmusic_client_id");
-    if (!clientId) { window.location.href = "/login"; return; }
+    const sessionExpiry = localStorage.getItem("fonmusic_session_expiry");
+    if (!clientId || !sessionExpiry || new Date(sessionExpiry) < new Date()) {
+      localStorage.removeItem("fonmusic_client_id");
+      localStorage.removeItem("fonmusic_session_expiry");
+      window.location.href = "/login";
+      return;
+    }
     initClient(clientId);
   }, []);
 
@@ -284,7 +290,11 @@ export default function DashboardPage() {
     setTimeout(() => { setPasswordSuccess(""); setShowChangePassword(false); }, 2000);
   };
 
-  const logout = () => { localStorage.removeItem("fonmusic_client_id"); window.location.href = "/login"; };
+  const logout = () => {
+    localStorage.removeItem("fonmusic_client_id");
+    localStorage.removeItem("fonmusic_session_expiry");
+    window.location.href = "/login";
+  };
 
   const maxLocations = PLAN_MAX_LOCATIONS[client?.plan || "trial"] || 1;
   const canAddLocation = locations.length < maxLocations;

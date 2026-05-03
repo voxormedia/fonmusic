@@ -71,6 +71,9 @@ export default function LoginPage() {
 
     const client = data[0];
     localStorage.setItem("fonmusic_client_id", client.id);
+    const sessionExpiry = new Date();
+    sessionExpiry.setDate(sessionExpiry.getDate() + 30);
+    localStorage.setItem("fonmusic_session_expiry", sessionExpiry.toISOString());
 
     if (client.subscription_status === "expired") {
       window.location.href = "/dashboard";

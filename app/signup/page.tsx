@@ -32,10 +32,6 @@ async function sb(path: string, options?: RequestInit) {
   return text ? JSON.parse(text) : null;
 }
 
-function generatePassword(): string {
-  return Math.floor(1000 + Math.random() * 9000).toString();
-}
-
 export default function SignupPage() {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
@@ -99,8 +95,7 @@ export default function SignupPage() {
       return;
     }
 
-    // Генерируем 4-значный пароль
-    const password = generatePassword();
+    const password = smsCode;
 
     // Создаём клиента
     const demoExpires = new Date();
@@ -145,17 +140,6 @@ export default function SignupPage() {
       }),
     });
 
-    // Отправляем SMS с паролем
-    try {
-      await fetch("/api/send-sms", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ phone, password, name }),
-      });
-    } catch {
-      // SMS не критично — продолжаем
-    }
-
     await fetch("/api/telegram", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -168,6 +152,9 @@ export default function SignupPage() {
     });
 
     localStorage.setItem("fonmusic_client_id", client[0].id);
+    const sessionExpiry = new Date();
+    sessionExpiry.setDate(sessionExpiry.getDate() + 30);
+    localStorage.setItem("fonmusic_session_expiry", sessionExpiry.toISOString());
     window.location.href = "/dashboard";
   };
 
