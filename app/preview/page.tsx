@@ -48,6 +48,19 @@ const DEMO_SCHEDULE_ITEMS = [
   { start_time: "18:00:00", end_time: "22:00:00", stations: { station_key: "shopping_vibes" } },
   { start_time: "22:00:00", end_time: "01:00:00", stations: { station_key: "luxury" } },
 ];
+
+function hasDemoAccess(account: any) {
+  if (!account) return false;
+  if (account.subscription_status === "demo" || account.plan === "trial") return true;
+  const demoUntil = account.demo_expires_at || account.trial_until;
+  return Boolean(demoUntil && new Date(demoUntil) > new Date());
+}
+
+function hasScheduleAccess(account: any) {
+  const plan = account?.plan || "";
+  return hasDemoAccess(account) || ["standard", "premium"].includes(plan);
+}
+
 const GENRE_PLAYLISTS = [
   { key: "genre_jazz", name: "Jazz", desc: "633 трека", icon: "🎷", color1: "#102033", color2: "#21415F", accent: "#60A5FA" },
   { key: "genre_chillout", name: "Chillout", desc: "682 трека", icon: "🌙", color1: "#101827", color2: "#27385F", accent: "#8BA7BE" },
@@ -288,11 +301,7 @@ export default function PlayerPage() {
   const stObj = ALL_STATIONS.find(s => s.key === currentStation) || STATIONS[9];
   const accent = stObj.accent;
   const isAutoMode = client?.music_mode !== "manual" && scheduleRef.current.length > 0;
-  const clientPlan = client?.plan || "";
-  const canUseSchedule =
-    client?.subscription_status === "demo" ||
-    clientPlan === "trial" ||
-    ["standard", "premium"].includes(clientPlan);
+  const canUseSchedule = hasScheduleAccess(client);
 
   useEffect(() => {
     if (isPlaying) {
@@ -341,6 +350,10 @@ export default function PlayerPage() {
     ...c,
     ...effectiveData,
     id: c.id,
+    plan: effectiveData.plan || c.plan,
+    subscription_status: effectiveData.subscription_status || c.subscription_status,
+    demo_expires_at: effectiveData.demo_expires_at || c.demo_expires_at,
+    trial_until: effectiveData.trial_until || c.trial_until,
     _locationId: locationData?.id || null,
     location_name: locationData?.name,
   };
@@ -353,12 +366,7 @@ const station = effectiveData.station_key || "best_of_radio";
     setCurrentStation(station);
     currentStationRef.current = station;
     let items: any[] = [];
-    const plan = effectiveData.plan || c.plan || "trial";
-    const subscriptionStatus = effectiveData.subscription_status || c.subscription_status;
-    const scheduleAllowed =
-      subscriptionStatus === "demo" ||
-      plan === "trial" ||
-      ["standard", "premium"].includes(plan);
+    const scheduleAllowed = hasScheduleAccess(mergedClient);
     const templateKey = effectiveData.template_key || effectiveData.default_template_key || c.template_key || c.default_template_key || "cafe_standard";
     if (scheduleAllowed) items = await loadScheduleItems(templateKey);
     if (scheduleAllowed && items.length === 0) {
