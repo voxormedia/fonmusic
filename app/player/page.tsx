@@ -25,19 +25,29 @@ const STATION_ID_MAP: Record<string, number> = {
 };
 
 const STATIONS = [
-  { key: "cozy_coffee",    name: "Для кофеен",    icon: "☕", desc: "Уютная и спокойная",   color1: "#2D1B0E", color2: "#8B4513", accent: "#C9A84C" },
-  { key: "cocktail_dinner",name: "Для ужина",      icon: "🍽️", desc: "Элегантная атмосфера",color1: "#0A0F2E", color2: "#1a2a6c", accent: "#3B82F6" },
-  { key: "cool_calm",      name: "Спокойная",      icon: "🎵", desc: "Тихо и расслабленно", color1: "#0D1F2D", color2: "#1B4F72", accent: "#60A5FA" },
-  { key: "lounge",         name: "Лаунж",          icon: "🏨", desc: "Лобби и лаунж",       color1: "#1A0A2E", color2: "#4a1a8a", accent: "#A78BFA" },
-  { key: "luxury",         name: "Премиальная",    icon: "✨", desc: "Роскошь и стиль",      color1: "#1A1200", color2: "#4a3500", accent: "#F59E0B" },
-  { key: "shopping_vibes", name: "Для магазинов",  icon: "🛍️", desc: "Энергичная и бодрая", color1: "#0A1F2E", color2: "#0e4d6e", accent: "#06B6D4" },
-  { key: "spa_garden",     name: "Для SPA",        icon: "💆", desc: "Расслабляющая",        color1: "#0A1F0F", color2: "#1a4a2a", accent: "#22C55E" },
-  { key: "workout",        name: "Для фитнеса",    icon: "💪", desc: "Максимальная энергия", color1: "#1F0A0A", color2: "#6a1a1a", accent: "#EF4444" },
-  { key: "on_the_rocks",   name: "Для баров",      icon: "🎸", desc: "Вечерняя атмосфера",  color1: "#1A0A0F", color2: "#4a1a2a", accent: "#EC4899" },
+  { key: "cozy_coffee",    name: "Кофейня",        icon: "☕", desc: "Уютно и спокойно",      color1: "#2D1B0E", color2: "#8B4513", accent: "#C9A84C" },
+  { key: "cocktail_dinner",name: "Ресторан / ужин", icon: "🍽️", desc: "Элегантный вечер",     color1: "#0A0F2E", color2: "#1a2a6c", accent: "#3B82F6" },
+  { key: "cool_calm",      name: "Тихий фон",      icon: "🎵", desc: "Ненавязчиво",          color1: "#0D1F2D", color2: "#1B4F72", accent: "#60A5FA" },
+  { key: "lounge",         name: "Отель / lounge", icon: "🏨", desc: "Лобби и лаунж",         color1: "#1A0A2E", color2: "#4a1a8a", accent: "#A78BFA" },
+  { key: "luxury",         name: "Бутик / премиум", icon: "✨", desc: "Стильно и дорого",      color1: "#1A1200", color2: "#4a3500", accent: "#F59E0B" },
+  { key: "shopping_vibes", name: "Магазин",        icon: "🛍️", desc: "Энергично и бодро",     color1: "#0A1F2E", color2: "#0e4d6e", accent: "#06B6D4" },
+  { key: "spa_garden",     name: "SPA / салон",    icon: "💆", desc: "Мягко и расслабленно",  color1: "#0A1F0F", color2: "#1a4a2a", accent: "#22C55E" },
+  { key: "workout",        name: "Фитнес",         icon: "💪", desc: "Максимальная энергия",  color1: "#1F0A0A", color2: "#6a1a1a", accent: "#EF4444" },
+  { key: "on_the_rocks",   name: "Бар",            icon: "🎸", desc: "Вечерний драйв",        color1: "#1A0A0F", color2: "#4a1a2a", accent: "#EC4899" },
   { key: "best_of_radio",  name: "Универсальная",  icon: "⭐", desc: "Подходит для всех",    color1: "#0A1020", color2: "#1a2a4a", accent: "#3B82F6" },
 ];
 
-const QUICK_STATIONS = ["cozy_coffee", "cocktail_dinner", "cool_calm", "shopping_vibes"];
+const BUSINESS_STATION_KEYS = ["cozy_coffee", "cocktail_dinner", "shopping_vibes", "spa_garden", "workout", "on_the_rocks", "lounge", "luxury", "cool_calm", "best_of_radio"];
+const GENRE_PLAYLISTS = [
+  { name: "Jazz", desc: "1453 трека", icon: "🎷" },
+  { name: "Chillout", desc: "872 трека", icon: "🌙" },
+  { name: "Deep House", desc: "222 трека", icon: "🌃" },
+  { name: "Lo-fi", desc: "284 трека", icon: "🎧" },
+  { name: "Bossa Nova", desc: "145 треков", icon: "🌴" },
+  { name: "Ambient", desc: "599 треков", icon: "☁️" },
+  { name: "Smooth Jazz", desc: "416 треков", icon: "🎺" },
+  { name: "Pop", desc: "2191 трек", icon: "✨" },
+];
 
 async function sb(path: string, options?: RequestInit) {
   const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
@@ -259,8 +269,8 @@ export default function PlayerPage() {
   const [isLoadingTrack, setIsLoadingTrack] = useState(false);
   const [currentStation, setCurrentStation] = useState("best_of_radio");
   const [volume, setVolume] = useState(0.8);
-  const [showAllStations, setShowAllStations] = useState(false);
-  const [showTimeline, setShowTimeline] = useState(false);
+  const [collectionTab, setCollectionTab] = useState<"business" | "genre">("business");
+  const [showTimeline, setShowTimeline] = useState(true);
   const [showScheduleEditor, setShowScheduleEditor] = useState(false);
   const [showBox, setShowBox] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -269,6 +279,7 @@ export default function PlayerPage() {
   const [scheduleItems, setScheduleItems] = useState<any[]>([]);
   const [trackFade, setTrackFade] = useState(1);
   const [eqBars, setEqBars] = useState([4, 8, 12, 7, 10, 5, 9, 6]);
+  const [, setNowTick] = useState(Date.now());
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const scheduleRef = useRef<any[]>([]);
@@ -308,6 +319,7 @@ export default function PlayerPage() {
 
   useEffect(() => {
     const interval = setInterval(() => {
+      setNowTick(Date.now());
       if (clientRef.current?.music_mode !== "manual") checkSchedule();
     }, 60000);
     return () => clearInterval(interval);
@@ -519,7 +531,7 @@ const station = effectiveData.station_key || "best_of_radio";
   const switchStation = async (stationKey: string) => {
     if (audioRef.current) audioRef.current.pause();
     setCurrentStation(stationKey); currentStationRef.current = stationKey;
-    setIsPlaying(false); setShowAllStations(false); setIsLoadingTrack(true);
+    setIsPlaying(false); setIsLoadingTrack(true);
     setProgress(0); setCurrentTime(0); lastScheduleStation.current = stationKey;
     if (clientRef.current) clientRef.current.music_mode = "manual";
     const ownerPath = client._locationId ? `locations?id=eq.${client._locationId}` : `clients?id=eq.${client.id}`;
@@ -663,10 +675,10 @@ const station = effectiveData.station_key || "best_of_radio";
         </div>
       </header>
 
-      <div style={{ position: "relative", zIndex: 10, maxWidth: 600, margin: "0 auto", padding: "0 20px 40px" }}>
+      <div className="player-shell" style={{ position: "relative", zIndex: 10, maxWidth: 1080, margin: "0 auto", padding: "0 20px 40px" }}>
 
         {/* 1. ПЛЕЕР */}
-        <div style={{ background: "rgba(255,255,255,0.04)", backdropFilter: "blur(20px)", border: `1px solid ${accent}30`, borderRadius: 28, padding: "32px 28px", marginBottom: 12, boxShadow: `0 0 60px ${accent}15, inset 0 1px 0 rgba(255,255,255,0.08)`, transition: "border-color 1s, box-shadow 1s" }}>
+        <div className="player-card" style={{ background: "rgba(255,255,255,0.04)", backdropFilter: "blur(20px)", border: `1px solid ${accent}30`, borderRadius: 28, padding: "32px 28px", marginBottom: 12, boxShadow: `0 0 60px ${accent}15, inset 0 1px 0 rgba(255,255,255,0.08)`, transition: "border-color 1s, box-shadow 1s" }}>
           <div style={{ textAlign: "center", marginBottom: 24 }}>
             <div style={{ width: 140, height: 140, borderRadius: 22, background: `linear-gradient(135deg, ${stObj.color1}, ${stObj.color2})`, margin: "0 auto 16px", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 64, border: `1px solid ${accent}40`, boxShadow: `0 0 40px ${accent}30`, transition: "all 1s ease", opacity: trackFade }}>
               {stObj.icon}
@@ -753,18 +765,22 @@ const station = effectiveData.station_key || "best_of_radio";
           </div>
         </div>
 
-        {/* 2. СМЕНИТЬ МУЗЫКУ */}
-        <div style={{ background: "rgba(255,255,255,0.04)", backdropFilter: "blur(20px)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 18, overflow: "hidden", marginBottom: 10 }}>
+        {/* 2. МУЗЫКАЛЬНЫЕ ПОДБОРКИ */}
+        <div className="collections-card" style={{ background: "rgba(255,255,255,0.04)", backdropFilter: "blur(20px)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 18, overflow: "hidden", marginBottom: 10 }}>
           <div style={{ padding: "16px 20px 12px" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
               <span style={{ fontSize: 18 }}>🎛️</span>
               <div>
-                <div style={{ fontSize: 13, fontWeight: 700, color: "#fff" }}>Сменить музыку прямо сейчас</div>
-                <div style={{ fontSize: 11, color: "#8BA7BE" }}>Музыку можно сменить вручную. Расписание продолжит работать автоматически.</div>
+                <div style={{ fontSize: 13, fontWeight: 700, color: "#fff" }}>Музыкальные подборки</div>
+                <div style={{ fontSize: 11, color: "#8BA7BE" }}>Выберите сценарий для бизнеса или музыкальный стиль.</div>
               </div>
             </div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6, marginBottom: 10, padding: 4, background: "rgba(255,255,255,0.03)", borderRadius: 12 }}>
+              <button onClick={() => setCollectionTab("business")} style={{ padding: "9px 10px", border: "none", borderRadius: 9, cursor: "pointer", background: collectionTab === "business" ? `${accent}22` : "transparent", color: collectionTab === "business" ? accent : "#8BA7BE", fontSize: 12, fontWeight: 800, fontFamily: "Georgia, serif" }}>По заведению</button>
+              <button onClick={() => setCollectionTab("genre")} style={{ padding: "9px 10px", border: "none", borderRadius: 9, cursor: "pointer", background: collectionTab === "genre" ? `${accent}22` : "transparent", color: collectionTab === "genre" ? accent : "#8BA7BE", fontSize: 12, fontWeight: 800, fontFamily: "Georgia, serif" }}>По жанру</button>
+            </div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 10 }}>
-              {QUICK_STATIONS.map(key => {
+              {collectionTab === "business" && BUSINESS_STATION_KEYS.map(key => {
                 const s = STATIONS.find(st => st.key === key)!;
                 const isActive = currentStation === key;
                 return (
@@ -777,33 +793,28 @@ const station = effectiveData.station_key || "best_of_radio";
                   </button>
                 );
               })}
+              {collectionTab === "genre" && GENRE_PLAYLISTS.map(g => (
+                <button key={g.name} disabled style={{ padding: "12px", borderRadius: 12, cursor: "default", fontFamily: "Georgia, serif", textAlign: "left", background: "rgba(255,255,255,0.025)", border: "1px solid rgba(255,255,255,0.06)", opacity: 0.75 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+                    <span style={{ fontSize: 18 }}>{g.icon}</span>
+                    <div style={{ fontSize: 12, fontWeight: 700, color: "#fff" }}>{g.name}</div>
+                  </div>
+                  <div style={{ fontSize: 10, color: "#4a5a6a" }}>{g.desc} · готовим</div>
+                </button>
+              ))}
             </div>
-            <button onClick={() => setShowAllStations(!showAllStations)} style={{ width: "100%", padding: "9px", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 10, cursor: "pointer", fontFamily: "Georgia, serif", fontSize: 12, color: "#8BA7BE" }}>
-              {showAllStations ? "Скрыть ▲" : "Посмотреть все атмосферы ▼"}
-            </button>
-          </div>
-          {showAllStations && (
-            <div style={{ borderTop: "1px solid rgba(255,255,255,0.06)", padding: "8px", maxHeight: 280, overflowY: "auto" }}>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6, padding: "4px" }}>
-                {STATIONS.filter(s => !QUICK_STATIONS.includes(s.key)).map(s => {
-                  const isActive = currentStation === s.key;
-                  return (
-                    <button key={s.key} onClick={() => switchStation(s.key)} style={{ padding: "12px", borderRadius: 12, cursor: "pointer", textAlign: "left", fontFamily: "Georgia, serif", background: isActive ? `${s.accent}15` : "rgba(255,255,255,0.03)", border: `1px solid ${isActive ? `${s.accent}40` : "rgba(255,255,255,0.06)"}` }}>
-                      <div style={{ fontSize: 20, marginBottom: 4 }}>{s.icon}</div>
-                      <div style={{ fontSize: 12, fontWeight: isActive ? 700 : 400, color: isActive ? s.accent : "#fff", marginBottom: 2 }}>{s.name}</div>
-                      <div style={{ fontSize: 10, color: "#4a5a6a" }}>{s.desc}</div>
-                    </button>
-                  );
-                })}
+            {collectionTab === "genre" && (
+              <div style={{ fontSize: 11, color: "#8BA7BE", lineHeight: 1.5, padding: "10px 12px", borderRadius: 10, background: "rgba(201,168,76,0.08)", border: "1px solid rgba(201,168,76,0.16)" }}>
+                Жанровые плейлисты уже выбраны из metadata.csv. После загрузки папок на R2 эти кнопки станут активными.
               </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
 
         {/* 3. ТАЙМЛАЙН + РЕДАКТОР */}
         {canUseSchedule && scheduleItems.length > 0 && (
-          <div style={{ background: "rgba(255,255,255,0.04)", backdropFilter: "blur(20px)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 18, overflow: "hidden", marginBottom: 10 }}>
-            <button onClick={() => { setShowTimeline(!showTimeline); setShowScheduleEditor(false); }} style={{ width: "100%", padding: "16px 20px", background: "transparent", border: "none", cursor: "pointer", fontFamily: "Georgia, serif", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <div className="schedule-card" style={{ background: "rgba(255,255,255,0.04)", backdropFilter: "blur(20px)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 18, overflow: "hidden", marginBottom: 10 }}>
+            <div style={{ width: "100%", padding: "16px 20px", background: "transparent", border: "none", fontFamily: "Georgia, serif", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
               <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                 <span style={{ fontSize: 18 }}>📅</span>
                 <div style={{ textAlign: "left" }}>
@@ -811,8 +822,8 @@ const station = effectiveData.station_key || "best_of_radio";
                   <div style={{ fontSize: 11, color: "#22C55E" }}>Автоматическое расписание · активно</div>
                 </div>
               </div>
-              <span style={{ color: accent, fontSize: 11 }}>{showTimeline ? "▲" : "▼"}</span>
-            </button>
+              <span style={{ color: accent, fontSize: 11 }}>LIVE</span>
+            </div>
 
             {showTimeline && (
   <div style={{ borderTop: "1px solid rgba(255,255,255,0.06)", padding: "12px 16px" }}>
@@ -864,7 +875,7 @@ const station = effectiveData.station_key || "best_of_radio";
         )}
 
         {!canUseSchedule && (
-          <div style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 18, padding: "16px 20px", marginBottom: 10 }}>
+          <div className="schedule-card" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 18, padding: "16px 20px", marginBottom: 10 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
               <span style={{ fontSize: 18 }}>📅</span>
               <div style={{ flex: 1 }}>
@@ -877,7 +888,7 @@ const station = effectiveData.station_key || "best_of_radio";
         )}
 
     {/* 4. BOX */}
-<div style={{ background: "rgba(201,168,76,0.06)", backdropFilter: "blur(20px)", border: "1px solid rgba(201,168,76,0.2)", borderRadius: 18, overflow: "hidden" }}>
+<div className="box-card" style={{ background: "rgba(201,168,76,0.06)", backdropFilter: "blur(20px)", border: "1px solid rgba(201,168,76,0.2)", borderRadius: 18, overflow: "hidden" }}>
   <button onClick={() => setShowBox(!showBox)} style={{ width: "100%", padding: "16px 20px", background: "transparent", border: "none", cursor: "pointer", fontFamily: "Georgia, serif", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
     <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
       <span style={{ fontSize: 18 }}>📦</span>
@@ -939,6 +950,23 @@ const station = effectiveData.station_key || "best_of_radio";
         ::-webkit-scrollbar { width:4px; }
         ::-webkit-scrollbar-track { background:transparent; }
         ::-webkit-scrollbar-thumb { background:rgba(255,255,255,0.1); border-radius:2px; }
+        .player-shell {
+          display: grid;
+          grid-template-columns: minmax(0, 600px) minmax(320px, 420px);
+          gap: 14px;
+          align-items: start;
+        }
+        .player-card, .collections-card, .box-card { grid-column: 1; }
+        .schedule-card {
+          grid-column: 2;
+          grid-row: 1 / span 2;
+          position: sticky;
+          top: 18px;
+        }
+        @media (max-width: 980px) {
+          .player-shell { display: block; max-width: 600px !important; }
+          .schedule-card { position: static; }
+        }
       `}</style>
     </main>
   );
