@@ -46,6 +46,14 @@ const STATIONS = [
 ];
 
 const BUSINESS_STATION_KEYS = ["cozy_coffee", "cocktail_dinner", "shopping_vibes", "spa_garden", "workout", "on_the_rocks", "lounge", "luxury", "cool_calm", "best_of_radio"];
+const DEMO_SCHEDULE_ITEMS = [
+  { start_time: "01:00:00", end_time: "09:00:00", stations: { station_key: "luxury" } },
+  { start_time: "09:00:00", end_time: "11:00:00", stations: { station_key: "best_of_radio" } },
+  { start_time: "11:00:00", end_time: "17:00:00", stations: { station_key: "shopping_vibes" } },
+  { start_time: "17:00:00", end_time: "18:00:00", stations: { station_key: "best_of_radio" } },
+  { start_time: "18:00:00", end_time: "22:00:00", stations: { station_key: "shopping_vibes" } },
+  { start_time: "22:00:00", end_time: "01:00:00", stations: { station_key: "luxury" } },
+];
 const GENRE_PLAYLISTS = [
   { key: "genre_jazz", name: "Jazz", desc: "633 трека", icon: "🎷", color1: "#102033", color2: "#21415F", accent: "#60A5FA" },
   { key: "genre_chillout", name: "Chillout", desc: "682 трека", icon: "🌙", color1: "#101827", color2: "#27385F", accent: "#8BA7BE" },
@@ -155,6 +163,16 @@ function getCurrentSlot(items: any[]) {
     if (inRange) return item;
   }
   return null;
+}
+
+function getCurrentScheduleStation(items: any[], fallbackStation: string) {
+  const cur = new Date().getHours() * 60 + new Date().getMinutes();
+  for (const item of items) {
+    const s = toMin(item.start_time), e = toMin(item.end_time);
+    const inRange = e < s ? cur >= s || cur < e : cur >= s && cur < e;
+    if (inRange && item.stations?.station_key) return item.stations.station_key;
+  }
+  return fallbackStation;
 }
 
 // ===== РЕДАКТОР РАСПИСАНИЯ =====
@@ -485,22 +503,20 @@ const station = effectiveData.station_key || "best_of_radio";
     setCurrentStation(station);
     currentStationRef.current = station;
     let items: any[] = [];
-    if (effectiveData.template_key) items = await loadScheduleItems(effectiveData.template_key);
-    setLoading(false);
-    if (effectiveData.template_key && effectiveData.music_mode !== "manual" && items.length > 0) {
-  scheduleRef.current = items;
-  // Находим текущую станцию по расписанию
-  const cur = new Date().getHours() * 60 + new Date().getMinutes();
-  let scheduleStation = station;
-  for (const item of items) {
-    const s = toMin(item.start_time), e = toMin(item.end_time);
-    const inRange = e < s ? cur >= s || cur < e : cur >= s && cur < e;
-    if (inRange && item.stations?.station_key) {
-      scheduleStation = item.stations.station_key;
-      lastScheduleStation.current = scheduleStation;
-      break;
+    const plan = c.plan || "trial";
+    const scheduleAllowed = ["trial", "standard", "premium"].includes(plan);
+    const templateKey = effectiveData.template_key || effectiveData.default_template_key || c.template_key || c.default_template_key || "cafe_standard";
+    if (scheduleAllowed) items = await loadScheduleItems(templateKey);
+    if (scheduleAllowed && items.length === 0) {
+      items = DEMO_SCHEDULE_ITEMS;
+      setScheduleItems(items);
+      scheduleRef.current = items;
     }
-  }
+    setLoading(false);
+    if (scheduleAllowed && effectiveData.music_mode !== "manual" && items.length > 0) {
+  scheduleRef.current = items;
+  const scheduleStation = getCurrentScheduleStation(items, station);
+  lastScheduleStation.current = scheduleStation;
   setCurrentStation(scheduleStation);
   currentStationRef.current = scheduleStation;
   loadPlaylist(scheduleStation);
