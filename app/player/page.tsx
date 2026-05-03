@@ -251,6 +251,7 @@ export default function PlayerPage() {
   const [client, setClient] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [screen, setScreen] = useState<"player" | "device_limit">("player");
+  const [isClosingOtherSessions, setIsClosingOtherSessions] = useState(false);
   const [playlist, setPlaylist] = useState<string[]>([]);
   const [currentTrack, setCurrentTrack] = useState("");
   const [trackIndex, setTrackIndex] = useState(0);
@@ -538,6 +539,20 @@ const station = effectiveData.station_key || "best_of_radio";
       audioRef.current.currentTime = (val / 100) * audioRef.current.duration;
   };
 
+  const closeOtherSessions = async () => {
+    setIsClosingOtherSessions(true);
+    const playerId = localStorage.getItem("fonmusic_player_id");
+    const clientId = clientRef.current?.id || client?.id || localStorage.getItem("fonmusic_client_id");
+    if (!playerId || !clientId) {
+      window.location.reload();
+      return;
+    }
+
+    const locationFilter = clientRef.current?._locationId ? `&location_id=eq.${clientRef.current._locationId}` : "";
+    await sb(`player_devices?client_id=eq.${clientId}${locationFilter}&player_id=neq.${playerId}`, { method: "DELETE" });
+    window.location.reload();
+  };
+
   const nextSlot = getNextSlot(scheduleItems);
   const nextSlotSt = nextSlot ? STATIONS.find(s => s.key === nextSlot.stations?.station_key) : null;
   const minLeft = getMinLeft(scheduleItems);
@@ -550,11 +565,14 @@ const station = effectiveData.station_key || "best_of_radio";
         <h1 style={{ fontSize: 22, fontWeight: 700, color: "#fff", marginBottom: 12, lineHeight: 1.25 }}>
           Плеер уже открыт на другом устройстве
         </h1>
-        <p style={{ fontSize: 14, color: "#8BA7BE", lineHeight: 1.7, marginBottom: 28 }}>
-          Пожалуйста, закройте плеер на предыдущем устройстве или в другом браузере, затем обновите эту страницу.
+        <p style={{ fontSize: 14, color: "#8BA7BE", lineHeight: 1.7, marginBottom: 24 }}>
+          Можно закрыть старую сессию удалённо и запустить музыку здесь. Это удобно, если плеер остался открытым дома, на работе или в другом браузере.
         </p>
-        <button onClick={() => window.location.reload()} style={{ width: "100%", padding: "16px", background: "#C9A84C", border: "none", borderRadius: 12, color: "#080C12", fontSize: 15, fontWeight: 700, cursor: "pointer", fontFamily: "Georgia, serif", marginBottom: 14 }}>
-          🔄 Обновить страницу
+        <button onClick={closeOtherSessions} disabled={isClosingOtherSessions} style={{ width: "100%", padding: "16px", background: "#C9A84C", border: "none", borderRadius: 12, color: "#080C12", fontSize: 15, fontWeight: 700, cursor: isClosingOtherSessions ? "default" : "pointer", fontFamily: "Georgia, serif", marginBottom: 12, opacity: isClosingOtherSessions ? 0.75 : 1 }}>
+          {isClosingOtherSessions ? "Закрываем другие сессии..." : "▶ Запустить музыку здесь"}
+        </button>
+        <button onClick={() => window.location.reload()} style={{ width: "100%", padding: "13px", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 12, color: "#8BA7BE", fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "Georgia, serif", marginBottom: 14 }}>
+          🔄 Я уже закрыл, обновить
         </button>
         <a href="/dashboard" style={{ display: "block", fontSize: 13, color: "#8BA7BE", textDecoration: "none" }}>
           ← Вернуться в кабинет
