@@ -16,6 +16,14 @@ const STATION_FOLDERS: Record<string, string> = {
   workout: "Workout",
   on_the_rocks: "The Rocks",
   best_of_radio: "Best Of Radio",
+  genre_jazz: "Jazz",
+  genre_chillout: "Chillout",
+  genre_deep_house: "Deep House",
+  genre_lofi: "Lo-fi",
+  genre_bossa_nova: "Bossa Nova",
+  genre_ambient: "Ambient",
+  genre_smooth_jazz: "Smooth Jazz",
+  genre_pop: "Pop",
 };
 
 const STATION_ID_MAP: Record<string, number> = {
@@ -39,15 +47,23 @@ const STATIONS = [
 
 const BUSINESS_STATION_KEYS = ["cozy_coffee", "cocktail_dinner", "shopping_vibes", "spa_garden", "workout", "on_the_rocks", "lounge", "luxury", "cool_calm", "best_of_radio"];
 const GENRE_PLAYLISTS = [
-  { name: "Jazz", desc: "1453 трека", icon: "🎷" },
-  { name: "Chillout", desc: "872 трека", icon: "🌙" },
-  { name: "Deep House", desc: "222 трека", icon: "🌃" },
-  { name: "Lo-fi", desc: "284 трека", icon: "🎧" },
-  { name: "Bossa Nova", desc: "145 треков", icon: "🌴" },
-  { name: "Ambient", desc: "599 треков", icon: "☁️" },
-  { name: "Smooth Jazz", desc: "416 треков", icon: "🎺" },
-  { name: "Pop", desc: "2191 трек", icon: "✨" },
+  { key: "genre_jazz", name: "Jazz", desc: "627 треков", icon: "🎷", color1: "#102033", color2: "#21415F", accent: "#60A5FA" },
+  { key: "genre_chillout", name: "Chillout", desc: "674 трека", icon: "🌙", color1: "#101827", color2: "#27385F", accent: "#8BA7BE" },
+  { key: "genre_deep_house", name: "Deep House", desc: "157 треков", icon: "🌃", color1: "#111729", color2: "#1E3A5F", accent: "#3B82F6" },
+  { key: "genre_lofi", name: "Lo-fi", desc: "243 трека", icon: "🎧", color1: "#172018", color2: "#31523A", accent: "#22C55E" },
+  { key: "genre_bossa_nova", name: "Bossa Nova", desc: "59 треков", icon: "🌴", color1: "#1F1A0A", color2: "#5A4315", accent: "#C9A84C" },
+  { key: "genre_ambient", name: "Ambient", desc: "459 треков", icon: "☁️", color1: "#0E1D22", color2: "#26525F", accent: "#06B6D4" },
+  { key: "genre_smooth_jazz", name: "Smooth Jazz", desc: "251 трек", icon: "🎺", color1: "#1A1200", color2: "#4A3500", accent: "#F59E0B" },
+  { key: "genre_pop", name: "Pop", desc: "1794 трека", icon: "✨", color1: "#211026", color2: "#5B2866", accent: "#EC4899" },
 ];
+
+const GENRE_STATIONS = GENRE_PLAYLISTS.map(g => ({ ...g, desc: "Жанровая подборка" }));
+const ALL_STATIONS = [...STATIONS, ...GENRE_STATIONS];
+type PlaylistTrack = string | { f: string; folder?: string; url?: string };
+
+function encodePath(path: string) {
+  return path.split("/").map(encodeURIComponent).join("/");
+}
 
 async function sb(path: string, options?: RequestInit) {
   const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
@@ -65,14 +81,18 @@ async function sb(path: string, options?: RequestInit) {
   return text ? JSON.parse(text) : null;
 }
 
-function getTrackName(t: string) {
-  const clean = t.replace(".mp3", "").replace(/_/g, " ");
+function getTrackFile(t: PlaylistTrack) {
+  return typeof t === "string" ? t : t.f || "";
+}
+
+function getTrackName(t: PlaylistTrack) {
+  const clean = getTrackFile(t).replace(".mp3", "").replace(/_/g, " ");
   const parts = clean.split("-");
   return parts.slice(1).join(" ").trim() || clean;
 }
 
-function getArtistName(t: string) {
-  return t.replace(".mp3", "").replace(/_/g, " ").split("-")[0]?.trim() || "Jamendo";
+function getArtistName(t: PlaylistTrack) {
+  return getTrackFile(t).replace(".mp3", "").replace(/_/g, " ").split("-")[0]?.trim() || "Jamendo";
 }
 
 function toMin(time: string) {
@@ -262,8 +282,8 @@ export default function PlayerPage() {
   const [loading, setLoading] = useState(true);
   const [screen, setScreen] = useState<"player" | "device_limit" | "session_taken">("player");
   const [isClosingOtherSessions, setIsClosingOtherSessions] = useState(false);
-  const [playlist, setPlaylist] = useState<string[]>([]);
-  const [currentTrack, setCurrentTrack] = useState("");
+  const [playlist, setPlaylist] = useState<PlaylistTrack[]>([]);
+  const [currentTrack, setCurrentTrack] = useState<PlaylistTrack | null>(null);
   const [trackIndex, setTrackIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isLoadingTrack, setIsLoadingTrack] = useState(false);
@@ -289,7 +309,7 @@ export default function PlayerPage() {
   const eqAnimRef = useRef<any>(null);
   const heartbeatRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const stObj = STATIONS.find(s => s.key === currentStation) || STATIONS[9];
+  const stObj = ALL_STATIONS.find(s => s.key === currentStation) || STATIONS[9];
   const accent = stObj.accent;
   const isAutoMode = client?.music_mode !== "manual" && scheduleRef.current.length > 0;
   const canUseSchedule = ['standard', 'premium', 'trial'].includes(client?.plan || 'trial');
@@ -479,27 +499,25 @@ const station = effectiveData.station_key || "best_of_radio";
     setIsLoadingTrack(true);
     const folder = STATION_FOLDERS[stationKey] || "Best Of Radio";
     try {
-      const res = await fetch(`${BASE_URL}/${folder.replace(/ /g, "%20")}/playlist.json`);
+      const res = await fetch(`${BASE_URL}/${encodePath(folder)}/playlist.json`);
       const raw = await res.json();
-      const tracks: string[] = raw.map((t: any) => typeof t === "string" ? t : t.f).filter(Boolean);
+      const tracks: PlaylistTrack[] = raw
+        .map((t: any) => typeof t === "string" ? t : { f: t.f, folder: t.folder, url: t.url })
+        .filter((t: PlaylistTrack) => getTrackFile(t));
       const shuffled = [...tracks].sort(() => Math.random() - 0.5);
-      setPlaylist(shuffled); setTrackIndex(0); setCurrentTrack(shuffled[0] || "");
+      setPlaylist(shuffled); setTrackIndex(0); setCurrentTrack(shuffled[0] || null);
       setIsLoadingTrack(false);
       setTimeout(() => playTrack(0, shuffled, stationKey), 100);
     } catch { setIsLoadingTrack(false); }
   };
 
-    const playTrack = (index: number, tracks?: any[], stationKey?: string) => {
-  const list = tracks || playlist;
-  const station = stationKey || currentStationRef.current;
-  if (!list.length) return;
-  const item = list[index % list.length];
-  const trackFile = typeof item === "string" ? item : item.f;
-  const trackFolder = typeof item === "string"
-    ? (STATION_FOLDERS[station] || "Best Of Radio")
-    : (item.folder || STATION_FOLDERS[station] || "Best Of Radio");
-  const url = `${BASE_URL}/${trackFolder.replace(/ /g, "%20")}/${encodeURIComponent(trackFile)}`;
-  const track = trackFile;
+  const playTrack = (index: number, tracks?: PlaylistTrack[], stationKey?: string) => {
+    const list = tracks || playlist;
+    const station = stationKey || currentStationRef.current;
+    if (!list.length) return;
+    const track = list[index % list.length];
+    const folder = typeof track === "string" ? STATION_FOLDERS[station] || "Best Of Radio" : track.folder || STATION_FOLDERS[station] || "Best Of Radio";
+    const url = typeof track === "string" || !track.url ? `${BASE_URL}/${encodePath(folder)}/${encodeURIComponent(getTrackFile(track))}` : track.url;
     setTrackFade(0);
     setTimeout(() => {
       if (audioRef.current) {
@@ -543,11 +561,13 @@ const station = effectiveData.station_key || "best_of_radio";
     setClient((prev: any) => ({ ...prev, music_mode: "manual", station_key: stationKey }));
     const folder = STATION_FOLDERS[stationKey] || "Best Of Radio";
     try {
-      const res = await fetch(`${BASE_URL}/${folder.replace(/ /g, "%20")}/playlist.json`);
+      const res = await fetch(`${BASE_URL}/${encodePath(folder)}/playlist.json`);
       const raw = await res.json();
-      const tracks: string[] = raw.map((t: any) => typeof t === "string" ? t : t.f).filter(Boolean);
+      const tracks: PlaylistTrack[] = raw
+        .map((t: any) => typeof t === "string" ? t : { f: t.f, folder: t.folder, url: t.url })
+        .filter((t: PlaylistTrack) => getTrackFile(t));
       const shuffled = [...tracks].sort(() => Math.random() - 0.5);
-      setPlaylist(shuffled); setTrackIndex(0); setCurrentTrack(shuffled[0] || "");
+      setPlaylist(shuffled); setTrackIndex(0); setCurrentTrack(shuffled[0] || null);
       setIsLoadingTrack(false);
       setTimeout(() => playTrack(0, shuffled, stationKey), 100);
     } catch { setIsLoadingTrack(false); }
@@ -797,50 +817,16 @@ const station = effectiveData.station_key || "best_of_radio";
                   </button>
                 );
               })}
-              {collectionTab === "genre" && GENRE_PLAYLISTS.map(g => {
-  const isActive = currentStation === g.name;
-  return (
-    <button key={g.name} onClick={async () => {
-      if (audioRef.current) audioRef.current.pause();
-      setCurrentStation(g.name); currentStationRef.current = g.name;
-      setIsPlaying(false); setIsLoadingTrack(true);
-      setProgress(0); setCurrentTime(0);
-      if (clientRef.current) clientRef.current.music_mode = "manual";
-      try {
-        const res = await fetch(`${BASE_URL}/${g.name.replace(/ /g, "%20")}/playlist.json`);
-        const raw = await res.json();
-        const tracks: any[] = raw.map((t: any) =>
-          typeof t === "string" ? { f: t, folder: g.name } : t
-        ).filter(Boolean);
-        const shuffled = [...tracks].sort(() => Math.random() - 0.5);
-        setPlaylist(shuffled as any); setTrackIndex(0); setCurrentTrack(shuffled[0]?.f || "");
-        setIsLoadingTrack(false);
-        setTimeout(() => {
-          if (audioRef.current && shuffled[0]) {
-            const track = shuffled[0];
-            const folder = (track.folder || g.name).replace(/ /g, "%20");
-            audioRef.current.src = `${BASE_URL}/${folder}/${encodeURIComponent(track.f)}`;
-            audioRef.current.volume = volume;
-            audioRef.current.load();
-            audioRef.current.play().then(() => setIsPlaying(true)).catch(() => setIsPlaying(false));
-          }
-        }, 100);
-      } catch { setIsLoadingTrack(false); }
-    }} style={{ padding: "12px", borderRadius: 12, cursor: "pointer", fontFamily: "Georgia, serif", textAlign: "left", background: isActive ? "rgba(201,168,76,0.15)" : "rgba(255,255,255,0.03)", border: `1px solid ${isActive ? "rgba(201,168,76,0.4)" : "rgba(255,255,255,0.06)"}` }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-        <span style={{ fontSize: 18 }}>{g.icon}</span>
-        <div style={{ fontSize: 12, fontWeight: isActive ? 700 : 400, color: isActive ? "#C9A84C" : "#fff" }}>{g.name}</div>
-      </div>
-      <div style={{ fontSize: 10, color: "#4a5a6a" }}>{g.desc}</div>
-    </button>
-  );
-})}
+              {collectionTab === "genre" && GENRE_PLAYLISTS.map(g => (
+                <button key={g.key} onClick={() => switchStation(g.key)} style={{ padding: "12px", borderRadius: 12, cursor: "pointer", fontFamily: "Georgia, serif", textAlign: "left", background: currentStation === g.key ? `${g.accent}15` : "rgba(255,255,255,0.03)", border: `1px solid ${currentStation === g.key ? `${g.accent}40` : "rgba(255,255,255,0.06)"}` }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+                    <span style={{ fontSize: 18 }}>{g.icon}</span>
+                    <div style={{ fontSize: 12, fontWeight: currentStation === g.key ? 800 : 700, color: currentStation === g.key ? g.accent : "#fff" }}>{g.name}</div>
+                  </div>
+                  <div style={{ fontSize: 10, color: "#4a5a6a" }}>{g.desc}</div>
+                </button>
+              ))}
             </div>
-            {collectionTab === "genre" && (
-              <div style={{ fontSize: 11, color: "#8BA7BE", lineHeight: 1.5, padding: "10px 12px", borderRadius: 10, background: "rgba(201,168,76,0.08)", border: "1px solid rgba(201,168,76,0.16)" }}>
-
-              </div>
-            )}
           </div>
         </div>
 
