@@ -95,6 +95,7 @@ const T = {
     auto_mode: "🔄 Авто",
     manual_mode: "✋ Вручную",
     open_player: "▶ Открыть плеер",
+    preview: "👁 Посмотреть без влияния",
     manage: "🎛️ Управлять",
     no_locations: "Нет заведений",
     no_locations_sub: "Добавьте первое заведение",
@@ -146,6 +147,7 @@ const T = {
     auto_mode: "🔄 Avto",
     manual_mode: "✋ Qo'lda",
     open_player: "▶ Pleerni ochish",
+    preview: "👁 Ta'sir qilmasdan ko'rish",
     manage: "🎛️ Boshqarish",
     no_locations: "Muassasalar yo'q",
     no_locations_sub: "Birinchi muassasani qo'shing",
@@ -242,6 +244,10 @@ export default function DashboardPage() {
     } else {
       window.location.href = `/player?location_id=${loc.id}`;
     }
+  };
+
+  const openPreview = (loc: any) => {
+    window.location.href = `/preview?location_id=${loc.id}`;
   };
 
   const addLocation = async () => {
@@ -452,6 +458,14 @@ export default function DashboardPage() {
           >
             ▶ {primaryLocation ? launchText : t.add_location_btn}
           </button>
+          {primaryLocation && (
+            <button
+              onClick={() => openPreview(primaryLocation)}
+              style={{ display: "block", width: "100%", maxWidth: 340, margin: "10px auto 0", padding: "13px 18px", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 12, color: "#8BA7BE", fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: "Georgia, serif" }}
+            >
+              {t.preview}
+            </button>
+          )}
         </section>
 
         {/* МОЁ ЗАВЕДЕНИЕ */}
@@ -472,9 +486,14 @@ export default function DashboardPage() {
                   <span style={{ fontSize: 13, color: primaryIsWeb ? "#3B82F6" : "#C9A84C" }}>{primaryIsWeb ? t.web_player : t.box_device}</span>
                 </div>
               </div>
-              <button onClick={() => openLocation(primaryLocation)} style={{ width: "100%", maxWidth: 220, padding: "14px 18px", background: primaryIsWeb ? "#3B82F6" : "#C9A84C", border: "none", borderRadius: 12, color: primaryIsWeb ? "#fff" : "#080C12", fontSize: 15, fontWeight: 800, cursor: "pointer", fontFamily: "Georgia, serif" }}>
-                ▶ {primaryIsWeb ? openText : t.manage}
-              </button>
+              <div style={{ width: "100%", maxWidth: 240, display: "flex", flexDirection: "column", gap: 8 }}>
+                <button onClick={() => openLocation(primaryLocation)} style={{ width: "100%", padding: "14px 18px", background: primaryIsWeb ? "#3B82F6" : "#C9A84C", border: "none", borderRadius: 12, color: primaryIsWeb ? "#fff" : "#080C12", fontSize: 15, fontWeight: 800, cursor: "pointer", fontFamily: "Georgia, serif" }}>
+                  ▶ {primaryIsWeb ? openText : t.manage}
+                </button>
+                <button onClick={() => openPreview(primaryLocation)} style={{ width: "100%", padding: "12px 14px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 12, color: "#8BA7BE", fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "Georgia, serif" }}>
+                  {t.preview}
+                </button>
+              </div>
             </div>
           ) : (
             <div style={{ textAlign: "center" }}>
@@ -502,7 +521,7 @@ export default function DashboardPage() {
         </section>
 
         <button onClick={() => setShowMore(!showMore)} style={{ width: "100%", padding: "13px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 12, color: "#8BA7BE", fontSize: 13, cursor: "pointer", fontFamily: "Georgia, serif", marginBottom: showMore ? 16 : 0 }}>
-          {showMore ? "Скрыть дополнительные настройки" : "⚙ Дополнительно: поддержка, пароль, сертификат"}
+          {showMore ? "Скрыть дополнительные настройки" : "⚙ Дополнительно: поддержка и пароль"}
         </button>
 
         {showMore && (
@@ -515,10 +534,20 @@ export default function DashboardPage() {
                     const stationInfo = STATION_LABELS[loc.station_key] || { ru: loc.station_key, uz: loc.station_key, icon: "🎵" };
                     const isWeb = loc.device_type !== "box";
                     return (
-                      <button key={loc.id} onClick={() => openLocation(loc)} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, padding: "14px 16px", background: "#0D1B2A", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 12, cursor: "pointer", fontFamily: "Georgia, serif", textAlign: "left" }}>
-                        <span style={{ color: "#fff", fontWeight: 700 }}>{loc.name}</span>
-                        <span style={{ color: "#8BA7BE", fontSize: 12 }}>{stationInfo.icon} {stationInfo[lang]} · {isWeb ? t.web_player : t.box_device}</span>
-                      </button>
+                      <div key={loc.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, padding: "14px 16px", background: "#0D1B2A", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 12, flexWrap: "wrap" }}>
+                        <div>
+                          <div style={{ color: "#fff", fontWeight: 700, marginBottom: 4 }}>{loc.name}</div>
+                          <div style={{ color: "#8BA7BE", fontSize: 12 }}>{stationInfo.icon} {stationInfo[lang]} · {isWeb ? t.web_player : t.box_device}</div>
+                        </div>
+                        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                          <button onClick={() => openLocation(loc)} style={{ padding: "9px 12px", background: isWeb ? "#3B82F6" : "#C9A84C", border: "none", borderRadius: 9, color: isWeb ? "#fff" : "#080C12", fontSize: 12, fontWeight: 800, cursor: "pointer", fontFamily: "Georgia, serif" }}>
+                            {isWeb ? t.open_player : t.manage}
+                          </button>
+                          <button onClick={() => openPreview(loc)} style={{ padding: "9px 12px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 9, color: "#8BA7BE", fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "Georgia, serif" }}>
+                            {t.preview}
+                          </button>
+                        </div>
+                      </div>
                     );
                   })}
                 </div>
