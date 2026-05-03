@@ -489,13 +489,17 @@ const station = effectiveData.station_key || "best_of_radio";
     } catch { setIsLoadingTrack(false); }
   };
 
-  const playTrack = (index: number, tracks?: string[], stationKey?: string) => {
-    const list = tracks || playlist;
-    const station = stationKey || currentStationRef.current;
-    if (!list.length) return;
-    const track = list[index % list.length];
-    const folder = STATION_FOLDERS[station] || "Best Of Radio";
-    const url = `${BASE_URL}/${folder.replace(/ /g, "%20")}/${encodeURIComponent(track)}`;
+    const playTrack = (index: number, tracks?: any[], stationKey?: string) => {
+  const list = tracks || playlist;
+  const station = stationKey || currentStationRef.current;
+  if (!list.length) return;
+  const item = list[index % list.length];
+  const trackFile = typeof item === "string" ? item : item.f;
+  const trackFolder = typeof item === "string"
+    ? (STATION_FOLDERS[station] || "Best Of Radio")
+    : (item.folder || STATION_FOLDERS[station] || "Best Of Radio");
+  const url = `${BASE_URL}/${trackFolder.replace(/ /g, "%20")}/${encodeURIComponent(trackFile)}`;
+  const track = trackFile;
     setTrackFade(0);
     setTimeout(() => {
       if (audioRef.current) {
@@ -805,13 +809,17 @@ const station = effectiveData.station_key || "best_of_radio";
       try {
         const res = await fetch(`${BASE_URL}/${g.name.replace(/ /g, "%20")}/playlist.json`);
         const raw = await res.json();
-        const tracks: string[] = raw.map((t: any) => typeof t === "string" ? t : t.f).filter(Boolean);
+        const tracks: any[] = raw.map((t: any) =>
+          typeof t === "string" ? { f: t, folder: g.name } : t
+        ).filter(Boolean);
         const shuffled = [...tracks].sort(() => Math.random() - 0.5);
-        setPlaylist(shuffled); setTrackIndex(0); setCurrentTrack(shuffled[0] || "");
+        setPlaylist(shuffled as any); setTrackIndex(0); setCurrentTrack(shuffled[0]?.f || "");
         setIsLoadingTrack(false);
         setTimeout(() => {
           if (audioRef.current && shuffled[0]) {
-            audioRef.current.src = `${BASE_URL}/${g.name.replace(/ /g, "%20")}/${encodeURIComponent(shuffled[0])}`;
+            const track = shuffled[0];
+            const folder = (track.folder || g.name).replace(/ /g, "%20");
+            audioRef.current.src = `${BASE_URL}/${folder}/${encodeURIComponent(track.f)}`;
             audioRef.current.volume = volume;
             audioRef.current.load();
             audioRef.current.play().then(() => setIsPlaying(true)).catch(() => setIsPlaying(false));
