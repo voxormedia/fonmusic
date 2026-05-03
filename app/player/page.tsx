@@ -379,7 +379,11 @@ export default function PlayerPage() {
   const stObj = ALL_STATIONS.find(s => s.key === currentStation) || STATIONS[9];
   const accent = stObj.accent;
   const isAutoMode = client?.music_mode !== "manual" && scheduleRef.current.length > 0;
-  const canUseSchedule = ['standard', 'premium', 'trial'].includes(client?.plan || 'trial');
+  const clientPlan = client?.plan || "";
+  const canUseSchedule =
+    client?.subscription_status === "demo" ||
+    clientPlan === "trial" ||
+    ["standard", "premium"].includes(clientPlan);
 
   useEffect(() => {
     if (isPlaying) {
@@ -503,8 +507,12 @@ const station = effectiveData.station_key || "best_of_radio";
     setCurrentStation(station);
     currentStationRef.current = station;
     let items: any[] = [];
-    const plan = c.plan || "trial";
-    const scheduleAllowed = ["trial", "standard", "premium"].includes(plan);
+    const plan = effectiveData.plan || c.plan || "trial";
+    const subscriptionStatus = effectiveData.subscription_status || c.subscription_status;
+    const scheduleAllowed =
+      subscriptionStatus === "demo" ||
+      plan === "trial" ||
+      ["standard", "premium"].includes(plan);
     const templateKey = effectiveData.template_key || effectiveData.default_template_key || c.template_key || c.default_template_key || "cafe_standard";
     if (scheduleAllowed) items = await loadScheduleItems(templateKey);
     if (scheduleAllowed && items.length === 0) {
