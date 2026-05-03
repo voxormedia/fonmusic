@@ -793,19 +793,44 @@ const station = effectiveData.station_key || "best_of_radio";
                   </button>
                 );
               })}
-              {collectionTab === "genre" && GENRE_PLAYLISTS.map(g => (
-                <button key={g.name} disabled style={{ padding: "12px", borderRadius: 12, cursor: "default", fontFamily: "Georgia, serif", textAlign: "left", background: "rgba(255,255,255,0.025)", border: "1px solid rgba(255,255,255,0.06)", opacity: 0.75 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-                    <span style={{ fontSize: 18 }}>{g.icon}</span>
-                    <div style={{ fontSize: 12, fontWeight: 700, color: "#fff" }}>{g.name}</div>
-                  </div>
-                  <div style={{ fontSize: 10, color: "#4a5a6a" }}>{g.desc} · готовим</div>
-                </button>
-              ))}
+              {collectionTab === "genre" && GENRE_PLAYLISTS.map(g => {
+  const isActive = currentStation === g.name;
+  return (
+    <button key={g.name} onClick={async () => {
+      if (audioRef.current) audioRef.current.pause();
+      setCurrentStation(g.name); currentStationRef.current = g.name;
+      setIsPlaying(false); setIsLoadingTrack(true);
+      setProgress(0); setCurrentTime(0);
+      if (clientRef.current) clientRef.current.music_mode = "manual";
+      try {
+        const res = await fetch(`${BASE_URL}/${g.name.replace(/ /g, "%20")}/playlist.json`);
+        const raw = await res.json();
+        const tracks: string[] = raw.map((t: any) => typeof t === "string" ? t : t.f).filter(Boolean);
+        const shuffled = [...tracks].sort(() => Math.random() - 0.5);
+        setPlaylist(shuffled); setTrackIndex(0); setCurrentTrack(shuffled[0] || "");
+        setIsLoadingTrack(false);
+        setTimeout(() => {
+          if (audioRef.current && shuffled[0]) {
+            audioRef.current.src = `${BASE_URL}/${g.name.replace(/ /g, "%20")}/${encodeURIComponent(shuffled[0])}`;
+            audioRef.current.volume = volume;
+            audioRef.current.load();
+            audioRef.current.play().then(() => setIsPlaying(true)).catch(() => setIsPlaying(false));
+          }
+        }, 100);
+      } catch { setIsLoadingTrack(false); }
+    }} style={{ padding: "12px", borderRadius: 12, cursor: "pointer", fontFamily: "Georgia, serif", textAlign: "left", background: isActive ? "rgba(201,168,76,0.15)" : "rgba(255,255,255,0.03)", border: `1px solid ${isActive ? "rgba(201,168,76,0.4)" : "rgba(255,255,255,0.06)"}` }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+        <span style={{ fontSize: 18 }}>{g.icon}</span>
+        <div style={{ fontSize: 12, fontWeight: isActive ? 700 : 400, color: isActive ? "#C9A84C" : "#fff" }}>{g.name}</div>
+      </div>
+      <div style={{ fontSize: 10, color: "#4a5a6a" }}>{g.desc}</div>
+    </button>
+  );
+})}
             </div>
             {collectionTab === "genre" && (
               <div style={{ fontSize: 11, color: "#8BA7BE", lineHeight: 1.5, padding: "10px 12px", borderRadius: 10, background: "rgba(201,168,76,0.08)", border: "1px solid rgba(201,168,76,0.16)" }}>
-                Жанровые плейлисты уже выбраны из metadata.csv. После загрузки папок на R2 эти кнопки станут активными.
+
               </div>
             )}
           </div>
