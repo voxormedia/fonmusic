@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 const BOX_IMAGE = "https://pub-b2c1411547b247808cb42732bb122560.r2.dev/images/fonmusic-box-small.png";
 
@@ -131,7 +131,22 @@ const T = {
 export default function PricingPage() {
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const [lang, setLang] = useState<"ru" | "uz">("ru");
+  const [hasSession, setHasSession] = useState(false);
   const t = T[lang];
+
+  useEffect(() => {
+    const clientId = localStorage.getItem("fonmusic_client_id");
+    const sessionExpiry = localStorage.getItem("fonmusic_session_expiry");
+    setHasSession(Boolean(clientId && sessionExpiry && new Date(sessionExpiry) > new Date()));
+  }, []);
+
+  const planCta = hasSession
+    ? (lang === "ru" ? "Подключить тариф" : "Tarifni ulash")
+    : t.cta;
+  const planCtaSub = hasSession
+    ? (lang === "ru" ? "После выбора мы свяжемся для подключения" : "Tanlovdan so'ng ulash uchun bog'lanamiz")
+    : t.cta_sub;
+  const planHref = hasSession ? "https://t.me/fonmusic2026" : "/signup";
 
   const LangSwitcher = () => (
     <div style={{ display: "flex", border: "1px solid rgba(255,255,255,0.15)", borderRadius: 8, overflow: "hidden" }}>
@@ -150,8 +165,8 @@ export default function PricingPage() {
         </div>
         <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
           <LangSwitcher />
-          <a href="/login" style={{ fontSize: 13, color: "#8BA7BE", textDecoration: "none", padding: "8px 16px", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8 }}>{t.nav_login}</a>
-          <a href="/signup" style={{ fontSize: 13, color: "#080C12", background: "#C9A84C", textDecoration: "none", padding: "8px 16px", borderRadius: 8, fontWeight: 700 }}>{t.nav_free}</a>
+          <a href={hasSession ? "/dashboard" : "/login"} style={{ fontSize: 13, color: "#8BA7BE", textDecoration: "none", padding: "8px 16px", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8 }}>{hasSession ? (lang === "ru" ? "В кабинет" : "Kabinet") : t.nav_login}</a>
+          {!hasSession && <a href="/signup" style={{ fontSize: 13, color: "#080C12", background: "#C9A84C", textDecoration: "none", padding: "8px 16px", borderRadius: 8, fontWeight: 700 }}>{t.nav_free}</a>}
         </div>
       </nav>
 
@@ -205,8 +220,8 @@ export default function PricingPage() {
                   <div style={{ fontSize: 11, color: "#4a5a6a", lineHeight: 1.6 }}>{t.extra_calc.map((line, i) => <div key={i}>{line}</div>)}</div>
                 </div>
               )}
-              <a href={plan.ctaHref} style={{ display: "block", textAlign: "center", padding: "14px", borderRadius: 12, background: plan.popular ? plan.accent : "rgba(255,255,255,0.06)", border: plan.popular ? "none" : `1px solid ${plan.accent}40`, color: plan.popular ? "#080C12" : plan.accent, fontSize: 14, fontWeight: 700, textDecoration: "none", marginBottom: 8 }}>{t.cta}</a>
-              <div style={{ textAlign: "center", fontSize: 11, color: "#4a5a6a" }}>{t.cta_sub}</div>
+              <a href={hasSession ? `${planHref}?text=${encodeURIComponent(`Здравствуйте! Хочу подключить тариф FonMusic: ${plan.name}`)}` : plan.ctaHref} target={hasSession ? "_blank" : undefined} style={{ display: "block", textAlign: "center", padding: "14px", borderRadius: 12, background: plan.popular ? plan.accent : "rgba(255,255,255,0.06)", border: plan.popular ? "none" : `1px solid ${plan.accent}40`, color: plan.popular ? "#080C12" : plan.accent, fontSize: 14, fontWeight: 700, textDecoration: "none", marginBottom: 8 }}>{planCta}</a>
+              <div style={{ textAlign: "center", fontSize: 11, color: "#4a5a6a" }}>{planCtaSub}</div>
             </div>
           ))}
         </div>
@@ -274,10 +289,16 @@ export default function PricingPage() {
       <section style={{ padding: "0 20px 60px", maxWidth: 600, margin: "0 auto", textAlign: "center" }}>
         <div style={{ background: "radial-gradient(ellipse at center, rgba(201,168,76,0.08) 0%, transparent 70%)", padding: "48px 32px", borderRadius: 20, border: "1px solid rgba(201,168,76,0.15)" }}>
           <div style={{ fontSize: 48, marginBottom: 16 }}>🎵</div>
-          <h2 style={{ fontSize: 30, fontWeight: 700, color: "#fff", marginBottom: 12 }}>{t.demo_h} <span style={{ color: "#C9A84C" }}>{t.demo_accent}</span></h2>
-          <p style={{ fontSize: 14, color: "#8BA7BE", lineHeight: 1.7, marginBottom: 8 }}>{t.demo_p}</p>
-          <p style={{ fontSize: 13, color: "#4a5a6a", marginBottom: 28 }}>{t.demo_sub}</p>
-          <a href="/signup" style={{ display: "inline-block", padding: "18px 40px", background: "#C9A84C", color: "#080C12", borderRadius: 12, fontSize: 17, fontWeight: 700, textDecoration: "none", boxShadow: "0 8px 32px rgba(201,168,76,0.3)" }}>{t.demo_btn}</a>
+          <h2 style={{ fontSize: 30, fontWeight: 700, color: "#fff", marginBottom: 12 }}>
+            {hasSession ? (lang === "ru" ? "Готовы подключить тариф?" : "Tarif ulashga tayyormisiz?") : t.demo_h} {!hasSession && <span style={{ color: "#C9A84C" }}>{t.demo_accent}</span>}
+          </h2>
+          <p style={{ fontSize: 14, color: "#8BA7BE", lineHeight: 1.7, marginBottom: 8 }}>
+            {hasSession ? (lang === "ru" ? "Выберите подходящий тариф выше или напишите нам — поможем подключить оплату." : "Yuqoridan mos tarifni tanlang yoki bizga yozing — to'lovni ulashga yordam beramiz.") : t.demo_p}
+          </p>
+          <p style={{ fontSize: 13, color: "#4a5a6a", marginBottom: 28 }}>{hasSession ? (lang === "ru" ? "Подключение занимает несколько минут." : "Ulash bir necha daqiqa oladi.") : t.demo_sub}</p>
+          <a href={hasSession ? "https://t.me/fonmusic2026" : "/signup"} target={hasSession ? "_blank" : undefined} style={{ display: "inline-block", padding: "18px 40px", background: "#C9A84C", color: "#080C12", borderRadius: 12, fontSize: 17, fontWeight: 700, textDecoration: "none", boxShadow: "0 8px 32px rgba(201,168,76,0.3)" }}>
+            {hasSession ? (lang === "ru" ? "Написать для подключения →" : "Ulash uchun yozish →") : t.demo_btn}
+          </a>
         </div>
       </section>
 
