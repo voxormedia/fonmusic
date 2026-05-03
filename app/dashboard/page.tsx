@@ -184,6 +184,8 @@ export default function DashboardPage() {
   const [locations, setLocations] = useState<any[]>([]);
   const [daysLeft, setDaysLeft] = useState<number | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showMore, setShowMore] = useState(false);
+  const [showWelcome, setShowWelcome] = useState(false);
   const [showChangePassword, setShowChangePassword] = useState(false);
   const [oldPassword, setOldPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -229,6 +231,9 @@ export default function DashboardPage() {
       }
     }
     await loadLocations(c.id);
+    if (!localStorage.getItem("fonmusic_dashboard_welcome_done")) {
+      setShowWelcome(true);
+    }
     setScreen("locations");
   };
 
@@ -243,11 +248,6 @@ export default function DashboardPage() {
     } else {
       window.location.href = `/player?location_id=${loc.id}`;
     }
-  };
-
-  const changeDeviceType = async (locId: string, newType: string) => {
-    await sb(`locations?id=eq.${locId}`, { method: "PATCH", body: JSON.stringify({ device_type: newType }) });
-    setLocations(prev => prev.map(l => l.id === locId ? { ...l, device_type: newType } : l));
   };
 
   const addLocation = async () => {
@@ -298,6 +298,16 @@ export default function DashboardPage() {
 
   const maxLocations = PLAN_MAX_LOCATIONS[client?.plan || "trial"] || 1;
   const canAddLocation = locations.length < maxLocations;
+  const primaryLocation = locations[0] || null;
+  const primaryStationInfo = primaryLocation
+    ? STATION_LABELS[primaryLocation.station_key] || { ru: primaryLocation.station_key, uz: primaryLocation.station_key, icon: "🎵" }
+    : null;
+  const primaryStationName = primaryStationInfo ? primaryStationInfo[lang] : "";
+  const primaryIsWeb = primaryLocation?.device_type !== "box";
+  const launchText = lang === "ru" ? "Запустить музыку" : "Musiqani boshlash";
+  const openText = lang === "ru" ? "Открыть плеер" : "Pleerni ochish";
+  const readyTitle = lang === "ru" ? "Музыка для вашего заведения готова" : "Muassasangiz uchun musiqa tayyor";
+  const readySub = lang === "ru" ? "Работает сразу · без настроек" : "Darhol ishlaydi · sozlamalarsiz";
 
   const LangSwitcher = () => (
     <div style={{ display: "flex", border: "1px solid rgba(255,255,255,0.15)", borderRadius: 8, overflow: "hidden" }}>
@@ -376,6 +386,45 @@ export default function DashboardPage() {
         </div>
       )}
 
+      {showWelcome && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.82)", zIndex: 110, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+          <div style={{ width: "100%", maxWidth: 420, background: "#0D1B2A", border: "1px solid rgba(201,168,76,0.25)", borderRadius: 18, padding: "28px 24px", boxShadow: "0 28px 70px rgba(0,0,0,0.55)" }}>
+            <div style={{ fontSize: 38, marginBottom: 12, textAlign: "center" }}>🎵</div>
+            <h2 style={{ fontSize: 24, color: "#fff", fontWeight: 800, textAlign: "center", marginBottom: 10 }}>
+              {lang === "ru" ? "Добро пожаловать в FonMusic" : "FonMusic'ga xush kelibsiz"}
+            </h2>
+            <p style={{ fontSize: 13, color: "#8BA7BE", textAlign: "center", lineHeight: 1.6, marginBottom: 22 }}>
+              {lang === "ru" ? "Музыка уже подобрана для вашего заведения." : "Musiqa muassasangiz uchun tayyor."}
+            </p>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 22 }}>
+              {[
+                lang === "ru" ? "Нажмите «Запустить музыку»" : "«Musiqani boshlash» tugmasini bosing",
+                lang === "ru" ? "Музыка начнёт играть сразу" : "Musiqa darhol ijro etiladi",
+                lang === "ru" ? "Атмосферу можно сменить в плеере" : "Atmosferani pleerda almashtirish mumkin",
+              ].map((line, i) => (
+                <div key={line} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", background: "rgba(255,255,255,0.04)", borderRadius: 10 }}>
+                  <span style={{ width: 22, height: 22, borderRadius: "50%", background: "rgba(201,168,76,0.14)", color: "#C9A84C", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 800, flexShrink: 0 }}>{i + 1}</span>
+                  <span style={{ fontSize: 13, color: "#E8EFF5" }}>{line}</span>
+                </div>
+              ))}
+            </div>
+            <button onClick={() => {
+              localStorage.setItem("fonmusic_dashboard_welcome_done", "1");
+              setShowWelcome(false);
+              if (primaryLocation) openLocation(primaryLocation);
+            }} style={{ width: "100%", padding: "16px", background: "#C9A84C", color: "#080C12", border: "none", borderRadius: 12, fontSize: 16, fontWeight: 800, cursor: "pointer", fontFamily: "Georgia, serif" }}>
+              ▶ {launchText}
+            </button>
+            <button onClick={() => {
+              localStorage.setItem("fonmusic_dashboard_welcome_done", "1");
+              setShowWelcome(false);
+            }} style={{ width: "100%", padding: "11px", background: "transparent", color: "#8BA7BE", border: "none", fontSize: 12, cursor: "pointer", marginTop: 8, fontFamily: "Georgia, serif" }}>
+              {lang === "ru" ? "Посмотреть кабинет" : "Kabinetni ko'rish"}
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* NAV */}
       <nav style={{ padding: "18px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: "1px solid rgba(201,168,76,0.15)" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
@@ -398,105 +447,95 @@ export default function DashboardPage() {
 
       <div style={{ maxWidth: 860, margin: "0 auto", padding: "32px 20px" }}>
 
-        {/* ТАРИФ */}
-        <div style={{ background: "#0D1B2A", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 16, padding: "16px 24px", marginBottom: 20, display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            <span style={{ fontSize: 20 }}>
-              {client?.plan === "premium" ? "✨" : client?.plan === "standard" ? "⭐" : client?.plan === "basic" ? "☕" : "🎵"}
-            </span>
-            <div>
-              <div style={{ fontSize: 13, fontWeight: 700, color: "#fff" }}>
-                {client?.plan === "premium" ? t.plan_premium : client?.plan === "standard" ? t.plan_standard : client?.plan === "basic" ? t.plan_basic : t.plan_trial}
-              </div>
-              <div style={{ fontSize: 11, color: "#8BA7BE" }}>
-                {client?.plan === "trial" ? `${t.plan_until} ${new Date(client?.trial_until || "").toLocaleDateString("ru-RU")}` : t.plan_active}
-              </div>
-            </div>
-          </div>
-          <a href="/pricing" style={{ fontSize: 12, color: "#C9A84C", textDecoration: "none", padding: "6px 14px", border: "1px solid rgba(201,168,76,0.3)", borderRadius: 8 }}>
-            {client?.plan === "trial" ? t.plan_choose : t.plan_change}
-          </a>
-        </div>
+        {/* ГЛАВНЫЙ ЗАПУСК */}
+        <section style={{ background: "linear-gradient(135deg, #101C2A 0%, #0D1B2A 100%)", border: "1px solid rgba(201,168,76,0.22)", borderRadius: 18, padding: "30px 28px", marginBottom: 14, textAlign: "center" }}>
+          <div style={{ fontSize: 38, marginBottom: 10 }}>🎵</div>
+          <h1 style={{ fontSize: 28, fontWeight: 800, color: "#fff", marginBottom: 8 }}>{readyTitle}</h1>
+          <p style={{ fontSize: 14, color: "#8BA7BE", marginBottom: 22 }}>{readySub}</p>
+          <button
+            onClick={() => primaryLocation ? openLocation(primaryLocation) : setShowAddModal(true)}
+            style={{ width: "100%", maxWidth: 340, padding: "17px 22px", background: "#C9A84C", border: "none", borderRadius: 12, color: "#080C12", fontSize: 17, fontWeight: 800, cursor: "pointer", fontFamily: "Georgia, serif", boxShadow: "0 12px 34px rgba(201,168,76,0.28)" }}
+          >
+            ▶ {primaryLocation ? launchText : t.add_location_btn}
+          </button>
+        </section>
 
-        {/* ДЕМО БАННЕР */}
-        {daysLeft !== null && daysLeft > 0 && client?.plan === "trial" && (
-          <div style={{ padding: "16px 20px", background: "rgba(201,168,76,0.08)", border: "1px solid rgba(201,168,76,0.2)", borderRadius: 14, marginBottom: 20, display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
-            <div style={{ fontSize: 14, color: "#C9A84C" }}>{t.demo_banner} <strong>{daysLeft} {t.demo_days_left}</strong></div>
-            <a href="/pricing" style={{ fontSize: 13, color: "#080C12", background: "#C9A84C", padding: "7px 16px", borderRadius: 8, textDecoration: "none", fontWeight: 700 }}>{t.demo_connect}</a>
-          </div>
-        )}
-
-        {/* МОИ ЗАВЕДЕНИЯ */}
-        <div style={{ marginBottom: 24 }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
-            <div>
-              <h1 style={{ fontSize: 20, fontWeight: 700, color: "#fff", marginBottom: 4 }}>{t.locations_h}</h1>
-              <div style={{ fontSize: 12, color: "#4a5a6a" }}>{locations.length} {t.locations_count} {maxLocations} {t.locations_points}</div>
+        {/* МОЁ ЗАВЕДЕНИЕ */}
+        <section style={{ background: "#0D1B2A", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 16, padding: "22px 24px", marginBottom: 14 }}>
+          {primaryLocation ? (
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, flexWrap: "wrap" }}>
+              <div style={{ flex: 1, minWidth: 220 }}>
+                <div style={{ fontSize: 12, color: "#4a5a6a", marginBottom: 6 }}>{lang === "ru" ? "Моё заведение" : "Mening muassasam"}</div>
+                <div style={{ fontSize: 21, fontWeight: 800, color: "#fff", marginBottom: 10 }}>{primaryLocation.name}</div>
+                <div style={{ display: "flex", alignItems: "center", gap: 9, flexWrap: "wrap" }}>
+                  <span style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 13, color: "#22C55E", fontWeight: 700 }}>
+                    <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#22C55E", boxShadow: "0 0 10px rgba(34,197,94,0.55)" }} />
+                    {lang === "ru" ? "Готово к запуску" : "Boshlashga tayyor"}
+                  </span>
+                  <span style={{ fontSize: 12, color: "#4a5a6a" }}>·</span>
+                  <span style={{ fontSize: 13, color: "#8BA7BE" }}>{primaryStationInfo?.icon} {primaryStationName}</span>
+                  <span style={{ fontSize: 12, color: "#4a5a6a" }}>·</span>
+                  <span style={{ fontSize: 13, color: primaryIsWeb ? "#3B82F6" : "#C9A84C" }}>{primaryIsWeb ? t.web_player : t.box_device}</span>
+                </div>
+              </div>
+              <button onClick={() => openLocation(primaryLocation)} style={{ width: "100%", maxWidth: 220, padding: "14px 18px", background: primaryIsWeb ? "#3B82F6" : "#C9A84C", border: "none", borderRadius: 12, color: primaryIsWeb ? "#fff" : "#080C12", fontSize: 15, fontWeight: 800, cursor: "pointer", fontFamily: "Georgia, serif" }}>
+                ▶ {primaryIsWeb ? openText : t.manage}
+              </button>
             </div>
-            {canAddLocation ? (
-              <button onClick={() => setShowAddModal(true)} style={{ padding: "10px 18px", background: "#C9A84C", border: "none", borderRadius: 10, color: "#080C12", fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "Georgia, serif" }}>
+          ) : (
+            <div style={{ textAlign: "center" }}>
+              <div style={{ fontSize: 32, marginBottom: 10 }}>🏢</div>
+              <div style={{ fontSize: 17, color: "#fff", fontWeight: 800, marginBottom: 6 }}>{t.no_locations}</div>
+              <div style={{ fontSize: 13, color: "#8BA7BE", marginBottom: 18 }}>{t.no_locations_sub}</div>
+              <button onClick={() => setShowAddModal(true)} style={{ padding: "13px 22px", background: "#C9A84C", border: "none", borderRadius: 10, color: "#080C12", fontSize: 14, fontWeight: 800, cursor: "pointer", fontFamily: "Georgia, serif" }}>
                 {t.add_location_btn}
               </button>
-            ) : (
-              <a href="/pricing" style={{ padding: "10px 18px", background: "rgba(201,168,76,0.1)", border: "1px solid rgba(201,168,76,0.3)", borderRadius: 10, color: "#C9A84C", fontSize: 13, fontWeight: 700, textDecoration: "none" }}>
-                {t.add_location_premium}
-              </a>
-            )}
-          </div>
+            </div>
+          )}
+        </section>
 
-          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-            {locations.map(loc => {
-              const stationInfo = STATION_LABELS[loc.station_key] || { ru: loc.station_key, uz: loc.station_key, icon: "🎵" };
-              const stationName = stationInfo[lang];
-              const isWeb = loc.device_type !== "box";
-              return (
-                <div key={loc.id} style={{ background: "#0D1B2A", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 16, padding: "20px 24px" }}>
-                  <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
-                    <div style={{ flex: 1 }}>
-                      <div style={{ fontSize: 16, fontWeight: 700, color: "#fff", marginBottom: 4 }}>{loc.name}</div>
-                      {loc.address && <div style={{ fontSize: 12, color: "#4a5a6a", marginBottom: 8 }}>📍 {loc.address}</div>}
-                      <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-                        <span style={{ fontSize: 12, color: "#8BA7BE" }}>{stationInfo.icon} {stationName}</span>
-                        <span style={{ fontSize: 11, color: "#4a5a6a" }}>·</span>
-                        <span style={{ fontSize: 12, color: isWeb ? "#3B82F6" : "#C9A84C" }}>
-                          {isWeb ? t.web_player : t.box_device}
-                        </span>
-                        <span style={{ fontSize: 11, color: "#4a5a6a" }}>·</span>
-                        <span style={{ fontSize: 12, color: loc.music_mode === "automatic" ? "#22C55E" : "#F59E0B" }}>
-                          {loc.music_mode === "automatic" ? t.auto_mode : t.manual_mode}
-                        </span>
-                      </div>
-                    </div>
-                    <div style={{ display: "flex", flexDirection: "column", gap: 8, alignItems: "flex-end" }}>
-                      <button onClick={() => openLocation(loc)} style={{ padding: "10px 20px", background: isWeb ? "#3B82F6" : "#C9A84C", border: "none", borderRadius: 10, color: isWeb ? "#fff" : "#080C12", fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "Georgia, serif", whiteSpace: "nowrap" }}>
-                        {isWeb ? t.open_player : t.manage}
+        {/* ДЕМО */}
+        <section style={{ padding: "15px 18px", background: "rgba(201,168,76,0.07)", border: "1px solid rgba(201,168,76,0.18)", borderRadius: 14, marginBottom: 14, display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
+          <div>
+            <div style={{ fontSize: 14, color: "#C9A84C", fontWeight: 800 }}>
+              ⏳ {lang === "ru" ? "Бесплатный период" : "Bepul davr"}: {daysLeft ?? 0} {t.demo_days}
+            </div>
+            <div style={{ fontSize: 12, color: "#8BA7BE", marginTop: 3 }}>{lang === "ru" ? "Все функции доступны бесплатно" : "Barcha funksiyalar bepul"}</div>
+          </div>
+          <a href="/pricing" style={{ fontSize: 13, color: "#080C12", background: "#C9A84C", padding: "9px 16px", borderRadius: 9, textDecoration: "none", fontWeight: 800 }}>
+            {lang === "ru" ? "Подключить тариф" : "Tarifni ulash"}
+          </a>
+        </section>
+
+        <button onClick={() => setShowMore(!showMore)} style={{ width: "100%", padding: "13px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 12, color: "#8BA7BE", fontSize: 13, cursor: "pointer", fontFamily: "Georgia, serif", marginBottom: showMore ? 16 : 0 }}>
+          {showMore ? "Скрыть дополнительные настройки" : "⚙ Дополнительно: поддержка, пароль, сертификат"}
+        </button>
+
+        {showMore && (
+          <>
+            {locations.length > 1 && (
+              <section style={{ marginBottom: 16 }}>
+                <div style={{ fontSize: 13, color: "#8BA7BE", marginBottom: 10 }}>{t.locations_h}</div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                  {locations.slice(1).map(loc => {
+                    const stationInfo = STATION_LABELS[loc.station_key] || { ru: loc.station_key, uz: loc.station_key, icon: "🎵" };
+                    const isWeb = loc.device_type !== "box";
+                    return (
+                      <button key={loc.id} onClick={() => openLocation(loc)} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, padding: "14px 16px", background: "#0D1B2A", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 12, cursor: "pointer", fontFamily: "Georgia, serif", textAlign: "left" }}>
+                        <span style={{ color: "#fff", fontWeight: 700 }}>{loc.name}</span>
+                        <span style={{ color: "#8BA7BE", fontSize: 12 }}>{stationInfo.icon} {stationInfo[lang]} · {isWeb ? t.web_player : t.box_device}</span>
                       </button>
-                      <div style={{ display: "flex", gap: 4 }}>
-                        <button onClick={() => changeDeviceType(loc.id, "web")} style={{ padding: "5px 10px", borderRadius: 6, cursor: "pointer", fontFamily: "Georgia, serif", fontSize: 10, background: isWeb ? "rgba(59,130,246,0.15)" : "rgba(255,255,255,0.04)", border: `1px solid ${isWeb ? "rgba(59,130,246,0.4)" : "rgba(255,255,255,0.08)"}`, color: isWeb ? "#3B82F6" : "#4a5a6a" }}>
-                          🎧 {lang === "ru" ? "Плеер" : "Pleer"}
-                        </button>
-                        <button onClick={() => changeDeviceType(loc.id, "box")} style={{ padding: "5px 10px", borderRadius: 6, cursor: "pointer", fontFamily: "Georgia, serif", fontSize: 10, background: !isWeb ? "rgba(201,168,76,0.15)" : "rgba(255,255,255,0.04)", border: `1px solid ${!isWeb ? "rgba(201,168,76,0.4)" : "rgba(255,255,255,0.08)"}`, color: !isWeb ? "#C9A84C" : "#4a5a6a" }}>
-                          📦 Box
-                        </button>
-                      </div>
-                    </div>
-                  </div>
+                    );
+                  })}
                 </div>
-              );
-            })}
-
-            {locations.length === 0 && (
-              <div style={{ textAlign: "center", padding: "40px 20px", background: "#0D1B2A", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 16 }}>
-                <div style={{ fontSize: 40, marginBottom: 12 }}>🏢</div>
-                <div style={{ fontSize: 15, color: "#fff", marginBottom: 8 }}>{t.no_locations}</div>
-                <div style={{ fontSize: 13, color: "#8BA7BE", marginBottom: 20 }}>{t.no_locations_sub}</div>
-                <button onClick={() => setShowAddModal(true)} style={{ padding: "12px 24px", background: "#C9A84C", border: "none", borderRadius: 10, color: "#080C12", fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: "Georgia, serif" }}>
-                  {t.add_location_btn}
-                </button>
-              </div>
+              </section>
             )}
-          </div>
-        </div>
+
+            {client?.plan === "premium" && canAddLocation && (
+              <button onClick={() => setShowAddModal(true)} style={{ width: "100%", padding: "13px", background: "rgba(201,168,76,0.1)", border: "1px solid rgba(201,168,76,0.25)", borderRadius: 12, color: "#C9A84C", fontSize: 13, fontWeight: 800, cursor: "pointer", fontFamily: "Georgia, serif", marginBottom: 16 }}>
+                {t.add_location_btn}
+              </button>
+            )}
 
         {/* ПОДДЕРЖКА */}
         <div style={{ background: "#0D1B2A", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 16, padding: "20px 24px", marginBottom: 16 }}>
@@ -537,6 +576,8 @@ export default function DashboardPage() {
             {t.cert_btn}
           </button>
         </div>
+          </>
+        )}
 
       </div>
     </main>
