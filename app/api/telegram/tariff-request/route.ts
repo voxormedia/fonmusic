@@ -37,8 +37,12 @@ export async function POST(req: NextRequest) {
     let client: any = null;
 
     if (clientId) {
-      const clients = await supabaseServerFetch(`clients?id=eq.${encodeURIComponent(clientId)}&select=*`);
-      client = clients?.[0] || null;
+      try {
+        const clients = await supabaseServerFetch(`clients?id=eq.${encodeURIComponent(clientId)}&select=*`);
+        client = clients?.[0] || null;
+      } catch {
+        client = null;
+      }
     }
 
     const name = String(body.name || client?.name || "-");
@@ -56,7 +60,7 @@ export async function POST(req: NextRequest) {
       `Телефон: ${phone}`,
       `Заведение: ${locationName}`,
       `Оплата: ${paymentMethod === "three_months_box" ? "3 месяца + FonMusic Box" : "Помесячно / банковский перевод"}`,
-      client?.id ? `Client ID: ${client.id}` : "",
+      client?.id ? `Client ID: ${client.id}` : clientId ? `Client ID: ${clientId}` : "",
       comment ? `Комментарий: ${comment}` : "",
     ].filter(Boolean).join("\n");
 
@@ -73,10 +77,14 @@ export async function POST(req: NextRequest) {
         comment ? `Комментарий: ${comment}` : "",
       ].filter(Boolean).join("\n");
 
-      await supabaseServerFetch(`clients?id=eq.${client.id}`, {
-        method: "PATCH",
-        body: JSON.stringify({ notes: note }),
-      });
+      try {
+        await supabaseServerFetch(`clients?id=eq.${client.id}`, {
+          method: "PATCH",
+          body: JSON.stringify({ notes: note }),
+        });
+      } catch {
+        // Telegram-заявка важнее: если заметка не записалась, не ломаем путь клиента.
+      }
     }
 
     return NextResponse.json({ success: true });
