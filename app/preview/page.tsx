@@ -96,6 +96,21 @@ function toMin(time: string) {
 
 function fmtTime(time: string) { return time.slice(0, 5); }
 
+function normalizeScheduleSlots(slots: any[]) {
+  const cleanSlots = slots
+    .map((slot) => ({
+      ...slot,
+      start_time: `${(slot.start_time || "00:00").slice(0, 5)}:00`,
+      selected_station_key: slot.selected_station_key || slot.stations?.station_key || "best_of_radio",
+    }))
+    .sort((a, b) => toMin(a.start_time) - toMin(b.start_time));
+
+  return cleanSlots.map((slot, index) => ({
+    ...slot,
+    end_time: cleanSlots[(index + 1) % cleanSlots.length]?.start_time || "23:59:00",
+  }));
+}
+
 function fmtSec(sec: number) {
   if (!sec || isNaN(sec)) return "0:00";
   return `${Math.floor(sec / 60)}:${Math.floor(sec % 60).toString().padStart(2, "0")}`;
@@ -136,6 +151,91 @@ function getCurrentSlot(items: any[]) {
   return null;
 }
 
+function PreviewScheduleEditor({ scheduleItems, accent, onSave, onCancel }: any) {
+  const [slots, setSlots] = useState(normalizeScheduleSlots(scheduleItems.map((item: any) => ({
+    ...item,
+    selected_station_key: item.stations?.station_key || "best_of_radio",
+  }))));
+  const [error, setError] = useState("");
+
+  const save = () => {
+    const normalizedSlots = normalizeScheduleSlots(slots);
+    const uniqueTimes = new Set(normalizedSlots.map((slot: any) => slot.start_time));
+    if (uniqueTimes.size !== normalizedSlots.length) {
+      setError("Есть одинаковое время. Измените один из слотов.");
+      return;
+    }
+
+    onSave(normalizedSlots.map((slot: any) => ({
+      ...slot,
+      stations: { station_key: slot.selected_station_key },
+    })));
+  };
+
+  return (
+    <div>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+        <div style={{ fontSize: 13, color: "#8BA7BE" }}>Время и музыка</div>
+        <button
+          onClick={() => setSlots(normalizeScheduleSlots([...slots, { start_time: "12:00:00", end_time: "13:00:00", selected_station_key: "best_of_radio" }]))}
+          style={{ padding: "7px 10px", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 9, color: "#fff", fontSize: 13, cursor: "pointer", fontFamily: "Georgia, serif" }}
+        >
+          + Слот
+        </button>
+      </div>
+      <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 14 }}>
+        {slots.map((slot: any, i: number) => (
+          <div key={i} style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <input
+              type="time"
+              value={fmtTime(slot.start_time)}
+              onChange={e => {
+                const updated = [...slots];
+                updated[i] = { ...updated[i], start_time: `${e.target.value}:00` };
+                setSlots(updated);
+              }}
+              style={{ width: 92, padding: "8px 10px", background: "#162435", border: `1px solid ${accent}40`, borderRadius: 10, color: "#fff", fontSize: 14, fontWeight: 700, outline: "none", fontFamily: "Georgia, serif" }}
+            />
+            <select
+              value={slot.selected_station_key}
+              onChange={e => {
+                const updated = [...slots];
+                updated[i] = { ...updated[i], selected_station_key: e.target.value };
+                setSlots(updated);
+              }}
+              style={{ flex: 1, padding: "8px 12px", background: "#162435", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, color: "#fff", fontSize: 13, outline: "none", fontFamily: "Georgia, serif" }}
+            >
+              {STATIONS.map((s) => (
+                <option key={s.key} value={s.key}>{s.icon} {s.name}</option>
+              ))}
+            </select>
+            {slots.length > 1 && (
+              <button
+                onClick={() => setSlots(slots.filter((_: any, index: number) => index !== i))}
+                style={{ width: 34, height: 34, borderRadius: 9, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", color: "#8BA7BE", cursor: "pointer", fontSize: 14 }}
+              >
+                ×
+              </button>
+            )}
+          </div>
+        ))}
+      </div>
+      {error && <div style={{ fontSize: 12, color: "#EF4444", marginBottom: 10 }}>{error}</div>}
+      <div style={{ display: "flex", gap: 8 }}>
+        <button onClick={save} style={{ flex: 1, padding: "11px", background: accent, border: "none", borderRadius: 10, color: "#070B14", fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "Georgia, serif" }}>
+          Применить в демо
+        </button>
+        <button onClick={onCancel} style={{ padding: "11px 16px", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, color: "#8BA7BE", fontSize: 13, cursor: "pointer", fontFamily: "Georgia, serif" }}>
+          Отмена
+        </button>
+      </div>
+      <div style={{ fontSize: 11, color: "#4a5a6a", marginTop: 8, textAlign: "center" }}>
+        Это не меняет музыку в заведении
+      </div>
+    </div>
+  );
+}
+
 // ===== ГЛАВНЫЙ ПЛЕЕР =====
 export default function PlayerPage() {
   const [client, setClient] = useState<any>(null);
@@ -149,6 +249,8 @@ export default function PlayerPage() {
   const [volume, setVolume] = useState(0.8);
   const [collectionTab, setCollectionTab] = useState<"business" | "genre">("business");
   const [showTimeline, setShowTimeline] = useState(true);
+  const [showScheduleEditor, setShowScheduleEditor] = useState(false);
+  const [scheduleNotice, setScheduleNotice] = useState("");
   const [showBox, setShowBox] = useState(false);
   const [progress, setProgress] = useState(0);
   const [duration, setDuration] = useState(0);
@@ -571,13 +673,20 @@ const station = effectiveData.station_key || "best_of_radio";
             {showTimeline && (
   <div style={{ borderTop: "1px solid rgba(255,255,255,0.06)", padding: "12px 16px" }}>
     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
-      <div style={{ fontSize: 13, color: "#8BA7BE" }}>Сегодня</div>
-      <div style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, fontSize: 12, color: "#8BA7BE", padding: "5px 10px", flexShrink: 0 }}>
-        Только просмотр
-      </div>
+      <div style={{ fontSize: 13, color: "#8BA7BE" }}>{showScheduleEditor ? "Демо-редактор" : "Сегодня"}</div>
+      <button onClick={() => setShowScheduleEditor(!showScheduleEditor)} style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, fontSize: 13, color: "#fff", padding: "6px 12px", flexShrink: 0, cursor: "pointer", fontFamily: "Georgia, serif" }}>
+        {showScheduleEditor ? "Готово" : "Изменить"}
+      </button>
     </div>
 
-                <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                {scheduleNotice && (
+                  <div style={{ fontSize: 12, color: "#22C55E", background: "rgba(34,197,94,0.08)", border: "1px solid rgba(34,197,94,0.18)", borderRadius: 10, padding: "9px 10px", marginBottom: 10 }}>
+                    {scheduleNotice}
+                  </div>
+                )}
+
+                {!showScheduleEditor ? (
+                  <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                   {scheduleItems.map((item, i) => {
                     const stKey = item.stations?.station_key;
                     const st = STATIONS.find(s => s.key === stKey);
@@ -596,7 +705,21 @@ const station = effectiveData.station_key || "best_of_radio";
                       </div>
                     );
                   })}
-                </div>
+                  </div>
+                ) : (
+                  <PreviewScheduleEditor
+                    scheduleItems={scheduleItems}
+                    accent={accent}
+                    onSave={(updatedItems: any[]) => {
+                      setScheduleItems(updatedItems);
+                      scheduleRef.current = updatedItems;
+                      setScheduleNotice("Изменения применены в демо-режиме");
+                      setShowScheduleEditor(false);
+                      if (clientRef.current?.music_mode !== "manual") checkScheduleWithItems(updatedItems, currentStationRef.current);
+                    }}
+                    onCancel={() => setShowScheduleEditor(false)}
+                  />
+                )}
               </div>
             )}
           </div>
