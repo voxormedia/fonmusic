@@ -108,9 +108,6 @@ const T = {
     password_error_wrong: "Неверный текущий пароль",
     password_error_short: "Пароль не менее 4 символов",
     password_success: "Пароль изменён!",
-    cert_h: "📄 Сертификат лицензии",
-    cert_p: "Официальный документ для проверяющих органов",
-    cert_btn: "🖨️ Распечатать сертификат",
   },
   uz: {
     loading: "⏳ Yuklanmoqda...",
@@ -162,9 +159,6 @@ const T = {
     password_error_wrong: "Joriy parol noto'g'ri",
     password_error_short: "Parol kamida 4 ta belgi",
     password_success: "Parol o'zgartirildi!",
-    cert_h: "📄 Litsenziya sertifikati",
-    cert_p: "Tekshiruvchi organlar uchun rasmiy hujjat",
-    cert_btn: "🖨️ Sertifikatni chop etish",
   },
 };
 
@@ -568,14 +562,6 @@ export default function DashboardPage() {
           )}
         </div>
 
-        {/* СЕРТИФИКАТ */}
-        <div style={{ background: "#0D1B2A", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 16, padding: "20px 24px" }}>
-          <h2 style={{ fontSize: 15, fontWeight: 700, color: "#fff", marginBottom: 6 }}>{t.cert_h}</h2>
-          <p style={{ fontSize: 13, color: "#8BA7BE", marginBottom: 14 }}>{t.cert_p}</p>
-          <button onClick={() => window.print()} style={{ padding: "10px 18px", background: "rgba(201,168,76,0.1)", border: "1px solid rgba(201,168,76,0.3)", borderRadius: 8, color: "#C9A84C", fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "Georgia, serif" }}>
-            {t.cert_btn}
-          </button>
-        </div>
           </>
         )}
 

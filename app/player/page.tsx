@@ -250,6 +250,7 @@ function ScheduleEditor({ client, scheduleItems, accent, onSave, onCancel }: any
 export default function PlayerPage() {
   const [client, setClient] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [screen, setScreen] = useState<"player" | "device_limit">("player");
   const [playlist, setPlaylist] = useState<string[]>([]);
   const [currentTrack, setCurrentTrack] = useState("");
   const [trackIndex, setTrackIndex] = useState(0);
@@ -352,7 +353,7 @@ const existingDevice = devices?.find((d: any) => d.player_id === playerId);
 if (!existingDevice) {
   if (devices && devices.length >= maxDevices) {
     setLoading(false);
-    window.location.href = "/login?error=device_limit";
+    setScreen("device_limit");
     return;
   }
   await sb("player_devices", {
@@ -541,6 +542,26 @@ const station = effectiveData.station_key || "best_of_radio";
   const nextSlotSt = nextSlot ? STATIONS.find(s => s.key === nextSlot.stations?.station_key) : null;
   const minLeft = getMinLeft(scheduleItems);
   const currentSlot = getCurrentSlot(scheduleItems);
+
+  if (screen === "device_limit") return (
+    <main style={{ minHeight: "100vh", background: "#070B14", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "Georgia, serif", padding: 20 }}>
+      <div style={{ width: "100%", maxWidth: 420, textAlign: "center", background: "rgba(13,27,42,0.86)", border: "1px solid rgba(201,168,76,0.24)", borderRadius: 20, padding: "32px 24px", boxShadow: "0 24px 70px rgba(0,0,0,0.35)" }}>
+        <div style={{ fontSize: 48, marginBottom: 16 }}>📱</div>
+        <h1 style={{ fontSize: 22, fontWeight: 700, color: "#fff", marginBottom: 12, lineHeight: 1.25 }}>
+          Плеер уже открыт на другом устройстве
+        </h1>
+        <p style={{ fontSize: 14, color: "#8BA7BE", lineHeight: 1.7, marginBottom: 28 }}>
+          Пожалуйста, закройте плеер на предыдущем устройстве или в другом браузере, затем обновите эту страницу.
+        </p>
+        <button onClick={() => window.location.reload()} style={{ width: "100%", padding: "16px", background: "#C9A84C", border: "none", borderRadius: 12, color: "#080C12", fontSize: 15, fontWeight: 700, cursor: "pointer", fontFamily: "Georgia, serif", marginBottom: 14 }}>
+          🔄 Обновить страницу
+        </button>
+        <a href="/dashboard" style={{ display: "block", fontSize: 13, color: "#8BA7BE", textDecoration: "none" }}>
+          ← Вернуться в кабинет
+        </a>
+      </div>
+    </main>
+  );
 
   if (loading) return (
     <main style={{ minHeight: "100vh", background: "#070B14", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "Georgia, serif" }}>
