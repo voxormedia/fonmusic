@@ -540,6 +540,9 @@ const station = effectiveData.station_key || "best_of_radio";
   };
 
   const closeOtherSessions = async () => {
+    const ok = window.confirm("Отключить другое устройство и запустить музыку здесь? Если сейчас музыка играет в заведении, она может остановиться на том устройстве.");
+    if (!ok) return;
+
     setIsClosingOtherSessions(true);
     const playerId = localStorage.getItem("fonmusic_player_id");
     const clientId = clientRef.current?.id || client?.id || localStorage.getItem("fonmusic_client_id");
@@ -563,13 +566,19 @@ const station = effectiveData.station_key || "best_of_radio";
       <div style={{ width: "100%", maxWidth: 420, textAlign: "center", background: "rgba(13,27,42,0.86)", border: "1px solid rgba(201,168,76,0.24)", borderRadius: 20, padding: "32px 24px", boxShadow: "0 24px 70px rgba(0,0,0,0.35)" }}>
         <div style={{ fontSize: 48, marginBottom: 16 }}>📱</div>
         <h1 style={{ fontSize: 22, fontWeight: 700, color: "#fff", marginBottom: 12, lineHeight: 1.25 }}>
-          Плеер уже открыт на другом устройстве
+          Музыка уже играет на другом устройстве
         </h1>
-        <p style={{ fontSize: 14, color: "#8BA7BE", lineHeight: 1.7, marginBottom: 24 }}>
-          Можно закрыть старую сессию удалённо и запустить музыку здесь. Это удобно, если плеер остался открытым дома, на работе или в другом браузере.
+        <p style={{ fontSize: 14, color: "#8BA7BE", lineHeight: 1.7, marginBottom: 14 }}>
+          Плеер этой точки уже открыт в другом браузере или на другом устройстве.
+        </p>
+        <div style={{ fontSize: 13, color: "#C9A84C", lineHeight: 1.6, background: "rgba(201,168,76,0.1)", border: "1px solid rgba(201,168,76,0.24)", borderRadius: 12, padding: "12px 14px", marginBottom: 20 }}>
+          Если запустить музыку здесь, воспроизведение в заведении может остановиться на предыдущем устройстве.
+        </div>
+        <p style={{ fontSize: 13, color: "#8BA7BE", lineHeight: 1.6, marginBottom: 24 }}>
+          Используйте это только если хотите перенести рабочий плеер на это устройство.
         </p>
         <button onClick={closeOtherSessions} disabled={isClosingOtherSessions} style={{ width: "100%", padding: "16px", background: "#C9A84C", border: "none", borderRadius: 12, color: "#080C12", fontSize: 15, fontWeight: 700, cursor: isClosingOtherSessions ? "default" : "pointer", fontFamily: "Georgia, serif", marginBottom: 12, opacity: isClosingOtherSessions ? 0.75 : 1 }}>
-          {isClosingOtherSessions ? "Закрываем другие сессии..." : "▶ Запустить музыку здесь"}
+          {isClosingOtherSessions ? "Отключаем другое устройство..." : "▶ Отключить другое устройство и запустить здесь"}
         </button>
         <button onClick={() => window.location.reload()} style={{ width: "100%", padding: "13px", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 12, color: "#8BA7BE", fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "Georgia, serif", marginBottom: 14 }}>
           🔄 Я уже закрыл, обновить
