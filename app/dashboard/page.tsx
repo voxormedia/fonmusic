@@ -308,6 +308,7 @@ export default function DashboardPage() {
   const openText = lang === "ru" ? "Открыть плеер" : "Pleerni ochish";
   const readyTitle = lang === "ru" ? "Музыка для вашего заведения готова" : "Muassasangiz uchun musiqa tayyor";
   const readySub = lang === "ru" ? "Работает сразу · без настроек" : "Darhol ishlaydi · sozlamalarsiz";
+  const hasTariffRequest = /Заявка на тариф/.test(client?.notes || "");
 
   const LangSwitcher = () => (
     <div style={{ display: "flex", border: "1px solid rgba(255,255,255,0.15)", borderRadius: 8, overflow: "hidden" }}>
@@ -511,12 +512,14 @@ export default function DashboardPage() {
         <section style={{ padding: "15px 18px", background: "rgba(201,168,76,0.07)", border: "1px solid rgba(201,168,76,0.18)", borderRadius: 14, marginBottom: 14, display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
           <div>
             <div style={{ fontSize: 14, color: "#C9A84C", fontWeight: 800 }}>
-              ⏳ {lang === "ru" ? "Бесплатный период" : "Bepul davr"}: {daysLeft ?? 0} {t.demo_days}
+              {hasTariffRequest ? "💳" : "⏳"} {hasTariffRequest ? (lang === "ru" ? "Заявка на тариф отправлена" : "Tarif arizasi yuborildi") : `${lang === "ru" ? "Бесплатный период" : "Bepul davr"}: ${daysLeft ?? 0} ${t.demo_days}`}
             </div>
-            <div style={{ fontSize: 12, color: "#8BA7BE", marginTop: 3 }}>{lang === "ru" ? "Все функции доступны бесплатно" : "Barcha funksiyalar bepul"}</div>
+            <div style={{ fontSize: 12, color: "#8BA7BE", marginTop: 3 }}>
+              {hasTariffRequest ? (lang === "ru" ? "Мы свяжемся для оплаты и подключения" : "To'lov va ulash uchun bog'lanamiz") : (lang === "ru" ? "Все функции доступны бесплатно" : "Barcha funksiyalar bepul")}
+            </div>
           </div>
           <a href="/pricing" style={{ fontSize: 13, color: "#080C12", background: "#C9A84C", padding: "9px 16px", borderRadius: 9, textDecoration: "none", fontWeight: 800 }}>
-            {lang === "ru" ? "Подключить тариф" : "Tarifni ulash"}
+            {hasTariffRequest ? (lang === "ru" ? "Изменить заявку" : "Arizani o'zgartirish") : (lang === "ru" ? "Подключить тариф" : "Tarifni ulash")}
           </a>
         </section>
 

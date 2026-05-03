@@ -39,6 +39,11 @@ const PLAN_LABELS: Record<string, { label: string, color: string }> = {
   premium:  { label: "Премиум",  color: "#A78BFA" },
 };
 
+function getRequestedPlan(notes?: string) {
+  const match = notes?.match(/Тариф:\s*(basic|standard|premium)/);
+  return match?.[1] || null;
+}
+
 export default function AdminPage() {
   const [authed, setAuthed] = useState(false);
   const [password, setPassword] = useState("");
@@ -72,6 +77,8 @@ export default function AdminPage() {
       extra.subscription_status = "demo";
     } else {
       extra.subscription_status = "active";
+      extra.demo_expires_at = null;
+      extra.trial_until = null;
     }
     await sb(`clients?id=eq.${clientId}`, { method: "PATCH", body: JSON.stringify(extra) });
     setClients(prev => prev.map(c => c.id === clientId ? { ...c, ...extra } : c));
@@ -230,6 +237,8 @@ export default function AdminPage() {
               const plan = PLAN_LABELS[c.plan] || { label: c.plan || "—", color: "#8BA7BE" };
               const daysLeft = c.demo_expires_at ? getDaysLeft(c.demo_expires_at) : null;
               const isExpired = c.subscription_status === "expired";
+              const requestedPlan = getRequestedPlan(c.notes);
+              const requestedPlanInfo = requestedPlan ? PLAN_LABELS[requestedPlan] : null;
 
               return (
                 <div key={c.id} style={{ background: "#0D1B2A", border: `1px solid ${isExpired ? "rgba(239,68,68,0.2)" : "rgba(255,255,255,0.06)"}`, borderRadius: 14, padding: "16px 20px" }}>
@@ -259,6 +268,11 @@ export default function AdminPage() {
                       <div style={{ fontSize: 11, color: "#4a5a6a", marginTop: 4 }}>
                         {c.playback_target === "box" ? "📦 Box" : "🌐 Веб-плеер"}
                       </div>
+                      {requestedPlanInfo && c.plan !== requestedPlan && (
+                        <div style={{ fontSize: 11, color: requestedPlanInfo.color, marginTop: 6, fontWeight: 700 }}>
+                          💳 Заявка: {requestedPlanInfo.label}
+                        </div>
+                      )}
                     </div>
 
                     {/* Действия */}
@@ -282,6 +296,16 @@ export default function AdminPage() {
                           </button>
                         ))}
                       </div>
+
+                      {requestedPlanInfo && c.plan !== requestedPlan && (
+                        <button
+                          onClick={() => requestedPlan && updatePlan(c.id, requestedPlan)}
+                          disabled={saving === c.id}
+                          style={{ padding: "7px 10px", borderRadius: 8, cursor: "pointer", fontFamily: "Georgia, serif", fontSize: 11, fontWeight: 800, marginTop: 2, background: `${requestedPlanInfo.color}22`, border: `1px solid ${requestedPlanInfo.color}55`, color: requestedPlanInfo.color }}
+                        >
+                          Активировать {requestedPlanInfo.label}
+                        </button>
+                      )}
 
                       {(c.plan === "trial" || isExpired) && (
                         <>

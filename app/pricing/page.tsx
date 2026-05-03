@@ -2,6 +2,24 @@
 import { useEffect, useState } from "react";
 
 const BOX_IMAGE = "https://pub-b2c1411547b247808cb42732bb122560.r2.dev/images/fonmusic-box-small.png";
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
+const SUPABASE_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
+
+async function sb(path: string, options?: RequestInit) {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
+    ...options,
+    headers: {
+      "apikey": SUPABASE_KEY,
+      "Authorization": `Bearer ${SUPABASE_KEY}`,
+      "Content-Type": "application/json",
+      "Prefer": "return=representation",
+      ...(options?.headers || {}),
+    },
+  });
+  if (!res.ok) return null;
+  const text = await res.text();
+  return text ? JSON.parse(text) : null;
+}
 
 const T = {
   ru: {
@@ -132,12 +150,33 @@ export default function PricingPage() {
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const [lang, setLang] = useState<"ru" | "uz">("ru");
   const [hasSession, setHasSession] = useState(false);
+  const [client, setClient] = useState<any>(null);
+  const [selectedPlan, setSelectedPlan] = useState<any>(null);
+  const [requestName, setRequestName] = useState("");
+  const [requestPhone, setRequestPhone] = useState("");
+  const [requestLocation, setRequestLocation] = useState("");
+  const [paymentMethod, setPaymentMethod] = useState("monthly");
+  const [requestComment, setRequestComment] = useState("");
+  const [requestLoading, setRequestLoading] = useState(false);
+  const [requestSent, setRequestSent] = useState(false);
+  const [requestError, setRequestError] = useState("");
   const t = T[lang];
 
   useEffect(() => {
     const clientId = localStorage.getItem("fonmusic_client_id");
     const sessionExpiry = localStorage.getItem("fonmusic_session_expiry");
-    setHasSession(Boolean(clientId && sessionExpiry && new Date(sessionExpiry) > new Date()));
+    const activeSession = Boolean(clientId && sessionExpiry && new Date(sessionExpiry) > new Date());
+    setHasSession(activeSession);
+    if (!activeSession || !clientId) return;
+
+    sb(`clients?id=eq.${clientId}&select=*`).then(data => {
+      const c = data?.[0];
+      if (!c) return;
+      setClient(c);
+      setRequestName(c.name || "");
+      setRequestPhone(c.phone || "");
+      setRequestLocation(c.name || "");
+    });
   }, []);
 
   const planCta = hasSession
@@ -146,7 +185,36 @@ export default function PricingPage() {
   const planCtaSub = hasSession
     ? (lang === "ru" ? "После выбора мы свяжемся для подключения" : "Tanlovdan so'ng ulash uchun bog'lanamiz")
     : t.cta_sub;
-  const planHref = hasSession ? "https://t.me/fonmusic2026" : "/signup";
+  const openTariffRequest = (plan: any) => {
+    setSelectedPlan(plan);
+    setRequestSent(false);
+    setRequestError("");
+  };
+
+  const sendTariffRequest = async () => {
+    if (!selectedPlan) return;
+    setRequestLoading(true);
+    setRequestError("");
+    const res = await fetch("/api/telegram/tariff-request", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        plan: selectedPlan.key,
+        clientId: client?.id || localStorage.getItem("fonmusic_client_id"),
+        name: requestName,
+        phone: requestPhone,
+        locationName: requestLocation,
+        paymentMethod,
+        comment: requestComment,
+      }),
+    });
+    setRequestLoading(false);
+    if (!res.ok) {
+      setRequestError(lang === "ru" ? "Не удалось отправить заявку. Напишите нам в Telegram." : "Arizani yuborib bo'lmadi. Telegram orqali yozing.");
+      return;
+    }
+    setRequestSent(true);
+  };
 
   const LangSwitcher = () => (
     <div style={{ display: "flex", border: "1px solid rgba(255,255,255,0.15)", borderRadius: 8, overflow: "hidden" }}>
@@ -220,7 +288,11 @@ export default function PricingPage() {
                   <div style={{ fontSize: 11, color: "#4a5a6a", lineHeight: 1.6 }}>{t.extra_calc.map((line, i) => <div key={i}>{line}</div>)}</div>
                 </div>
               )}
-              <a href={hasSession ? `${planHref}?text=${encodeURIComponent(`Здравствуйте! Хочу подключить тариф FonMusic: ${plan.name}`)}` : plan.ctaHref} target={hasSession ? "_blank" : undefined} style={{ display: "block", textAlign: "center", padding: "14px", borderRadius: 12, background: plan.popular ? plan.accent : "rgba(255,255,255,0.06)", border: plan.popular ? "none" : `1px solid ${plan.accent}40`, color: plan.popular ? "#080C12" : plan.accent, fontSize: 14, fontWeight: 700, textDecoration: "none", marginBottom: 8 }}>{planCta}</a>
+              {hasSession ? (
+                <button onClick={() => openTariffRequest(plan)} style={{ width: "100%", textAlign: "center", padding: "14px", borderRadius: 12, background: plan.popular ? plan.accent : "rgba(255,255,255,0.06)", border: plan.popular ? "none" : `1px solid ${plan.accent}40`, color: plan.popular ? "#080C12" : plan.accent, fontSize: 14, fontWeight: 700, marginBottom: 8, cursor: "pointer", fontFamily: "Georgia, serif" }}>{planCta}</button>
+              ) : (
+                <a href={plan.ctaHref} style={{ display: "block", textAlign: "center", padding: "14px", borderRadius: 12, background: plan.popular ? plan.accent : "rgba(255,255,255,0.06)", border: plan.popular ? "none" : `1px solid ${plan.accent}40`, color: plan.popular ? "#080C12" : plan.accent, fontSize: 14, fontWeight: 700, textDecoration: "none", marginBottom: 8 }}>{planCta}</a>
+              )}
               <div style={{ textAlign: "center", fontSize: 11, color: "#4a5a6a" }}>{planCtaSub}</div>
             </div>
           ))}
@@ -329,6 +401,65 @@ export default function PricingPage() {
           <LangSwitcher />
         </div>
       </footer>
+
+      {selectedPlan && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.72)", zIndex: 50, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+          <div style={{ width: "100%", maxWidth: 460, background: "#0D1B2A", border: `1px solid ${selectedPlan.accent}55`, borderRadius: 18, padding: 24, boxShadow: "0 24px 80px rgba(0,0,0,0.45)" }}>
+            {!requestSent ? (
+              <>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 16, marginBottom: 18 }}>
+                  <div>
+                    <div style={{ fontSize: 12, color: selectedPlan.accent, fontWeight: 800, marginBottom: 6 }}>{lang === "ru" ? "Заявка на тариф" : "Tarif arizasi"}</div>
+                    <div style={{ fontSize: 24, color: "#fff", fontWeight: 800 }}>{selectedPlan.name}</div>
+                    <div style={{ fontSize: 13, color: "#8BA7BE", marginTop: 4 }}>{selectedPlan.price} {lang === "ru" ? "сум / месяц" : "so'm / oy"}</div>
+                  </div>
+                  <button onClick={() => setSelectedPlan(null)} style={{ width: 34, height: 34, borderRadius: 10, border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.04)", color: "#8BA7BE", cursor: "pointer", fontSize: 18 }}>×</button>
+                </div>
+
+                {[
+                  { label: lang === "ru" ? "Имя / бизнес" : "Ism / biznes", value: requestName, set: setRequestName },
+                  { label: lang === "ru" ? "Телефон" : "Telefon", value: requestPhone, set: setRequestPhone },
+                  { label: lang === "ru" ? "Заведение" : "Muassasa", value: requestLocation, set: setRequestLocation },
+                ].map(field => (
+                  <label key={field.label} style={{ display: "block", marginBottom: 10 }}>
+                    <div style={{ fontSize: 12, color: "#8BA7BE", marginBottom: 6 }}>{field.label}</div>
+                    <input value={field.value} onChange={e => field.set(e.target.value)} style={{ width: "100%", padding: "12px 14px", background: "#101A28", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, color: "#fff", fontSize: 14, outline: "none", fontFamily: "Georgia, serif" }} />
+                  </label>
+                ))}
+
+                <label style={{ display: "block", marginBottom: 10 }}>
+                  <div style={{ fontSize: 12, color: "#8BA7BE", marginBottom: 6 }}>{lang === "ru" ? "Вариант подключения" : "Ulash varianti"}</div>
+                  <select value={paymentMethod} onChange={e => setPaymentMethod(e.target.value)} style={{ width: "100%", padding: "12px 14px", background: "#101A28", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, color: "#fff", fontSize: 14, outline: "none", fontFamily: "Georgia, serif" }}>
+                    <option value="monthly">{lang === "ru" ? "Оплата за месяц" : "Bir oy uchun to'lov"}</option>
+                    <option value="three_months_box">{lang === "ru" ? "Оплата за 3 месяца + FonMusic Box" : "3 oy + FonMusic Box"}</option>
+                  </select>
+                </label>
+
+                <label style={{ display: "block", marginBottom: 14 }}>
+                  <div style={{ fontSize: 12, color: "#8BA7BE", marginBottom: 6 }}>{lang === "ru" ? "Комментарий" : "Izoh"}</div>
+                  <textarea value={requestComment} onChange={e => setRequestComment(e.target.value)} rows={3} placeholder={lang === "ru" ? "Например: хочу оплатить сегодня" : "Masalan: bugun to'lamoqchiman"} style={{ width: "100%", padding: "12px 14px", background: "#101A28", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, color: "#fff", fontSize: 14, outline: "none", resize: "vertical", fontFamily: "Georgia, serif" }} />
+                </label>
+
+                {requestError && <div style={{ color: "#EF4444", fontSize: 13, marginBottom: 12 }}>{requestError}</div>}
+                <button onClick={sendTariffRequest} disabled={requestLoading || !requestPhone || !requestName} style={{ width: "100%", padding: "15px", borderRadius: 12, background: selectedPlan.accent, border: "none", color: "#080C12", fontSize: 15, fontWeight: 800, cursor: requestLoading ? "wait" : "pointer", fontFamily: "Georgia, serif", opacity: requestLoading || !requestPhone || !requestName ? 0.7 : 1 }}>
+                  {requestLoading ? (lang === "ru" ? "Отправляем..." : "Yuborilmoqda...") : (lang === "ru" ? "Отправить заявку" : "Ariza yuborish")}
+                </button>
+              </>
+            ) : (
+              <div style={{ textAlign: "center", padding: "18px 4px" }}>
+                <div style={{ fontSize: 42, marginBottom: 14 }}>✓</div>
+                <div style={{ fontSize: 24, color: "#fff", fontWeight: 800, marginBottom: 8 }}>{lang === "ru" ? "Заявка принята" : "Ariza qabul qilindi"}</div>
+                <div style={{ fontSize: 14, color: "#8BA7BE", lineHeight: 1.7, marginBottom: 22 }}>
+                  {lang === "ru" ? "Мы получили запрос и свяжемся для оплаты и подключения тарифа." : "So'rovni oldik. To'lov va ulash uchun bog'lanamiz."}
+                </div>
+                <button onClick={() => setSelectedPlan(null)} style={{ width: "100%", padding: "13px", borderRadius: 12, background: "#C9A84C", border: "none", color: "#080C12", fontSize: 15, fontWeight: 800, cursor: "pointer", fontFamily: "Georgia, serif" }}>
+                  {lang === "ru" ? "Понятно" : "Tushunarli"}
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       <style>{`* { margin: 0; padding: 0; box-sizing: border-box; } html, body { overflow-x: hidden; }`}</style>
     </main>
