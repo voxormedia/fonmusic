@@ -250,7 +250,7 @@ function ScheduleEditor({ client, scheduleItems, accent, onSave, onCancel }: any
 export default function PlayerPage() {
   const [client, setClient] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [screen, setScreen] = useState<"player" | "device_limit">("player");
+  const [screen, setScreen] = useState<"player" | "device_limit" | "session_taken">("player");
   const [isClosingOtherSessions, setIsClosingOtherSessions] = useState(false);
   const [playlist, setPlaylist] = useState<string[]>([]);
   const [currentTrack, setCurrentTrack] = useState("");
@@ -276,6 +276,7 @@ export default function PlayerPage() {
   const clientRef = useRef<any>(null);
   const currentStationRef = useRef<string>("best_of_radio");
   const eqAnimRef = useRef<any>(null);
+  const heartbeatRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const stObj = STATIONS.find(s => s.key === currentStation) || STATIONS[9];
   const accent = stObj.accent;
@@ -300,6 +301,9 @@ export default function PlayerPage() {
   const params = new URLSearchParams(window.location.search);
   const locationId = params.get("location_id");
   initClient(clientId, locationId || undefined);
+  return () => {
+    if (heartbeatRef.current) clearInterval(heartbeatRef.current);
+  };
 }, []);
 
   useEffect(() => {
@@ -374,18 +378,27 @@ if (!existingDevice) {
   });
 }
 
-// Heartbeat каждые 60 секунд
-setInterval(async () => {
+// Heartbeat каждые 10 секунд: если сессию забрали на другом устройстве, этот плеер останавливается.
+if (heartbeatRef.current) clearInterval(heartbeatRef.current);
+heartbeatRef.current = setInterval(async () => {
   const pid = localStorage.getItem("fonmusic_player_id");
   const cid = localStorage.getItem("fonmusic_client_id");
   if (pid && cid) {
     const locationFilter = clientRef.current?._locationId ? `&location_id=eq.${clientRef.current._locationId}` : "";
+    const activeDevice = await sb(`player_devices?player_id=eq.${pid}&client_id=eq.${cid}${locationFilter}&select=id`);
+    if (!activeDevice || activeDevice.length === 0) {
+      audioRef.current?.pause();
+      setIsPlaying(false);
+      setScreen("session_taken");
+      if (heartbeatRef.current) clearInterval(heartbeatRef.current);
+      return;
+    }
     await sb(`player_devices?player_id=eq.${pid}&client_id=eq.${cid}${locationFilter}`, {
       method: "PATCH",
       body: JSON.stringify({ last_seen: new Date().toISOString() }),
     });
   }
-}, 60000);
+}, 10000);
 
 const station = effectiveData.station_key || "best_of_radio";
     setCurrentStation(station);
@@ -582,6 +595,26 @@ const station = effectiveData.station_key || "best_of_radio";
         </button>
         <button onClick={() => window.location.reload()} style={{ width: "100%", padding: "13px", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 12, color: "#8BA7BE", fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "Georgia, serif", marginBottom: 14 }}>
           🔄 Я уже закрыл, обновить
+        </button>
+        <a href="/dashboard" style={{ display: "block", fontSize: 13, color: "#8BA7BE", textDecoration: "none" }}>
+          ← Вернуться в кабинет
+        </a>
+      </div>
+    </main>
+  );
+
+  if (screen === "session_taken") return (
+    <main style={{ minHeight: "100vh", background: "#070B14", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "Georgia, serif", padding: 20 }}>
+      <div style={{ width: "100%", maxWidth: 420, textAlign: "center", background: "rgba(13,27,42,0.86)", border: "1px solid rgba(201,168,76,0.24)", borderRadius: 20, padding: "32px 24px", boxShadow: "0 24px 70px rgba(0,0,0,0.35)" }}>
+        <div style={{ fontSize: 48, marginBottom: 16 }}>🔇</div>
+        <h1 style={{ fontSize: 22, fontWeight: 700, color: "#fff", marginBottom: 12, lineHeight: 1.25 }}>
+          Воспроизведение перенесено
+        </h1>
+        <p style={{ fontSize: 14, color: "#8BA7BE", lineHeight: 1.7, marginBottom: 24 }}>
+          Музыку этой точки запустили на другом устройстве. На этом устройстве плеер остановлен, чтобы не играть одновременно в двух местах.
+        </p>
+        <button onClick={() => window.location.reload()} style={{ width: "100%", padding: "16px", background: "#C9A84C", border: "none", borderRadius: 12, color: "#080C12", fontSize: 15, fontWeight: 700, cursor: "pointer", fontFamily: "Georgia, serif", marginBottom: 14 }}>
+          🔄 Проверить снова
         </button>
         <a href="/dashboard" style={{ display: "block", fontSize: 13, color: "#8BA7BE", textDecoration: "none" }}>
           ← Вернуться в кабинет
