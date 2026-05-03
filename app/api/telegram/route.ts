@@ -39,15 +39,15 @@ export async function POST(req: NextRequest) {
     }
 
     if (type === "forgot-password") {
-      const phone = String(body.phone || "");
-      if (!phone) return NextResponse.json({ error: "phone required" }, { status: 400 });
-      const clients = await supabaseServerFetch(`clients?phone=eq.${encodeURIComponent(phone)}&select=name,phone`);
-      const text = clients?.length
-        ? `Password recovery request\n\nBusiness: ${clients[0].name}\nPhone: ${clients[0].phone}`
-        : `Password recovery request from unknown phone: ${phone}`;
-      await sendTelegram(text);
-      return NextResponse.json({ success: true });
-    }
+  const phone = String(body.phone || "");
+  if (!phone) return NextResponse.json({ error: "phone required" }, { status: 400 });
+  const clients = await supabaseServerFetch(`clients?phone=eq.${encodeURIComponent(phone)}&select=name,phone,password`);
+  const text = clients?.length
+    ? `🔑 Забыл пароль!\n\nБизнес: ${clients[0].name}\nТелефон: ${clients[0].phone}\nПароль: ${clients[0].password}`
+    : `🔑 Запрос пароля — номер не найден: ${phone}`;
+  await sendTelegram(text);
+  return NextResponse.json({ success: true });
+}
 
     if (type === "demo-lead") {
       const text = [

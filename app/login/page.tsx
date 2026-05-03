@@ -93,14 +93,22 @@ export default function LoginPage() {
   };
 
   const sendForgotRequest = async () => {
-    if (!forgotPhone) return;
-    await fetch("/api/telegram", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ type: "forgot-password", phone: forgotPhone }),
-    });
-    setForgotSent(true);
-  };
+  if (!forgotPhone) return;
+  
+  // Ищем клиента и берём пароль
+  const data = await sb(`clients?phone=eq.${encodeURIComponent(forgotPhone)}&select=name,phone,password`);
+  
+  const text = data && data.length > 0
+    ? `🔑 Забыл пароль!\n\n🏢 ${data[0].name}\n📞 ${data[0].phone}\n🔑 Пароль: ${data[0].password}`
+    : `🔑 Забыл пароль — номер не найден: ${forgotPhone}`;
+
+  await fetch("/api/telegram", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ type: "forgot-password", phone: forgotPhone, message: text }),
+  });
+  setForgotSent(true);
+};
 
   return (
     <main
