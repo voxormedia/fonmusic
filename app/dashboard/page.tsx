@@ -174,6 +174,18 @@ const PLAN_MAX_LOCATIONS: Record<string, number> = {
   trial: 1, basic: 1, standard: 1, premium: 10,
 };
 
+function hasDemoAccess(client: any) {
+  if (!client) return false;
+  if (client.subscription_status === "demo" || client.plan === "trial") return true;
+  const demoUntil = client.demo_expires_at || client.trial_until;
+  return Boolean(demoUntil && new Date(demoUntil) > new Date());
+}
+
+function getEffectiveMaxLocations(client: any) {
+  if (hasDemoAccess(client)) return PLAN_MAX_LOCATIONS.premium;
+  return PLAN_MAX_LOCATIONS[client?.plan || "trial"] || 1;
+}
+
 export default function DashboardPage() {
   const [screen, setScreen] = useState<"loading" | "locations" | "paywall">("loading");
   const [client, setClient] = useState<any>(null);
@@ -296,7 +308,8 @@ export default function DashboardPage() {
     window.location.href = "/login";
   };
 
-  const maxLocations = PLAN_MAX_LOCATIONS[client?.plan || "trial"] || 1;
+  const demoAccess = hasDemoAccess(client);
+  const maxLocations = getEffectiveMaxLocations(client);
   const canAddLocation = locations.length < maxLocations;
   const primaryLocation = locations[0] || null;
   const primaryStationInfo = primaryLocation
@@ -557,7 +570,7 @@ export default function DashboardPage() {
               </section>
             )}
 
-            {client?.plan === "premium" && canAddLocation && (
+            {(demoAccess || client?.plan === "premium") && canAddLocation && (
               <button onClick={() => setShowAddModal(true)} style={{ width: "100%", padding: "13px", background: "rgba(201,168,76,0.1)", border: "1px solid rgba(201,168,76,0.25)", borderRadius: 12, color: "#C9A84C", fontSize: 13, fontWeight: 800, cursor: "pointer", fontFamily: "Georgia, serif", marginBottom: 16 }}>
                 {t.add_location_btn}
               </button>
