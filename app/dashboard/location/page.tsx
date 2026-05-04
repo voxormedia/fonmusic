@@ -112,7 +112,7 @@ export default function LocationPage() {
   };
 
   if (loading) return (
-    <main style={{ minHeight: "100vh", background: "#080C12", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "Georgia, serif" }}>
+    <main style={{ minHeight: "100vh", background: "#0A1628", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "Georgia, serif" }}>
       <div style={{ color: "#8BA7BE" }}>⏳ Загрузка...</div>
     </main>
   );
@@ -121,7 +121,7 @@ export default function LocationPage() {
   const isBox = location?.device_type === "box";
 
   return (
-    <main style={{ minHeight: "100vh", background: "#080C12", fontFamily: "Georgia, serif", color: "#E8EFF5" }}>
+    <main style={{ minHeight: "100vh", background: "#0A1628", fontFamily: "Georgia, serif", color: "#E8EFF5" }}>
 
       {/* NAV */}
       <nav style={{ padding: "18px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: "1px solid rgba(201,168,76,0.15)" }}>
@@ -337,7 +337,7 @@ function DeviceBindForm({ locationId, onBind }: { locationId: string, onBind: (i
       />
       <button onClick={bind} disabled={saving || !deviceId} style={{
         padding: "10px 18px", background: "#C9A84C", border: "none", borderRadius: 10,
-        color: "#080C12", fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "Georgia, serif",
+        color: "#0A1628", fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "Georgia, serif",
       }}>
         {saving ? "..." : "Привязать"}
       </button>

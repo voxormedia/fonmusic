@@ -2,13 +2,13 @@
 
 export default function PrivacyPage() {
   return (
-    <main style={{ fontFamily: "Georgia, serif", background: "#080C12", color: "#E8EFF5", minHeight: "100vh" }}>
+    <main style={{ fontFamily: "Georgia, serif", background: "#0A1628", color: "#E8EFF5", minHeight: "100vh" }}>
       <nav style={{ padding: "18px 28px", display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <div style={{ width: 4, height: 20, background: "#C9A84C", borderRadius: 2 }} />
           <a href="/" style={{ fontSize: 18, fontWeight: 700, color: "#fff", textDecoration: "none" }}>FonMusic</a>
         </div>
-        <a href="/signup" style={{ fontSize: 13, color: "#080C12", background: "#C9A84C", textDecoration: "none", padding: "8px 16px", borderRadius: 8, fontWeight: 700 }}>
+        <a href="/signup" style={{ fontSize: 13, color: "#0A1628", background: "#C9A84C", textDecoration: "none", padding: "8px 16px", borderRadius: 8, fontWeight: 700 }}>
           Попробовать бесплатно
         </a>
       </nav>

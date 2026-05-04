@@ -137,7 +137,7 @@ export default function AdminPage() {
 
   if (!authed) {
     return (
-      <main style={{ minHeight: "100vh", background: "#080C12", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "Georgia, serif" }}>
+      <main style={{ minHeight: "100vh", background: "#0A1628", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "Georgia, serif" }}>
         <div style={{ width: "100%", maxWidth: 360, padding: 20 }}>
           <div style={{ textAlign: "center", marginBottom: 32 }}>
             <div style={{ display: "inline-flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
@@ -157,7 +157,7 @@ export default function AdminPage() {
             onClick={() => {
   adminLogin();
 }}
-            style={{ width: "100%", padding: "14px", background: "#C9A84C", border: "none", borderRadius: 10, color: "#080C12", fontSize: 15, fontWeight: 700, cursor: "pointer", fontFamily: "Georgia, serif" }}
+            style={{ width: "100%", padding: "14px", background: "#C9A84C", border: "none", borderRadius: 10, color: "#0A1628", fontSize: 15, fontWeight: 700, cursor: "pointer", fontFamily: "Georgia, serif" }}
           >
             Войти
           </button>
@@ -170,7 +170,7 @@ export default function AdminPage() {
   }
 
   return (
-    <main style={{ minHeight: "100vh", background: "#080C12", fontFamily: "Georgia, serif", color: "#E8EFF5" }}>
+    <main style={{ minHeight: "100vh", background: "#0A1628", fontFamily: "Georgia, serif", color: "#E8EFF5" }}>
       <nav style={{ padding: "16px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: "1px solid rgba(201,168,76,0.15)" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <div style={{ width: 4, height: 18, background: "#C9A84C", borderRadius: 2 }} />

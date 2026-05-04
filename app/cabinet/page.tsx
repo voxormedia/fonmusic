@@ -140,7 +140,7 @@ export default function CabinetPage() {
   // LOGIN SCREEN
   if (screen === "login") {
     return (
-      <main style={{ minHeight: "100vh", background: "#080C12", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "Georgia, serif" }}>
+      <main style={{ minHeight: "100vh", background: "#0A1628", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "Georgia, serif" }}>
         <div style={{ width: "100%", maxWidth: 420, padding: 48, background: "#0D1B2A", border: "1px solid rgba(201,168,76,0.2)", borderRadius: 24, boxShadow: "0 40px 80px rgba(0,0,0,0.5)" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 40 }}>
             <div style={{ width: 6, height: 24, background: "#C9A84C", borderRadius: 2 }} />
@@ -171,7 +171,7 @@ export default function CabinetPage() {
               {error}
             </div>
           )}
-          <button onClick={login} disabled={loading} style={{ width: "100%", padding: "14px", background: "#C9A84C", border: "none", borderRadius: 8, color: "#080C12", fontSize: 15, fontWeight: 700, cursor: "pointer" }}>
+          <button onClick={login} disabled={loading} style={{ width: "100%", padding: "14px", background: "#C9A84C", border: "none", borderRadius: 8, color: "#0A1628", fontSize: 15, fontWeight: 700, cursor: "pointer" }}>
             {loading ? "Входим..." : "Войти"}
           </button>
           <div style={{ marginTop: 24, textAlign: "center" }}>
@@ -184,7 +184,7 @@ export default function CabinetPage() {
 
   // CABINET SCREEN
   return (
-    <main style={{ minHeight: "100vh", background: "#080C12", fontFamily: "Georgia, serif", color: "#E8EFF5" }}>
+    <main style={{ minHeight: "100vh", background: "#0A1628", fontFamily: "Georgia, serif", color: "#E8EFF5" }}>
 
       {/* NAV */}
       <nav style={{ padding: "20px 32px", display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: "1px solid rgba(201,168,76,0.15)" }}>
@@ -272,7 +272,7 @@ export default function CabinetPage() {
               padding: "6px 14px", borderRadius: 20, fontSize: 12, cursor: "pointer", fontFamily: "Georgia, serif",
               background: !selectedCategory ? "#C9A84C" : "rgba(255,255,255,0.05)",
               border: !selectedCategory ? "none" : "1px solid rgba(255,255,255,0.1)",
-              color: !selectedCategory ? "#080C12" : "#E8EFF5",
+              color: !selectedCategory ? "#0A1628" : "#E8EFF5",
               fontWeight: !selectedCategory ? 700 : 400,
             }}>
               Все
@@ -282,7 +282,7 @@ export default function CabinetPage() {
                 padding: "6px 14px", borderRadius: 20, fontSize: 12, cursor: "pointer", fontFamily: "Georgia, serif",
                 background: selectedCategory === c.category_key ? "#C9A84C" : "rgba(255,255,255,0.05)",
                 border: selectedCategory === c.category_key ? "none" : "1px solid rgba(255,255,255,0.1)",
-                color: selectedCategory === c.category_key ? "#080C12" : "#E8EFF5",
+                color: selectedCategory === c.category_key ? "#0A1628" : "#E8EFF5",
                 fontWeight: selectedCategory === c.category_key ? 700 : 400,
               }}>
                 {c.icon} {c.name}

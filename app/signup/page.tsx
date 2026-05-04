@@ -161,7 +161,7 @@ export default function SignupPage() {
   const inputStyle = { padding: "14px 16px", background: "#162435", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, color: "#fff", fontSize: 15, outline: "none", boxSizing: "border-box" as const, width: "100%" };
 
   return (
-    <main style={{ minHeight: "100vh", background: "#080C12", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "Georgia, serif", padding: 20 }}>
+    <main style={{ minHeight: "100vh", background: "#0A1628", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "Georgia, serif", padding: 20 }}>
       <div style={{ width: "100%", maxWidth: 460 }}>
 
         <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 40, justifyContent: "center" }}>
@@ -210,13 +210,13 @@ export default function SignupPage() {
               {!phoneVerified && (
                 <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                   {!smsSent ? (
-                    <button onClick={sendSmsCode} disabled={smsLoading || phone.length < 12} style={{ flex: 1, padding: "10px", background: "#C9A84C", border: "none", borderRadius: 8, color: "#080C12", fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "Georgia, serif" }}>
+                    <button onClick={sendSmsCode} disabled={smsLoading || phone.length < 12} style={{ flex: 1, padding: "10px", background: "#C9A84C", border: "none", borderRadius: 8, color: "#0A1628", fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "Georgia, serif" }}>
                       {smsLoading ? "Отправляем..." : "Получить код"}
                     </button>
                   ) : (
                     <>
                       <input value={smsCode} onChange={e => setSmsCode(e.target.value.replace(/\D/g, "").slice(0, 4))} placeholder="Код из SMS" inputMode="numeric" style={{ ...inputStyle, flex: 1, minWidth: 120 }} />
-                      <button onClick={verifySmsCode} disabled={smsLoading || smsCode.length !== 4} style={{ padding: "10px 14px", background: "#C9A84C", border: "none", borderRadius: 8, color: "#080C12", fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "Georgia, serif" }}>
+                      <button onClick={verifySmsCode} disabled={smsLoading || smsCode.length !== 4} style={{ padding: "10px 14px", background: "#C9A84C", border: "none", borderRadius: 8, color: "#0A1628", fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "Georgia, serif" }}>
                         {smsLoading ? "..." : "Проверить"}
                       </button>
                     </>
@@ -245,7 +245,7 @@ export default function SignupPage() {
             </div>
           )}
 
-          <button onClick={register} disabled={loading || !phoneVerified} style={{ width: "100%", padding: "16px", background: phoneVerified ? "#C9A84C" : "rgba(255,255,255,0.08)", border: "none", borderRadius: 10, color: phoneVerified ? "#080C12" : "#8BA7BE", fontSize: 16, fontWeight: 700, cursor: phoneVerified ? "pointer" : "not-allowed", marginBottom: 16, boxShadow: phoneVerified ? "0 8px 24px rgba(201,168,76,0.3)" : "none", fontFamily: "Georgia, serif" }}>
+          <button onClick={register} disabled={loading || !phoneVerified} style={{ width: "100%", padding: "16px", background: phoneVerified ? "#C9A84C" : "rgba(255,255,255,0.08)", border: "none", borderRadius: 10, color: phoneVerified ? "#0A1628" : "#8BA7BE", fontSize: 16, fontWeight: 700, cursor: phoneVerified ? "pointer" : "not-allowed", marginBottom: 16, boxShadow: phoneVerified ? "0 8px 24px rgba(201,168,76,0.3)" : "none", fontFamily: "Georgia, serif" }}>
             {loading ? "Создаём аккаунт..." : phoneVerified ? "Начать 7 дней бесплатно →" : "Сначала подтвердите телефон"}
           </button>
 

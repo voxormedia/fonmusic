@@ -218,13 +218,13 @@ export default function PricingPage() {
 
   const LangSwitcher = () => (
     <div style={{ display: "flex", border: "1px solid rgba(255,255,255,0.15)", borderRadius: 8, overflow: "hidden" }}>
-      <button onClick={() => setLang("ru")} style={{ padding: "6px 12px", background: lang === "ru" ? "#C9A84C" : "transparent", color: lang === "ru" ? "#080C12" : "#8BA7BE", border: "none", cursor: "pointer", fontSize: 12, fontWeight: 700, fontFamily: "Georgia, serif" }}>RU</button>
-      <button onClick={() => setLang("uz")} style={{ padding: "6px 12px", background: lang === "uz" ? "#C9A84C" : "transparent", color: lang === "uz" ? "#080C12" : "#8BA7BE", border: "none", cursor: "pointer", fontSize: 12, fontWeight: 700, fontFamily: "Georgia, serif" }}>UZ</button>
+      <button onClick={() => setLang("ru")} style={{ padding: "6px 12px", background: lang === "ru" ? "#C9A84C" : "transparent", color: lang === "ru" ? "#0A1628" : "#8BA7BE", border: "none", cursor: "pointer", fontSize: 12, fontWeight: 700, fontFamily: "Georgia, serif" }}>RU</button>
+      <button onClick={() => setLang("uz")} style={{ padding: "6px 12px", background: lang === "uz" ? "#C9A84C" : "transparent", color: lang === "uz" ? "#0A1628" : "#8BA7BE", border: "none", cursor: "pointer", fontSize: 12, fontWeight: 700, fontFamily: "Georgia, serif" }}>UZ</button>
     </div>
   );
 
   return (
-    <main style={{ fontFamily: "Georgia, serif", background: "#080C12", color: "#E8EFF5", minHeight: "100vh", overflowX: "hidden" }}>
+    <main style={{ fontFamily: "Georgia, serif", background: "#0A1628", color: "#E8EFF5", minHeight: "100vh", overflowX: "hidden" }}>
 
       <nav style={{ padding: "18px 28px", display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -234,7 +234,7 @@ export default function PricingPage() {
         <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
           <LangSwitcher />
           <a href={hasSession ? "/dashboard" : "/login"} style={{ fontSize: 13, color: "#8BA7BE", textDecoration: "none", padding: "8px 16px", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8 }}>{hasSession ? (lang === "ru" ? "В кабинет" : "Kabinet") : t.nav_login}</a>
-          {!hasSession && <a href="/signup" style={{ fontSize: 13, color: "#080C12", background: "#C9A84C", textDecoration: "none", padding: "8px 16px", borderRadius: 8, fontWeight: 700 }}>{t.nav_free}</a>}
+          {!hasSession && <a href="/signup" style={{ fontSize: 13, color: "#0A1628", background: "#C9A84C", textDecoration: "none", padding: "8px 16px", borderRadius: 8, fontWeight: 700 }}>{t.nav_free}</a>}
         </div>
       </nav>
 
@@ -253,7 +253,7 @@ export default function PricingPage() {
           {t.plans.map((plan) => (
             <div key={plan.key} style={{ position: "relative", borderRadius: 20, padding: plan.popular ? "32px 24px" : "28px 24px", background: plan.popular ? "linear-gradient(135deg, #0D1B2A, #162435)" : "#0D1B2A", border: `2px solid ${plan.popular ? plan.accent : "rgba(255,255,255,0.06)"}`, boxShadow: plan.popular ? `0 0 40px ${plan.accent}20` : "none" }}>
               {plan.popular && (
-                <div style={{ position: "absolute", top: -14, left: "50%", transform: "translateX(-50%)", background: plan.accent, color: "#080C12", padding: "4px 16px", borderRadius: 100, fontSize: 11, fontWeight: 700, whiteSpace: "nowrap" }}>{t.recommended}</div>
+                <div style={{ position: "absolute", top: -14, left: "50%", transform: "translateX(-50%)", background: plan.accent, color: "#0A1628", padding: "4px 16px", borderRadius: 100, fontSize: 11, fontWeight: 700, whiteSpace: "nowrap" }}>{t.recommended}</div>
               )}
               <div style={{ marginBottom: 20 }}>
                 <div style={{ fontSize: 13, color: plan.accent, fontWeight: 700, marginBottom: 6 }}>{plan.name.toUpperCase()}</div>
@@ -289,9 +289,9 @@ export default function PricingPage() {
                 </div>
               )}
               {hasSession ? (
-                <button onClick={() => openTariffRequest(plan)} style={{ width: "100%", textAlign: "center", padding: "14px", borderRadius: 12, background: plan.popular ? plan.accent : "rgba(255,255,255,0.06)", border: plan.popular ? "none" : `1px solid ${plan.accent}40`, color: plan.popular ? "#080C12" : plan.accent, fontSize: 14, fontWeight: 700, marginBottom: 8, cursor: "pointer", fontFamily: "Georgia, serif" }}>{planCta}</button>
+                <button onClick={() => openTariffRequest(plan)} style={{ width: "100%", textAlign: "center", padding: "14px", borderRadius: 12, background: plan.popular ? plan.accent : "rgba(255,255,255,0.06)", border: plan.popular ? "none" : `1px solid ${plan.accent}40`, color: plan.popular ? "#0A1628" : plan.accent, fontSize: 14, fontWeight: 700, marginBottom: 8, cursor: "pointer", fontFamily: "Georgia, serif" }}>{planCta}</button>
               ) : (
-                <a href={plan.ctaHref} style={{ display: "block", textAlign: "center", padding: "14px", borderRadius: 12, background: plan.popular ? plan.accent : "rgba(255,255,255,0.06)", border: plan.popular ? "none" : `1px solid ${plan.accent}40`, color: plan.popular ? "#080C12" : plan.accent, fontSize: 14, fontWeight: 700, textDecoration: "none", marginBottom: 8 }}>{planCta}</a>
+                <a href={plan.ctaHref} style={{ display: "block", textAlign: "center", padding: "14px", borderRadius: 12, background: plan.popular ? plan.accent : "rgba(255,255,255,0.06)", border: plan.popular ? "none" : `1px solid ${plan.accent}40`, color: plan.popular ? "#0A1628" : plan.accent, fontSize: 14, fontWeight: 700, textDecoration: "none", marginBottom: 8 }}>{planCta}</a>
               )}
               <div style={{ textAlign: "center", fontSize: 11, color: "#4a5a6a" }}>{planCtaSub}</div>
             </div>
@@ -350,7 +350,7 @@ export default function PricingPage() {
             <div style={{ fontSize: 14, color: "#C9A84C", fontWeight: 700, marginBottom: 4 }}>{t.box_price}</div>
             <div style={{ fontSize: 12, color: "#22C55E", marginBottom: 4 }}>{t.box_free2}</div>
             <div style={{ fontSize: 11, color: "#4a5a6a", marginBottom: 20 }}>{t.box_note}</div>
-            <a href="https://t.me/fonmusic2026" target="_blank" style={{ display: "inline-block", padding: "13px 24px", background: "#C9A84C", color: "#080C12", borderRadius: 10, fontSize: 14, fontWeight: 700, textDecoration: "none" }}>{t.box_btn}</a>
+            <a href="https://t.me/fonmusic2026" target="_blank" style={{ display: "inline-block", padding: "13px 24px", background: "#C9A84C", color: "#0A1628", borderRadius: 10, fontSize: 14, fontWeight: 700, textDecoration: "none" }}>{t.box_btn}</a>
           </div>
           <div style={{ flexShrink: 0, width: 180 }}>
             <img src={BOX_IMAGE} alt="FonMusic Box" style={{ width: "100%", borderRadius: 14, border: "1px solid rgba(201,168,76,0.2)" }} />
@@ -368,7 +368,7 @@ export default function PricingPage() {
             {hasSession ? (lang === "ru" ? "Выберите подходящий тариф выше или напишите нам — поможем подключить оплату." : "Yuqoridan mos tarifni tanlang yoki bizga yozing — to'lovni ulashga yordam beramiz.") : t.demo_p}
           </p>
           <p style={{ fontSize: 13, color: "#4a5a6a", marginBottom: 28 }}>{hasSession ? (lang === "ru" ? "Подключение занимает несколько минут." : "Ulash bir necha daqiqa oladi.") : t.demo_sub}</p>
-          <a href={hasSession ? "https://t.me/fonmusic2026" : "/signup"} target={hasSession ? "_blank" : undefined} style={{ display: "inline-block", padding: "18px 40px", background: "#C9A84C", color: "#080C12", borderRadius: 12, fontSize: 17, fontWeight: 700, textDecoration: "none", boxShadow: "0 8px 32px rgba(201,168,76,0.3)" }}>
+          <a href={hasSession ? "https://t.me/fonmusic2026" : "/signup"} target={hasSession ? "_blank" : undefined} style={{ display: "inline-block", padding: "18px 40px", background: "#C9A84C", color: "#0A1628", borderRadius: 12, fontSize: 17, fontWeight: 700, textDecoration: "none", boxShadow: "0 8px 32px rgba(201,168,76,0.3)" }}>
             {hasSession ? (lang === "ru" ? "Написать для подключения →" : "Ulash uchun yozish →") : t.demo_btn}
           </a>
         </div>
@@ -441,7 +441,7 @@ export default function PricingPage() {
                 </label>
 
                 {requestError && <div style={{ color: "#EF4444", fontSize: 13, marginBottom: 12 }}>{requestError}</div>}
-                <button onClick={sendTariffRequest} disabled={requestLoading || !requestPhone || !requestName} style={{ width: "100%", padding: "15px", borderRadius: 12, background: selectedPlan.accent, border: "none", color: "#080C12", fontSize: 15, fontWeight: 800, cursor: requestLoading ? "wait" : "pointer", fontFamily: "Georgia, serif", opacity: requestLoading || !requestPhone || !requestName ? 0.7 : 1 }}>
+                <button onClick={sendTariffRequest} disabled={requestLoading || !requestPhone || !requestName} style={{ width: "100%", padding: "15px", borderRadius: 12, background: selectedPlan.accent, border: "none", color: "#0A1628", fontSize: 15, fontWeight: 800, cursor: requestLoading ? "wait" : "pointer", fontFamily: "Georgia, serif", opacity: requestLoading || !requestPhone || !requestName ? 0.7 : 1 }}>
                   {requestLoading ? (lang === "ru" ? "Отправляем..." : "Yuborilmoqda...") : (lang === "ru" ? "Отправить заявку" : "Ariza yuborish")}
                 </button>
               </>
@@ -452,7 +452,7 @@ export default function PricingPage() {
                 <div style={{ fontSize: 14, color: "#8BA7BE", lineHeight: 1.7, marginBottom: 22 }}>
                   {lang === "ru" ? "Мы получили запрос и свяжемся для оплаты и подключения тарифа." : "So'rovni oldik. To'lov va ulash uchun bog'lanamiz."}
                 </div>
-                <button onClick={() => setSelectedPlan(null)} style={{ width: "100%", padding: "13px", borderRadius: 12, background: "#C9A84C", border: "none", color: "#080C12", fontSize: 15, fontWeight: 800, cursor: "pointer", fontFamily: "Georgia, serif" }}>
+                <button onClick={() => setSelectedPlan(null)} style={{ width: "100%", padding: "13px", borderRadius: 12, background: "#C9A84C", border: "none", color: "#0A1628", fontSize: 15, fontWeight: 800, cursor: "pointer", fontFamily: "Georgia, serif" }}>
                   {lang === "ru" ? "Понятно" : "Tushunarli"}
                 </button>
               </div>

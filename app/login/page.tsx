@@ -117,7 +117,7 @@ export default function LoginPage() {
     <main
       style={{
         minHeight: "100vh",
-        background: "#080C12",
+        background: "#0A1628",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
@@ -202,7 +202,7 @@ export default function LoginPage() {
                   background: "#C9A84C",
                   border: "none",
                   borderRadius: 10,
-                  color: "#080C12",
+                  color: "#0A1628",
                   fontSize: 15,
                   fontWeight: 700,
                   cursor: "pointer",
@@ -265,7 +265,7 @@ export default function LoginPage() {
                       background: "#C9A84C",
                       border: "none",
                       borderRadius: 10,
-                      color: "#080C12",
+                      color: "#0A1628",
                       fontSize: 14,
                       fontWeight: 700,
                       cursor: "pointer",

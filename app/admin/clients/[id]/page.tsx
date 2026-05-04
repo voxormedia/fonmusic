@@ -247,13 +247,13 @@ export default function ClientDetailPage() {
   };
 
   if (loading) return (
-    <main style={{ minHeight: "100vh", background: "#080C12", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "Georgia, serif" }}>
+    <main style={{ minHeight: "100vh", background: "#0A1628", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "Georgia, serif" }}>
       <div style={{ color: "#8BA7BE" }}>⏳ Загрузка...</div>
     </main>
   );
 
   if (!client) return (
-    <main style={{ minHeight: "100vh", background: "#080C12", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "Georgia, serif" }}>
+    <main style={{ minHeight: "100vh", background: "#0A1628", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "Georgia, serif" }}>
       <div style={{ color: "#EF4444" }}>Клиент не найден</div>
     </main>
   );
@@ -263,7 +263,7 @@ export default function ClientDetailPage() {
   const daysLeft = client.demo_expires_at ? getDaysLeft(client.demo_expires_at) : null;
 
   return (
-    <main style={{ minHeight: "100vh", background: "#080C12", fontFamily: "Georgia, serif", color: "#E8EFF5" }}>
+    <main style={{ minHeight: "100vh", background: "#0A1628", fontFamily: "Georgia, serif", color: "#E8EFF5" }}>
       <header style={{ padding: "18px 24px", borderBottom: "1px solid rgba(201,168,76,0.15)", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           <button onClick={() => router.push("/admin")} style={{ padding: "7px 14px", background: "transparent", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, color: "#8BA7BE", fontSize: 12, cursor: "pointer", fontFamily: "Georgia, serif" }}>
@@ -319,7 +319,7 @@ export default function ClientDetailPage() {
               </div>
             </div>
             <div style={{ display: "flex", gap: 10 }}>
-              <button onClick={saveEdit} disabled={savingEdit} style={{ padding: "10px 24px", background: "#C9A84C", border: "none", borderRadius: 8, color: "#080C12", fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "Georgia, serif" }}>
+              <button onClick={saveEdit} disabled={savingEdit} style={{ padding: "10px 24px", background: "#C9A84C", border: "none", borderRadius: 8, color: "#0A1628", fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "Georgia, serif" }}>
                 {savingEdit ? "Сохраняем..." : "Сохранить изменения"}
               </button>
               <button onClick={() => setShowEdit(false)} style={{ padding: "10px 16px", background: "transparent", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, color: "#8BA7BE", fontSize: 13, cursor: "pointer", fontFamily: "Georgia, serif" }}>
@@ -393,7 +393,7 @@ export default function ClientDetailPage() {
               <select value={selectedStation} onChange={e => setSelectedStation(e.target.value)} style={selectStyle}>
                 {STATIONS.map(s => <option key={s.key} value={s.key}>{s.name}</option>)}
               </select>
-              <button onClick={changeStation} disabled={saving} style={{ padding: "8px 16px", background: "#C9A84C", border: "none", borderRadius: 8, color: "#080C12", fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "Georgia, serif" }}>
+              <button onClick={changeStation} disabled={saving} style={{ padding: "8px 16px", background: "#C9A84C", border: "none", borderRadius: 8, color: "#0A1628", fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "Georgia, serif" }}>
                 Применить
               </button>
             </div>

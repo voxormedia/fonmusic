@@ -707,7 +707,7 @@ const station = effectiveData.station_key || "best_of_radio";
         <p style={{ fontSize: 13, color: "#8BA7BE", lineHeight: 1.6, marginBottom: 24 }}>
           Используйте это только если хотите перенести рабочий плеер на это устройство.
         </p>
-        <button onClick={closeOtherSessions} disabled={isClosingOtherSessions} style={{ width: "100%", padding: "16px", background: "#C9A84C", border: "none", borderRadius: 12, color: "#080C12", fontSize: 15, fontWeight: 700, cursor: isClosingOtherSessions ? "default" : "pointer", fontFamily: "Georgia, serif", marginBottom: 12, opacity: isClosingOtherSessions ? 0.75 : 1 }}>
+        <button onClick={closeOtherSessions} disabled={isClosingOtherSessions} style={{ width: "100%", padding: "16px", background: "#C9A84C", border: "none", borderRadius: 12, color: "#0A1628", fontSize: 15, fontWeight: 700, cursor: isClosingOtherSessions ? "default" : "pointer", fontFamily: "Georgia, serif", marginBottom: 12, opacity: isClosingOtherSessions ? 0.75 : 1 }}>
           {isClosingOtherSessions ? "Отключаем другое устройство..." : "▶ Отключить другое устройство и запустить здесь"}
         </button>
         <button onClick={() => window.location.reload()} style={{ width: "100%", padding: "13px", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 12, color: "#8BA7BE", fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "Georgia, serif", marginBottom: 14 }}>
@@ -730,7 +730,7 @@ const station = effectiveData.station_key || "best_of_radio";
         <p style={{ fontSize: 14, color: "#8BA7BE", lineHeight: 1.7, marginBottom: 24 }}>
           Музыку этой точки запустили на другом устройстве. На этом устройстве плеер остановлен, чтобы не играть одновременно в двух местах.
         </p>
-        <button onClick={() => window.location.reload()} style={{ width: "100%", padding: "16px", background: "#C9A84C", border: "none", borderRadius: 12, color: "#080C12", fontSize: 15, fontWeight: 700, cursor: "pointer", fontFamily: "Georgia, serif", marginBottom: 14 }}>
+        <button onClick={() => window.location.reload()} style={{ width: "100%", padding: "16px", background: "#C9A84C", border: "none", borderRadius: 12, color: "#0A1628", fontSize: 15, fontWeight: 700, cursor: "pointer", fontFamily: "Georgia, serif", marginBottom: 14 }}>
           🔄 Проверить снова
         </button>
         <a href="/dashboard" style={{ display: "block", fontSize: 13, color: "#8BA7BE", textDecoration: "none" }}>

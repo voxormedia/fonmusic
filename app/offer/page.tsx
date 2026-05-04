@@ -2,14 +2,14 @@
 
 export default function OfferPage() {
   return (
-    <main style={{ fontFamily: "Georgia, serif", background: "#080C12", color: "#E8EFF5", minHeight: "100vh" }}>
+    <main style={{ fontFamily: "Georgia, serif", background: "#0A1628", color: "#E8EFF5", minHeight: "100vh" }}>
       {/* NAV */}
       <nav style={{ padding: "18px 28px", display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <div style={{ width: 4, height: 20, background: "#C9A84C", borderRadius: 2 }} />
           <a href="/" style={{ fontSize: 18, fontWeight: 700, color: "#fff", textDecoration: "none" }}>FonMusic</a>
         </div>
-        <a href="/signup" style={{ fontSize: 13, color: "#080C12", background: "#C9A84C", textDecoration: "none", padding: "8px 16px", borderRadius: 8, fontWeight: 700 }}>
+        <a href="/signup" style={{ fontSize: 13, color: "#0A1628", background: "#C9A84C", textDecoration: "none", padding: "8px 16px", borderRadius: 8, fontWeight: 700 }}>
           Попробовать бесплатно
         </a>
       </nav>
@@ -136,7 +136,7 @@ Telegram: @fonmusic2026
         <div style={{ marginTop: 60, padding: "32px", background: "rgba(201,168,76,0.06)", border: "1px solid rgba(201,168,76,0.15)", borderRadius: 16, textAlign: "center" }}>
           <div style={{ fontSize: 15, fontWeight: 700, color: "#fff", marginBottom: 8 }}>Начните пользоваться FonMusic</div>
           <div style={{ fontSize: 13, color: "#8BA7BE", marginBottom: 20 }}>10 дней бесплатно — все функции без ограничений</div>
-          <a href="/signup" style={{ display: "inline-block", padding: "14px 32px", background: "#C9A84C", color: "#080C12", borderRadius: 10, fontSize: 14, fontWeight: 700, textDecoration: "none" }}>
+          <a href="/signup" style={{ display: "inline-block", padding: "14px 32px", background: "#C9A84C", color: "#0A1628", borderRadius: 10, fontSize: 14, fontWeight: 700, textDecoration: "none" }}>
             Попробовать бесплатно →
           </a>
         </div>

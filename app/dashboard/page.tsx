@@ -325,8 +325,8 @@ export default function DashboardPage() {
 
   const LangSwitcher = () => (
     <div style={{ display: "flex", border: "1px solid rgba(255,255,255,0.15)", borderRadius: 8, overflow: "hidden" }}>
-      <button onClick={() => setLang("ru")} style={{ padding: "5px 10px", background: lang === "ru" ? "#C9A84C" : "transparent", color: lang === "ru" ? "#080C12" : "#8BA7BE", border: "none", cursor: "pointer", fontSize: 11, fontWeight: 700, fontFamily: "Georgia, serif" }}>RU</button>
-      <button onClick={() => setLang("uz")} style={{ padding: "5px 10px", background: lang === "uz" ? "#C9A84C" : "transparent", color: lang === "uz" ? "#080C12" : "#8BA7BE", border: "none", cursor: "pointer", fontSize: 11, fontWeight: 700, fontFamily: "Georgia, serif" }}>UZ</button>
+      <button onClick={() => setLang("ru")} style={{ padding: "5px 10px", background: lang === "ru" ? "#C9A84C" : "transparent", color: lang === "ru" ? "#0A1628" : "#8BA7BE", border: "none", cursor: "pointer", fontSize: 11, fontWeight: 700, fontFamily: "Georgia, serif" }}>RU</button>
+      <button onClick={() => setLang("uz")} style={{ padding: "5px 10px", background: lang === "uz" ? "#C9A84C" : "transparent", color: lang === "uz" ? "#0A1628" : "#8BA7BE", border: "none", cursor: "pointer", fontSize: 11, fontWeight: 700, fontFamily: "Georgia, serif" }}>UZ</button>
     </div>
   );
 
@@ -337,25 +337,25 @@ export default function DashboardPage() {
   };
 
   if (screen === "loading") return (
-    <main style={{ minHeight: "100vh", background: "#080C12", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "Georgia, serif" }}>
+    <main style={{ minHeight: "100vh", background: "#0A1628", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "Georgia, serif" }}>
       <div style={{ color: "#8BA7BE" }}>{t.loading}</div>
     </main>
   );
 
   if (screen === "paywall") return (
-    <main style={{ minHeight: "100vh", background: "#080C12", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "Georgia, serif", padding: 20 }}>
+    <main style={{ minHeight: "100vh", background: "#0A1628", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "Georgia, serif", padding: 20 }}>
       <div style={{ width: "100%", maxWidth: 420, textAlign: "center" }}>
         <div style={{ fontSize: 64, marginBottom: 24 }}>⏰</div>
         <h1 style={{ fontSize: 28, fontWeight: 700, color: "#fff", marginBottom: 12 }}>{t.paywall_h}</h1>
         <p style={{ fontSize: 15, color: "#8BA7BE", lineHeight: 1.7, marginBottom: 32 }}>{t.paywall_p}</p>
-        <a href="/pricing" style={{ display: "block", padding: "18px", background: "#C9A84C", color: "#080C12", borderRadius: 14, fontSize: 16, fontWeight: 700, textDecoration: "none", marginBottom: 16 }}>{t.paywall_btn}</a>
+        <a href="/pricing" style={{ display: "block", padding: "18px", background: "#C9A84C", color: "#0A1628", borderRadius: 14, fontSize: 16, fontWeight: 700, textDecoration: "none", marginBottom: 16 }}>{t.paywall_btn}</a>
         <a href="tel:+998994100910" style={{ display: "block", padding: "14px", background: "transparent", border: "1px solid rgba(255,255,255,0.1)", color: "#8BA7BE", borderRadius: 12, fontSize: 14, textDecoration: "none" }}>+998 99 410 09 10</a>
       </div>
     </main>
   );
 
   return (
-    <main style={{ minHeight: "100vh", background: "#080C12", fontFamily: "Georgia, serif", color: "#E8EFF5" }}>
+    <main style={{ minHeight: "100vh", background: "#0A1628", fontFamily: "Georgia, serif", color: "#E8EFF5" }}>
 
       {/* ADD MODAL */}
       {showAddModal && (
@@ -389,7 +389,7 @@ export default function DashboardPage() {
               </div>
             </div>
             <div style={{ display: "flex", gap: 8 }}>
-              <button onClick={addLocation} disabled={modalSaving || !modalName} style={{ flex: 1, padding: "13px", background: "#C9A84C", border: "none", borderRadius: 10, color: "#080C12", fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: "Georgia, serif" }}>
+              <button onClick={addLocation} disabled={modalSaving || !modalName} style={{ flex: 1, padding: "13px", background: "#C9A84C", border: "none", borderRadius: 10, color: "#0A1628", fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: "Georgia, serif" }}>
                 {modalSaving ? t.add_btn_loading : t.add_btn}
               </button>
               <button onClick={() => setShowAddModal(false)} style={{ padding: "13px 18px", background: "transparent", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, color: "#8BA7BE", fontSize: 14, cursor: "pointer", fontFamily: "Georgia, serif" }}>
@@ -426,7 +426,7 @@ export default function DashboardPage() {
               localStorage.setItem("fonmusic_dashboard_welcome_done", "1");
               setShowWelcome(false);
               if (primaryLocation) openLocation(primaryLocation);
-            }} style={{ width: "100%", padding: "16px", background: "#C9A84C", color: "#080C12", border: "none", borderRadius: 12, fontSize: 16, fontWeight: 800, cursor: "pointer", fontFamily: "Georgia, serif" }}>
+            }} style={{ width: "100%", padding: "16px", background: "#C9A84C", color: "#0A1628", border: "none", borderRadius: 12, fontSize: 16, fontWeight: 800, cursor: "pointer", fontFamily: "Georgia, serif" }}>
               ▶ {launchText}
             </button>
             <button onClick={() => {
@@ -468,7 +468,7 @@ export default function DashboardPage() {
           <p style={{ fontSize: 14, color: "#8BA7BE", marginBottom: 22 }}>{readySub}</p>
           <button
             onClick={() => primaryLocation ? openLocation(primaryLocation) : setShowAddModal(true)}
-            style={{ width: "100%", maxWidth: 340, padding: "17px 22px", background: "#C9A84C", border: "none", borderRadius: 12, color: "#080C12", fontSize: 17, fontWeight: 800, cursor: "pointer", fontFamily: "Georgia, serif", boxShadow: "0 12px 34px rgba(201,168,76,0.28)" }}
+            style={{ width: "100%", maxWidth: 340, padding: "17px 22px", background: "#C9A84C", border: "none", borderRadius: 12, color: "#0A1628", fontSize: 17, fontWeight: 800, cursor: "pointer", fontFamily: "Georgia, serif", boxShadow: "0 12px 34px rgba(201,168,76,0.28)" }}
           >
             ▶ {primaryLocation ? launchText : t.add_location_btn}
           </button>
@@ -501,7 +501,7 @@ export default function DashboardPage() {
                 </div>
               </div>
               <div style={{ width: "100%", maxWidth: 240, display: "flex", flexDirection: "column", gap: 8 }}>
-                <button onClick={() => openLocation(primaryLocation)} style={{ width: "100%", padding: "14px 18px", background: primaryIsWeb ? "#3B82F6" : "#C9A84C", border: "none", borderRadius: 12, color: primaryIsWeb ? "#fff" : "#080C12", fontSize: 15, fontWeight: 800, cursor: "pointer", fontFamily: "Georgia, serif" }}>
+                <button onClick={() => openLocation(primaryLocation)} style={{ width: "100%", padding: "14px 18px", background: primaryIsWeb ? "#3B82F6" : "#C9A84C", border: "none", borderRadius: 12, color: primaryIsWeb ? "#fff" : "#0A1628", fontSize: 15, fontWeight: 800, cursor: "pointer", fontFamily: "Georgia, serif" }}>
                   ▶ {primaryIsWeb ? openText : t.manage}
                 </button>
                 <button onClick={() => openPreview(primaryLocation)} style={{ width: "100%", padding: "12px 14px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 12, color: "#8BA7BE", fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "Georgia, serif" }}>
@@ -514,7 +514,7 @@ export default function DashboardPage() {
               <div style={{ fontSize: 32, marginBottom: 10 }}>🏢</div>
               <div style={{ fontSize: 17, color: "#fff", fontWeight: 800, marginBottom: 6 }}>{t.no_locations}</div>
               <div style={{ fontSize: 13, color: "#8BA7BE", marginBottom: 18 }}>{t.no_locations_sub}</div>
-              <button onClick={() => setShowAddModal(true)} style={{ padding: "13px 22px", background: "#C9A84C", border: "none", borderRadius: 10, color: "#080C12", fontSize: 14, fontWeight: 800, cursor: "pointer", fontFamily: "Georgia, serif" }}>
+              <button onClick={() => setShowAddModal(true)} style={{ padding: "13px 22px", background: "#C9A84C", border: "none", borderRadius: 10, color: "#0A1628", fontSize: 14, fontWeight: 800, cursor: "pointer", fontFamily: "Georgia, serif" }}>
                 {t.add_location_btn}
               </button>
             </div>
@@ -531,7 +531,7 @@ export default function DashboardPage() {
               {hasTariffRequest ? (lang === "ru" ? "Мы свяжемся для оплаты и подключения" : "To'lov va ulash uchun bog'lanamiz") : (lang === "ru" ? "Все функции доступны бесплатно" : "Barcha funksiyalar bepul")}
             </div>
           </div>
-          <a href="/pricing" style={{ fontSize: 13, color: "#080C12", background: "#C9A84C", padding: "9px 16px", borderRadius: 9, textDecoration: "none", fontWeight: 800 }}>
+          <a href="/pricing" style={{ fontSize: 13, color: "#0A1628", background: "#C9A84C", padding: "9px 16px", borderRadius: 9, textDecoration: "none", fontWeight: 800 }}>
             {hasTariffRequest ? (lang === "ru" ? "Изменить заявку" : "Arizani o'zgartirish") : (lang === "ru" ? "Подключить тариф" : "Tarifni ulash")}
           </a>
         </section>
@@ -556,7 +556,7 @@ export default function DashboardPage() {
                           <div style={{ color: "#8BA7BE", fontSize: 12 }}>{stationInfo.icon} {stationInfo[lang]} · {isWeb ? t.web_player : t.box_device}</div>
                         </div>
                         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                          <button onClick={() => openLocation(loc)} style={{ padding: "9px 12px", background: isWeb ? "#3B82F6" : "#C9A84C", border: "none", borderRadius: 9, color: isWeb ? "#fff" : "#080C12", fontSize: 12, fontWeight: 800, cursor: "pointer", fontFamily: "Georgia, serif" }}>
+                          <button onClick={() => openLocation(loc)} style={{ padding: "9px 12px", background: isWeb ? "#3B82F6" : "#C9A84C", border: "none", borderRadius: 9, color: isWeb ? "#fff" : "#0A1628", fontSize: 12, fontWeight: 800, cursor: "pointer", fontFamily: "Georgia, serif" }}>
                             {isWeb ? t.open_player : t.manage}
                           </button>
                           <button onClick={() => openPreview(loc)} style={{ padding: "9px 12px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 9, color: "#8BA7BE", fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "Georgia, serif" }}>
@@ -600,7 +600,7 @@ export default function DashboardPage() {
               <input type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} placeholder={t.password_new} style={{ padding: "12px 14px", background: "#162435", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, color: "#fff", fontSize: 14, outline: "none" }} />
               {passwordError && <div style={{ fontSize: 13, color: "#EF4444" }}>{passwordError}</div>}
               {passwordSuccess && <div style={{ fontSize: 13, color: "#22C55E" }}>{passwordSuccess}</div>}
-              <button onClick={changePassword} disabled={saving} style={{ padding: "12px", background: "#C9A84C", border: "none", borderRadius: 10, color: "#080C12", fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: "Georgia, serif" }}>
+              <button onClick={changePassword} disabled={saving} style={{ padding: "12px", background: "#C9A84C", border: "none", borderRadius: 10, color: "#0A1628", fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: "Georgia, serif" }}>
                 {t.password_save}
               </button>
             </div>

@@ -253,13 +253,13 @@ export default function Home() {
 
   const LangSwitcher = () => (
     <div style={{ display: "flex", border: "1px solid rgba(255,255,255,0.15)", borderRadius: 8, overflow: "hidden", flexShrink: 0 }}>
-      <button onClick={() => setLang("ru")} style={{ padding: "6px 12px", background: lang === "ru" ? "#C9A84C" : "transparent", color: lang === "ru" ? "#080C12" : "#8BA7BE", border: "none", cursor: "pointer", fontSize: 12, fontWeight: 700, fontFamily: "Georgia, serif" }}>RU</button>
-      <button onClick={() => setLang("uz")} style={{ padding: "6px 12px", background: lang === "uz" ? "#C9A84C" : "transparent", color: lang === "uz" ? "#080C12" : "#8BA7BE", border: "none", cursor: "pointer", fontSize: 12, fontWeight: 700, fontFamily: "Georgia, serif" }}>UZ</button>
+      <button onClick={() => setLang("ru")} style={{ padding: "6px 12px", background: lang === "ru" ? "#C9A84C" : "transparent", color: lang === "ru" ? "#0A1628" : "#8BA7BE", border: "none", cursor: "pointer", fontSize: 12, fontWeight: 700, fontFamily: "Georgia, serif" }}>RU</button>
+      <button onClick={() => setLang("uz")} style={{ padding: "6px 12px", background: lang === "uz" ? "#C9A84C" : "transparent", color: lang === "uz" ? "#0A1628" : "#8BA7BE", border: "none", cursor: "pointer", fontSize: 12, fontWeight: 700, fontFamily: "Georgia, serif" }}>UZ</button>
     </div>
   );
 
   return (
-    <main style={{ fontFamily: "'Georgia', serif", background: "#080C12", color: "#E8EFF5", overflowX: "hidden", width: "100%" }}>
+    <main style={{ fontFamily: "'Georgia', serif", background: "#0A1628", color: "#E8EFF5", overflowX: "hidden", width: "100%" }}>
 
       {/* NAV */}
       <nav style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 100, padding: `16px ${px}px`, display: "flex", alignItems: "center", justifyContent: "space-between", background: isScrolled ? "rgba(8,12,18,0.97)" : "transparent", backdropFilter: isScrolled ? "blur(20px)" : "none", borderBottom: isScrolled ? "1px solid rgba(201,168,76,0.15)" : "none", transition: "all 0.3s" }}>
@@ -280,7 +280,7 @@ export default function Home() {
           <a href="/dashboard" style={{ padding: "9px 18px", background: "transparent", border: "1px solid rgba(255,255,255,0.15)", color: "#8BA7BE", borderRadius: 8, fontSize: 13, fontWeight: 600, textDecoration: "none" }}>
             {m ? t.nav_login_short : t.nav_login}
           </a>
-          <a href="#trial" style={{ padding: m ? "9px 14px" : "9px 20px", background: "#C9A84C", color: "#080C12", borderRadius: 8, fontSize: m ? 12 : 13, fontWeight: 700, textDecoration: "none" }}>
+          <a href="#trial" style={{ padding: m ? "9px 14px" : "9px 20px", background: "#C9A84C", color: "#0A1628", borderRadius: 8, fontSize: m ? 12 : 13, fontWeight: 700, textDecoration: "none" }}>
             {m ? t.nav_free_short : t.nav_free}
           </a>
         </div>
@@ -297,7 +297,7 @@ export default function Home() {
         </h1>
         <p style={{ fontSize: m ? 15 : 18, color: "#8BA7BE", lineHeight: 1.7, marginBottom: 36, maxWidth: 520 }}>{t.hero_p}</p>
         <div style={{ display: "flex", flexDirection: m ? "column" : "row", gap: 12, width: m ? "100%" : "auto", marginBottom: 48 }}>
-          <a href="#trial" style={{ padding: m ? "18px 24px" : "16px 36px", background: "#C9A84C", color: "#080C12", borderRadius: 12, fontSize: m ? 16 : 17, fontWeight: 700, textDecoration: "none", boxShadow: "0 8px 32px rgba(201,168,76,0.3)", textAlign: "center" }}>{t.hero_btn1}</a>
+          <a href="#trial" style={{ padding: m ? "18px 24px" : "16px 36px", background: "#C9A84C", color: "#0A1628", borderRadius: 12, fontSize: m ? 16 : 17, fontWeight: 700, textDecoration: "none", boxShadow: "0 8px 32px rgba(201,168,76,0.3)", textAlign: "center" }}>{t.hero_btn1}</a>
           <a href="#demo" style={{ padding: m ? "18px 24px" : "16px 36px", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.15)", color: "#fff", borderRadius: 12, fontSize: m ? 16 : 17, fontWeight: 600, textDecoration: "none", textAlign: "center" }}>{t.hero_btn2}</a>
         </div>
         <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: m ? 12 : 32 }}>
@@ -394,7 +394,7 @@ export default function Home() {
           <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 32 }}>
             {t.plans.map(plan => (
               <div key={plan.name} style={{ padding: "24px", background: plan.highlight ? "linear-gradient(135deg, rgba(26,107,154,0.3), rgba(13,61,94,0.3))" : "#0D1B2A", border: `2px solid ${plan.highlight ? "#C9A84C" : "rgba(255,255,255,0.06)"}`, borderRadius: 16, position: "relative" }}>
-                {plan.highlight && <div style={{ position: "absolute", top: -12, right: 20, background: "#C9A84C", color: "#080C12", padding: "4px 14px", borderRadius: 100, fontSize: 11, fontWeight: 700 }}>{t.plan_recommended}</div>}
+                {plan.highlight && <div style={{ position: "absolute", top: -12, right: 20, background: "#C9A84C", color: "#0A1628", padding: "4px 14px", borderRadius: 100, fontSize: 11, fontWeight: 700 }}>{t.plan_recommended}</div>}
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 }}>
                   <div>
                     <div style={{ fontSize: 18, fontWeight: 700, color: "#fff", marginBottom: 2 }}>{plan.name}</div>
@@ -414,7 +414,7 @@ export default function Home() {
                     </div>
                   ))}
                 </div>
-                <a href="/pricing" style={{ display: "block", textAlign: "center", padding: "13px", borderRadius: 10, background: plan.highlight ? "#C9A84C" : "rgba(201,168,76,0.1)", border: plan.highlight ? "none" : "1px solid rgba(201,168,76,0.3)", color: plan.highlight ? "#080C12" : "#C9A84C", fontSize: 14, fontWeight: 700, textDecoration: "none" }}>{t.plan_btn}</a>
+                <a href="/pricing" style={{ display: "block", textAlign: "center", padding: "13px", borderRadius: 10, background: plan.highlight ? "#C9A84C" : "rgba(201,168,76,0.1)", border: plan.highlight ? "none" : "1px solid rgba(201,168,76,0.3)", color: plan.highlight ? "#0A1628" : "#C9A84C", fontSize: 14, fontWeight: 700, textDecoration: "none" }}>{t.plan_btn}</a>
               </div>
             ))}
           </div>
@@ -432,7 +432,7 @@ export default function Home() {
                 <div style={{ fontSize: 28, fontWeight: 700, color: "#fff" }}>$70</div>
                 <div style={{ fontSize: 12, color: "#8BA7BE" }}>{t.box_price}</div>
               </div>
-              <a href="https://t.me/fonmusic2026" target="_blank" style={{ padding: "13px 24px", background: "#C9A84C", color: "#080C12", borderRadius: 10, fontSize: 14, fontWeight: 700, textDecoration: "none" }}>{t.box_btn}</a>
+              <a href="https://t.me/fonmusic2026" target="_blank" style={{ padding: "13px 24px", background: "#C9A84C", color: "#0A1628", borderRadius: 10, fontSize: 14, fontWeight: 700, textDecoration: "none" }}>{t.box_btn}</a>
             </div>
           </div>
         </div>
@@ -481,7 +481,7 @@ export default function Home() {
           <div style={{ fontSize: 11, color: "#C9A84C", letterSpacing: "0.15em", marginBottom: 12 }}>{t.trial_label}</div>
           <h2 style={{ fontSize: m ? 32 : 44, fontWeight: 700, color: "#fff", marginBottom: 12 }}>{t.trial_h} <span style={{ color: "#C9A84C" }}>{t.trial_accent}</span></h2>
           <p style={{ fontSize: 14, color: "#8BA7BE", lineHeight: 1.6, marginBottom: 32 }}>{t.trial_p}</p>
-          <a href="/signup" style={{ display: "block", padding: "20px", background: "#C9A84C", color: "#080C12", borderRadius: 14, fontSize: 18, fontWeight: 700, textDecoration: "none", boxShadow: "0 8px 32px rgba(201,168,76,0.35)", marginBottom: 16 }}>{t.trial_btn}</a>
+          <a href="/signup" style={{ display: "block", padding: "20px", background: "#C9A84C", color: "#0A1628", borderRadius: 14, fontSize: 18, fontWeight: 700, textDecoration: "none", boxShadow: "0 8px 32px rgba(201,168,76,0.35)", marginBottom: 16 }}>{t.trial_btn}</a>
           <div style={{ fontSize: 13, color: "#8BA7BE" }}>
             или <a href="tel:+998994100910" style={{ color: "#C9A84C", textDecoration: "none" }}>+998 99 410 09 10</a> · <a href="https://t.me/fonmusic2026" style={{ color: "#C9A84C", textDecoration: "none" }}>Telegram</a>
           </div>

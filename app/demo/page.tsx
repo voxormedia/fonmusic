@@ -152,7 +152,7 @@ function LeadModal({ onClose, onSuccess }: { onClose: () => void; onSuccess: () 
                 ))}
               </select>
             </div>
-            <button onClick={send} disabled={loading} style={{ width: "100%", padding: "18px", background: "#C9A84C", color: "#080C12", border: "none", borderRadius: 12, fontSize: 16, fontWeight: 700, cursor: "pointer" }}>
+            <button onClick={send} disabled={loading} style={{ width: "100%", padding: "18px", background: "#C9A84C", color: "#0A1628", border: "none", borderRadius: 12, fontSize: 16, fontWeight: 700, cursor: "pointer" }}>
               {loading ? "Отправляем..." : "Получить 7 дней бесплатно →"}
             </button>
             <button onClick={onClose} style={{ width: "100%", padding: "12px", background: "transparent", border: "none", color: "#8BA7BE", fontSize: 13, cursor: "pointer", marginTop: 8 }}>
@@ -299,7 +299,7 @@ function DemoPlayer() {
   // ЭКРАН ВЫБОРА БИЗНЕСА
   if (!businessSelected) {
     return (
-      <main style={{ minHeight: "100vh", background: "#080C12", fontFamily: "Georgia, serif", color: "#E8EFF5", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "40px 20px" }}>
+      <main style={{ minHeight: "100vh", background: "#0A1628", fontFamily: "Georgia, serif", color: "#E8EFF5", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "40px 20px" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
           <div style={{ width: 5, height: 20, background: "#C9A84C", borderRadius: 2 }} />
           <span style={{ fontSize: 17, fontWeight: 700, color: "#fff" }}>FonMusic</span>
@@ -333,7 +333,7 @@ function DemoPlayer() {
 
   // ДЕМО ПЛЕЕР
   return (
-    <main style={{ minHeight: "100vh", background: "#080C12", fontFamily: "Georgia, serif", color: "#E8EFF5" }}>
+    <main style={{ minHeight: "100vh", background: "#0A1628", fontFamily: "Georgia, serif", color: "#E8EFF5" }}>
       <audio
         ref={audioRef}
         onEnded={() => { if (playlist.length) { const next = (trackIndex + 1) % playlist.length; playTrack(next); } }}
@@ -436,7 +436,7 @@ function DemoPlayer() {
           ))}
         </div>
 
-        <button onClick={() => setShowModal(true)} style={{ display: "block", width: "100%", padding: "18px", background: "#C9A84C", color: "#080C12", borderRadius: 14, fontSize: 16, fontWeight: 700, border: "none", cursor: "pointer", fontFamily: "Georgia, serif", marginBottom: 12, boxShadow: "0 8px 32px rgba(201,168,76,0.3)" }}>
+        <button onClick={() => setShowModal(true)} style={{ display: "block", width: "100%", padding: "18px", background: "#C9A84C", color: "#0A1628", borderRadius: 14, fontSize: 16, fontWeight: 700, border: "none", cursor: "pointer", fontFamily: "Georgia, serif", marginBottom: 12, boxShadow: "0 8px 32px rgba(201,168,76,0.3)" }}>
           Подключить FonMusic →
         </button>
         <a href="/" style={{ display: "block", textAlign: "center", fontSize: 13, color: "#8BA7BE", textDecoration: "none" }}>← На главную</a>
