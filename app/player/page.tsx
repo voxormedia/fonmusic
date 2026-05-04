@@ -692,7 +692,7 @@ const station = effectiveData.station_key || "best_of_radio";
   const currentSlot = getCurrentSlot(scheduleItems);
 
   if (screen === "device_limit") return (
-    <main style={{ minHeight: "100vh", background: "#070B14", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "Georgia, serif", padding: 20 }}>
+    <main style={{ minHeight: "100vh", background: "#0A1628", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "Georgia, serif", padding: 20 }}>
       <div style={{ width: "100%", maxWidth: 420, textAlign: "center", background: "rgba(13,27,42,0.86)", border: "1px solid rgba(201,168,76,0.24)", borderRadius: 20, padding: "32px 24px", boxShadow: "0 24px 70px rgba(0,0,0,0.35)" }}>
         <div style={{ fontSize: 48, marginBottom: 16 }}>📱</div>
         <h1 style={{ fontSize: 22, fontWeight: 700, color: "#fff", marginBottom: 12, lineHeight: 1.25 }}>
@@ -721,7 +721,7 @@ const station = effectiveData.station_key || "best_of_radio";
   );
 
   if (screen === "session_taken") return (
-    <main style={{ minHeight: "100vh", background: "#070B14", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "Georgia, serif", padding: 20 }}>
+    <main style={{ minHeight: "100vh", background: "#0A1628", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "Georgia, serif", padding: 20 }}>
       <div style={{ width: "100%", maxWidth: 420, textAlign: "center", background: "rgba(13,27,42,0.86)", border: "1px solid rgba(201,168,76,0.24)", borderRadius: 20, padding: "32px 24px", boxShadow: "0 24px 70px rgba(0,0,0,0.35)" }}>
         <div style={{ fontSize: 48, marginBottom: 16 }}>🔇</div>
         <h1 style={{ fontSize: 22, fontWeight: 700, color: "#fff", marginBottom: 12, lineHeight: 1.25 }}>
@@ -741,22 +741,22 @@ const station = effectiveData.station_key || "best_of_radio";
   );
 
   if (loading) return (
-    <main style={{ minHeight: "100vh", background: "#070B14", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "Georgia, serif" }}>
+    <main style={{ minHeight: "100vh", background: "#0A1628", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "Georgia, serif" }}>
       <div style={{ color: "#8BA7BE" }}>⏳ Загрузка...</div>
     </main>
   );
 
   return (
-    <main style={{ minHeight: "100vh", fontFamily: "Georgia, serif", color: "#E8EFF5", position: "relative", overflow: "hidden", background: "#070B14" }}>
+    <main style={{ minHeight: "100vh", fontFamily: "Georgia, serif", color: "#E8EFF5", position: "relative", overflow: "hidden", background: "#0A1628" }}>
       <audio ref={audioRef} onTimeUpdate={handleTimeUpdate} onLoadedMetadata={handleTimeUpdate}
         onEnded={() => playTrack((trackIndex + 1) % playlist.length)}
         onError={() => setTimeout(() => playTrack((trackIndex + 1) % playlist.length), 2000)} />
 
       {/* АТМОСФЕРНЫЙ ФОН */}
       <div style={{ position: "fixed", inset: 0, zIndex: 0, pointerEvents: "none" }}>
-        <div style={{ position: "absolute", top: "-20%", left: "-10%", width: "60%", height: "60%", borderRadius: "50%", background: `radial-gradient(circle, ${stObj.color2}80 0%, transparent 70%)`, transition: "all 2s ease", animation: "float1 8s ease-in-out infinite" }} />
-        <div style={{ position: "absolute", bottom: "-10%", right: "-10%", width: "50%", height: "50%", borderRadius: "50%", background: `radial-gradient(circle, ${stObj.color1}60 0%, transparent 70%)`, transition: "all 2s ease", animation: "float2 10s ease-in-out infinite" }} />
-        <div style={{ position: "absolute", top: "40%", right: "20%", width: "30%", height: "30%", borderRadius: "50%", background: `radial-gradient(circle, ${accent}15 0%, transparent 70%)`, transition: "all 2s ease", animation: "float3 6s ease-in-out infinite" }} />
+        <div style={{ position: "absolute", top: "-24%", left: "-12%", width: "70%", height: "70%", borderRadius: "50%", background: "radial-gradient(circle, rgba(26,90,200,0.5) 0%, transparent 70%)", transition: "all 2s ease", animation: "float1 8s ease-in-out infinite" }} />
+        <div style={{ position: "absolute", bottom: "-14%", right: "-10%", width: "50%", height: "50%", borderRadius: "50%", background: "radial-gradient(circle, rgba(201,168,76,0.2) 0%, transparent 70%)", transition: "all 2s ease", animation: "float2 10s ease-in-out infinite" }} />
+        <div style={{ position: "absolute", top: "35%", right: "16%", width: "40%", height: "40%", borderRadius: "50%", background: "radial-gradient(circle, rgba(0,150,255,0.3) 0%, transparent 70%)", transition: "all 2s ease", animation: "float3 6s ease-in-out infinite" }} />
       </div>
 
       {/* NAV */}
@@ -783,7 +783,7 @@ const station = effectiveData.station_key || "best_of_radio";
       <div className="player-shell" style={{ position: "relative", zIndex: 10, maxWidth: 1080, margin: "0 auto", padding: "0 20px 40px" }}>
 
         {/* 1. ПЛЕЕР */}
-        <div className="player-card" style={{ background: "rgba(255,255,255,0.04)", backdropFilter: "blur(20px)", border: `1px solid ${accent}30`, borderRadius: 28, padding: "32px 28px", marginBottom: 12, boxShadow: `0 0 60px ${accent}15, inset 0 1px 0 rgba(255,255,255,0.08)`, transition: "border-color 1s, box-shadow 1s" }}>
+        <div className="player-card" style={{ background: "rgba(20,60,130,0.4)", backdropFilter: "blur(20px)", border: `1px solid ${accent}30`, borderRadius: 28, padding: "32px 28px", marginBottom: 12, boxShadow: `0 0 60px ${accent}15, inset 0 1px 0 rgba(255,255,255,0.08)`, transition: "border-color 1s, box-shadow 1s" }}>
           <div style={{ textAlign: "center", marginBottom: 24 }}>
             <div style={{ width: 140, height: 140, borderRadius: 22, background: `linear-gradient(135deg, ${stObj.color1}, ${stObj.color2})`, margin: "0 auto 16px", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 64, border: `1px solid ${accent}40`, boxShadow: `0 0 40px ${accent}30`, transition: "all 1s ease", opacity: trackFade }}>
               {stObj.icon}
@@ -871,7 +871,7 @@ const station = effectiveData.station_key || "best_of_radio";
         </div>
 
         {/* 2. МУЗЫКАЛЬНЫЕ ПОДБОРКИ */}
-        <div className="collections-card" style={{ background: "rgba(255,255,255,0.04)", backdropFilter: "blur(20px)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 18, overflow: "hidden", marginBottom: 10 }}>
+        <div className="collections-card" style={{ background: "rgba(15,45,100,0.4)", backdropFilter: "blur(20px)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 18, overflow: "hidden", marginBottom: 10 }}>
           <div style={{ padding: "16px 20px 12px" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
               <span style={{ fontSize: 18 }}>🎛️</span>
@@ -913,7 +913,7 @@ const station = effectiveData.station_key || "best_of_radio";
 
         {/* 3. ТАЙМЛАЙН + РЕДАКТОР */}
         {canUseSchedule && scheduleItems.length > 0 && (
-          <div className="schedule-card" style={{ background: "rgba(255,255,255,0.04)", backdropFilter: "blur(20px)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 18, overflow: "hidden", marginBottom: 10 }}>
+          <div className="schedule-card" style={{ background: "rgba(15,45,100,0.4)", backdropFilter: "blur(20px)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 18, overflow: "hidden", marginBottom: 10 }}>
             <div style={{ width: "100%", padding: "16px 20px", background: "transparent", border: "none", fontFamily: "Georgia, serif", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
               <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                 <span style={{ fontSize: 18 }}>📅</span>
@@ -974,7 +974,7 @@ const station = effectiveData.station_key || "best_of_radio";
         )}
 
         {!canUseSchedule && (
-          <div className="schedule-card" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 18, padding: "16px 20px", marginBottom: 10 }}>
+          <div className="schedule-card" style={{ background: "rgba(15,45,100,0.4)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 18, padding: "16px 20px", marginBottom: 10 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
               <span style={{ fontSize: 18 }}>📅</span>
               <div style={{ flex: 1 }}>
