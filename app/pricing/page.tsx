@@ -34,9 +34,9 @@ const T = {
     cta_sub: "7 дней бесплатно · без обязательств",
     recommended: "⭐ Самый популярный",
     box_label: "📦 FonMusic Box (по желанию)",
-    box_price_text: "750 000 сум отдельно · 500 000 сум при оплате за 3 месяца · 0 сум при оплате за 12 месяцев",
+    box_price_text: "750 000 сум отдельно · 500 000 сум при оплате за 3 месяца · 0 сум при предоплате: Базовый 12 мес. · Стандарт 9 мес. · Премиум 6 мес.",
     box_free: "0 сум",
-    box_free_cond: "при оплате подписки за 12 месяцев",
+    box_free_cond: "при предоплате: Базовый 12 мес. · Стандарт 9 мес. · Премиум 6 мес.",
     extra_label: "Дополнительные заведения",
     extra_price: "599 000 сум / мес за каждое",
     extra_calc: ["2 точки — 1 498 000 сум", "3 точки — 2 097 000 сум", "5 точек — 3 295 000 сум"],
@@ -52,7 +52,7 @@ const T = {
     box_desc: "FonMusic Box — маленькое устройство, которое подключается к аудиосистеме заведения и автоматически запускает музыку.",
     box_features: ["Работает круглосуточно без перерывов", "Автоматически запускает музыку после включения", "Управляется через кабинет FonMusic"],
     box_price: "750 000 сум",
-    box_free2: "500 000 сум при оплате за 3 месяца · бесплатно при оплате за 12 месяцев",
+    box_free2: "500 000 сум при оплате за 3 месяца · бесплатно при предоплате: Базовый 12 мес. · Стандарт 9 мес. · Премиум 6 мес.",
     box_note: "FonMusic Box является опцией. Можно использовать сервис через веб-плеер без покупки устройства.",
     box_btn: "Подключить FonMusic Box →",
     demo_h: "Попробуйте FonMusic", demo_accent: "бесплатно 7 дней",
@@ -68,9 +68,9 @@ const T = {
     ],
     footer_offer: "Оферта", footer_privacy: "Конфиденциальность",
     plans: [
-      { key: "basic", name: "Базовый", price: "399 000", desc: "Для одного небольшого заведения", popular: false, features: ["1 точка", "Все музыкальные атмосферы", "Веб-плеер", "Ручное переключение музыки"], missing: ["Автоматическое расписание"], ctaHref: "/signup", accent: "#8BA7BE", box: true },
-      { key: "standard", name: "Стандарт", price: "599 000", desc: "Оптимальный тариф для кафе, магазинов, салонов и фитнес-клубов", popular: true, features: ["1 точка", "Все музыкальные атмосферы", "Веб-плеер", "Автоматическое расписание музыки", "Удалённое управление"], missing: [], ctaHref: "/signup?plan=standard", accent: "#C9A84C", box: true },
-      { key: "premium", name: "Премиум", price: "899 000", desc: "Для сетей кафе, ресторанов, магазинов, фитнес-клубов и салонов красоты", popular: false, features: ["1 точка включена", "Все функции тарифа Стандарт", "Централизованное управление сетью", "Приоритетная поддержка"], missing: [], ctaHref: "/signup?plan=premium", accent: "#A78BFA", box: true },
+      { key: "basic", name: "Базовый", price: "399 000", desc: "Для одного небольшого заведения", popular: false, features: ["1 точка", "Все музыкальные атмосферы", "Веб-плеер", "Ручное переключение музыки"], missing: ["Автоматическое расписание"], ctaHref: "/signup", accent: "#8BA7BE", box: true, boxFreeMonths: 12 },
+      { key: "standard", name: "Стандарт", price: "599 000", desc: "Оптимальный тариф для кафе, магазинов, салонов и фитнес-клубов", popular: true, features: ["1 точка", "Все музыкальные атмосферы", "Веб-плеер", "Автоматическое расписание музыки", "Удалённое управление"], missing: [], ctaHref: "/signup?plan=standard", accent: "#C9A84C", box: true, boxFreeMonths: 9 },
+      { key: "premium", name: "Премиум", price: "899 000", desc: "Для сетей кафе, ресторанов, магазинов, фитнес-клубов и салонов красоты", popular: false, features: ["1 точка включена", "Все функции тарифа Стандарт", "Централизованное управление сетью", "Приоритетная поддержка"], missing: [], ctaHref: "/signup?plan=premium", accent: "#A78BFA", box: true, boxFreeMonths: 6 },
     ],
     compare: [
       { label: "Количество точек", basic: "1", standard: "1", premium: "∞" },
@@ -95,9 +95,9 @@ const T = {
     cta_sub: "7 kun bepul · majburiyatsiz",
     recommended: "⭐ Eng mashhur",
     box_label: "📦 FonMusic Box (ixtiyoriy)",
-    box_price_text: "750 000 so'm alohida · 3 oy to'lovda 500 000 so'm · 12 oy to'lovda 0 so'm",
+    box_price_text: "750 000 so'm alohida · 3 oy to'lovda 500 000 so'm · bepul: Asosiy 12 oy · Standart 9 oy · Premium 6 oy",
     box_free: "0 so'm",
-    box_free_cond: "12 oylik obuna to'lovida",
+    box_free_cond: "oldindan to'lovda: Asosiy 12 oy · Standart 9 oy · Premium 6 oy",
     extra_label: "Qo'shimcha muassasalar",
     extra_price: "599 000 so'm / oy har biri uchun",
     extra_calc: ["2 nuqta — 1 498 000 so'm", "3 nuqta — 2 097 000 so'm", "5 nuqta — 3 295 000 so'm"],
@@ -113,7 +113,7 @@ const T = {
     box_desc: "FonMusic Box — muassasaning audio tizimiga ulanadigan va musiqani avtomatik ishga tushuradigan kichik qurilma.",
     box_features: ["Uzluksiz sutka bo'yi ishlaydi", "Yoqilgandan so'ng musiqani avtomatik ishga tushiradi", "FonMusic kabineti orqali boshqariladi"],
     box_price: "750 000 so'm",
-    box_free2: "3 oy to'lovda 500 000 so'm · 12 oy to'lovda bepul",
+    box_free2: "3 oy to'lovda 500 000 so'm · bepul: Asosiy 12 oy · Standart 9 oy · Premium 6 oy",
     box_note: "FonMusic Box ixtiyoriy. Qurilma sotib olmay veb-pleer orqali foydalanish mumkin.",
     box_btn: "FonMusic Box ulash →",
     demo_h: "FonMusic'ni sinab ko'ring", demo_accent: "7 kun bepul",
@@ -129,9 +129,9 @@ const T = {
     ],
     footer_offer: "Oferta", footer_privacy: "Maxfiylik",
     plans: [
-      { key: "basic", name: "Asosiy", price: "399 000", desc: "Bitta kichik muassasa uchun", popular: false, features: ["1 nuqta", "Barcha musiqa atmosferalari", "Veb-pleer", "Musiqani qo'lda almashtirish"], missing: ["Avtomatik jadval"], ctaHref: "/signup", accent: "#8BA7BE", box: true },
-      { key: "standard", name: "Standart", price: "599 000", desc: "Kafe, do'kon, salon va fitnes-klublar uchun optimal tarif", popular: true, features: ["1 nuqta", "Barcha musiqa atmosferalari", "Veb-pleer", "Avtomatik musiqa jadvali", "Masofaviy boshqaruv"], missing: [], ctaHref: "/signup?plan=standard", accent: "#C9A84C", box: true },
-      { key: "premium", name: "Premium", price: "899 000", desc: "Kafe, restoran, do'kon, fitnes-klub va salonlar tarmog'i uchun", popular: false, features: ["1 nuqta kiritilgan", "Standart tarifning barcha funksiyalari", "Tarmoqni markazlashgan boshqaruv", "Ustuvor yordam"], missing: [], ctaHref: "/signup?plan=premium", accent: "#A78BFA", box: true },
+      { key: "basic", name: "Asosiy", price: "399 000", desc: "Bitta kichik muassasa uchun", popular: false, features: ["1 nuqta", "Barcha musiqa atmosferalari", "Veb-pleer", "Musiqani qo'lda almashtirish"], missing: ["Avtomatik jadval"], ctaHref: "/signup", accent: "#8BA7BE", box: true, boxFreeMonths: 12 },
+      { key: "standard", name: "Standart", price: "599 000", desc: "Kafe, do'kon, salon va fitnes-klublar uchun optimal tarif", popular: true, features: ["1 nuqta", "Barcha musiqa atmosferalari", "Veb-pleer", "Avtomatik musiqa jadvali", "Masofaviy boshqaruv"], missing: [], ctaHref: "/signup?plan=standard", accent: "#C9A84C", box: true, boxFreeMonths: 9 },
+      { key: "premium", name: "Premium", price: "899 000", desc: "Kafe, restoran, do'kon, fitnes-klub va salonlar tarmog'i uchun", popular: false, features: ["1 nuqta kiritilgan", "Standart tarifning barcha funksiyalari", "Tarmoqni markazlashgan boshqaruv", "Ustuvor yordam"], missing: [], ctaHref: "/signup?plan=premium", accent: "#A78BFA", box: true, boxFreeMonths: 6 },
     ],
     compare: [
       { label: "Nuqtalar soni", basic: "1", standard: "1", premium: "∞" },
@@ -435,7 +435,7 @@ export default function PricingPage() {
                     <option value="monthly">{lang === "ru" ? "Оплата за месяц" : "Bir oy uchun to'lov"}</option>
                     <option value="box_full_price">{lang === "ru" ? "FonMusic Box отдельно — 750 000 сум" : "FonMusic Box alohida — 750 000 so'm"}</option>
                     <option value="three_months_box_discount">{lang === "ru" ? "Оплата за 3 мес. + Box за 500 000 сум" : "3 oy to'lov + Box 500 000 so'm"}</option>
-                    <option value="annual_box_free">{lang === "ru" ? "Оплата за 12 мес. + Box бесплатно" : "12 oy to'lov + Box bepul"}</option>
+                    <option value="annual_box_free">{lang === "ru" ? `Оплата за ${selectedPlan.boxFreeMonths} мес. + Box бесплатно` : `${selectedPlan.boxFreeMonths} oy to'lov + Box bepul`}</option>
                   </select>
                 </label>
 
