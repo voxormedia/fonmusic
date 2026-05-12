@@ -10,6 +10,12 @@ const PLAN_LABELS: Record<string, string> = {
   premium: "Премиум",
 };
 
+const BOX_PREPAY_MONTHS: Record<string, number> = {
+  basic: 5,
+  standard: 4,
+  premium: 3,
+};
+
 async function sendTelegram(text: string) {
   if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_ID) {
     throw new Error("Telegram env is not configured");
@@ -51,6 +57,9 @@ export async function POST(req: NextRequest) {
     const paymentMethod = String(body.paymentMethod || "bank_transfer");
     const comment = String(body.comment || "").trim();
     const planLabel = PLAN_LABELS[plan];
+    const paymentLabel = paymentMethod === "prepaid_box"
+      ? `Предоплата ${BOX_PREPAY_MONTHS[plan]} мес. + FonMusic Box`
+      : "Помесячно / банковский перевод";
 
     const text = [
       "💳 Заявка на тариф FonMusic",
@@ -59,7 +68,7 @@ export async function POST(req: NextRequest) {
       `Клиент: ${name}`,
       `Телефон: ${phone}`,
       `Заведение: ${locationName}`,
-      `Оплата: ${paymentMethod === "three_months_box" ? "3 месяца + FonMusic Box" : "Помесячно / банковский перевод"}`,
+      `Оплата: ${paymentLabel}`,
       client?.id ? `Client ID: ${client.id}` : clientId ? `Client ID: ${clientId}` : "",
       comment ? `Комментарий: ${comment}` : "",
     ].filter(Boolean).join("\n");
@@ -73,7 +82,7 @@ export async function POST(req: NextRequest) {
         `Дата: ${new Date(requestedAt).toLocaleString("ru-RU", { timeZone: "Asia/Tashkent" })}`,
         `Тариф: ${plan}`,
         `Телефон: ${phone}`,
-        `Оплата: ${paymentMethod}`,
+        `Оплата: ${paymentLabel}`,
         comment ? `Комментарий: ${comment}` : "",
       ].filter(Boolean).join("\n");
 

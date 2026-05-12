@@ -36,7 +36,7 @@ const T = {
     box_label: "📦 FonMusic Box (по желанию)",
     box_price_text: "750 000 сум · или",
     box_free: "бесплатно",
-    box_free_cond: "при оплате любого тарифа за 3 месяца",
+    box_free_cond: "при предоплате: Базовый 5 мес. · Стандарт 4 мес. · Премиум 3 мес.",
     extra_label: "Дополнительные заведения",
     extra_price: "599 000 сум / мес за каждое",
     extra_calc: ["2 точки — 1 498 000 сум", "3 точки — 2 097 000 сум", "5 точек — 3 295 000 сум"],
@@ -52,7 +52,7 @@ const T = {
     box_desc: "FonMusic Box — маленькое устройство, которое подключается к аудиосистеме заведения и автоматически запускает музыку.",
     box_features: ["Работает круглосуточно без перерывов", "Автоматически запускает музыку после включения", "Управляется через кабинет FonMusic"],
     box_price: "750 000 сум",
-    box_free2: "или бесплатно при оплате любого тарифа за 3 месяца",
+    box_free2: "или бесплатно при предоплате: Базовый за 5 месяцев, Стандарт за 4 месяца, Премиум за 3 месяца",
     box_note: "FonMusic Box является опцией. Можно использовать сервис через веб-плеер без покупки устройства.",
     box_btn: "Подключить FonMusic Box →",
     demo_h: "Попробуйте FonMusic", demo_accent: "бесплатно 7 дней",
@@ -68,9 +68,9 @@ const T = {
     ],
     footer_offer: "Оферта", footer_privacy: "Конфиденциальность",
     plans: [
-      { key: "basic", name: "Базовый", price: "399 000", desc: "Для одного небольшого заведения", popular: false, features: ["1 точка", "Все музыкальные атмосферы", "Веб-плеер", "Ручное переключение музыки"], missing: ["Автоматическое расписание"], ctaHref: "/signup", accent: "#8BA7BE", box: true },
-      { key: "standard", name: "Стандарт", price: "599 000", desc: "Оптимальный тариф для кафе, магазинов, салонов и фитнес-клубов", popular: true, features: ["1 точка", "Все музыкальные атмосферы", "Веб-плеер", "Автоматическое расписание музыки", "Удалённое управление"], missing: [], ctaHref: "/signup?plan=standard", accent: "#C9A84C", box: true },
-      { key: "premium", name: "Премиум", price: "899 000", desc: "Для сетей кафе, ресторанов, магазинов, фитнес-клубов и салонов красоты", popular: false, features: ["1 точка включена", "Все функции тарифа Стандарт", "Централизованное управление сетью", "Приоритетная поддержка"], missing: [], ctaHref: "/signup?plan=premium", accent: "#A78BFA", box: true },
+      { key: "basic", name: "Базовый", price: "399 000", desc: "Для одного небольшого заведения", popular: false, features: ["1 точка", "Все музыкальные атмосферы", "Веб-плеер", "Ручное переключение музыки"], missing: ["Автоматическое расписание"], ctaHref: "/signup", accent: "#8BA7BE", box: true, boxMonths: 5 },
+      { key: "standard", name: "Стандарт", price: "599 000", desc: "Оптимальный тариф для кафе, магазинов, салонов и фитнес-клубов", popular: true, features: ["1 точка", "Все музыкальные атмосферы", "Веб-плеер", "Автоматическое расписание музыки", "Удалённое управление"], missing: [], ctaHref: "/signup?plan=standard", accent: "#C9A84C", box: true, boxMonths: 4 },
+      { key: "premium", name: "Премиум", price: "899 000", desc: "Для сетей кафе, ресторанов, магазинов, фитнес-клубов и салонов красоты", popular: false, features: ["1 точка включена", "Все функции тарифа Стандарт", "Централизованное управление сетью", "Приоритетная поддержка"], missing: [], ctaHref: "/signup?plan=premium", accent: "#A78BFA", box: true, boxMonths: 3 },
     ],
     compare: [
       { label: "Количество точек", basic: "1", standard: "1", premium: "∞" },
@@ -97,7 +97,7 @@ const T = {
     box_label: "📦 FonMusic Box (ixtiyoriy)",
     box_price_text: "750 000 so'm · yoki",
     box_free: "bepul",
-    box_free_cond: "istalgan tarif uchun 3 oylik to'lovda",
+    box_free_cond: "oldindan to'lovda: Asosiy 5 oy · Standart 4 oy · Premium 3 oy",
     extra_label: "Qo'shimcha muassasalar",
     extra_price: "599 000 so'm / oy har biri uchun",
     extra_calc: ["2 nuqta — 1 498 000 so'm", "3 nuqta — 2 097 000 so'm", "5 nuqta — 3 295 000 so'm"],
@@ -113,7 +113,7 @@ const T = {
     box_desc: "FonMusic Box — muassasaning audio tizimiga ulanadigan va musiqani avtomatik ishga tushuradigan kichik qurilma.",
     box_features: ["Uzluksiz sutka bo'yi ishlaydi", "Yoqilgandan so'ng musiqani avtomatik ishga tushiradi", "FonMusic kabineti orqali boshqariladi"],
     box_price: "750 000 so'm",
-    box_free2: "yoki istalgan tarif uchun 3 oylik to'lovda bepul",
+    box_free2: "yoki oldindan to'lovda bepul: Asosiy 5 oy, Standart 4 oy, Premium 3 oy",
     box_note: "FonMusic Box ixtiyoriy. Qurilma sotib olmay veb-pleer orqali foydalanish mumkin.",
     box_btn: "FonMusic Box ulash →",
     demo_h: "FonMusic'ni sinab ko'ring", demo_accent: "7 kun bepul",
@@ -129,9 +129,9 @@ const T = {
     ],
     footer_offer: "Oferta", footer_privacy: "Maxfiylik",
     plans: [
-      { key: "basic", name: "Asosiy", price: "399 000", desc: "Bitta kichik muassasa uchun", popular: false, features: ["1 nuqta", "Barcha musiqa atmosferalari", "Veb-pleer", "Musiqani qo'lda almashtirish"], missing: ["Avtomatik jadval"], ctaHref: "/signup", accent: "#8BA7BE", box: true },
-      { key: "standard", name: "Standart", price: "599 000", desc: "Kafe, do'kon, salon va fitnes-klublar uchun optimal tarif", popular: true, features: ["1 nuqta", "Barcha musiqa atmosferalari", "Veb-pleer", "Avtomatik musiqa jadvali", "Masofaviy boshqaruv"], missing: [], ctaHref: "/signup?plan=standard", accent: "#C9A84C", box: true },
-      { key: "premium", name: "Premium", price: "899 000", desc: "Kafe, restoran, do'kon, fitnes-klub va salonlar tarmog'i uchun", popular: false, features: ["1 nuqta kiritilgan", "Standart tarifning barcha funksiyalari", "Tarmoqni markazlashgan boshqaruv", "Ustuvor yordam"], missing: [], ctaHref: "/signup?plan=premium", accent: "#A78BFA", box: true },
+      { key: "basic", name: "Asosiy", price: "399 000", desc: "Bitta kichik muassasa uchun", popular: false, features: ["1 nuqta", "Barcha musiqa atmosferalari", "Veb-pleer", "Musiqani qo'lda almashtirish"], missing: ["Avtomatik jadval"], ctaHref: "/signup", accent: "#8BA7BE", box: true, boxMonths: 5 },
+      { key: "standard", name: "Standart", price: "599 000", desc: "Kafe, do'kon, salon va fitnes-klublar uchun optimal tarif", popular: true, features: ["1 nuqta", "Barcha musiqa atmosferalari", "Veb-pleer", "Avtomatik musiqa jadvali", "Masofaviy boshqaruv"], missing: [], ctaHref: "/signup?plan=standard", accent: "#C9A84C", box: true, boxMonths: 4 },
+      { key: "premium", name: "Premium", price: "899 000", desc: "Kafe, restoran, do'kon, fitnes-klub va salonlar tarmog'i uchun", popular: false, features: ["1 nuqta kiritilgan", "Standart tarifning barcha funksiyalari", "Tarmoqni markazlashgan boshqaruv", "Ustuvor yordam"], missing: [], ctaHref: "/signup?plan=premium", accent: "#A78BFA", box: true, boxMonths: 3 },
     ],
     compare: [
       { label: "Nuqtalar soni", basic: "1", standard: "1", premium: "∞" },
@@ -278,7 +278,9 @@ export default function PricingPage() {
               {plan.box && (
                 <div style={{ background: "rgba(201,168,76,0.06)", border: "1px solid rgba(201,168,76,0.15)", borderRadius: 12, padding: "12px 14px", marginBottom: 16 }}>
                   <div style={{ fontSize: 11, color: "#C9A84C", fontWeight: 700, marginBottom: 4 }}>{t.box_label}</div>
-                  <div style={{ fontSize: 12, color: "#8BA7BE", lineHeight: 1.5 }}>{t.box_price_text} <span style={{ color: "#22C55E", fontWeight: 700 }}>{t.box_free}</span> {t.box_free_cond}</div>
+                  <div style={{ fontSize: 12, color: "#8BA7BE", lineHeight: 1.5 }}>
+                    {t.box_price_text} <span style={{ color: "#22C55E", fontWeight: 700 }}>{t.box_free}</span> {lang === "ru" ? `при оплате за ${plan.boxMonths} мес.` : `${plan.boxMonths} oylik to'lovda`}
+                  </div>
                 </div>
               )}
               {plan.key === "premium" && (
@@ -431,7 +433,7 @@ export default function PricingPage() {
                   <div style={{ fontSize: 12, color: "#8BA7BE", marginBottom: 6 }}>{lang === "ru" ? "Вариант подключения" : "Ulash varianti"}</div>
                   <select value={paymentMethod} onChange={e => setPaymentMethod(e.target.value)} style={{ width: "100%", padding: "12px 14px", background: "#101A28", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, color: "#fff", fontSize: 14, outline: "none", fontFamily: "Georgia, serif" }}>
                     <option value="monthly">{lang === "ru" ? "Оплата за месяц" : "Bir oy uchun to'lov"}</option>
-                    <option value="three_months_box">{lang === "ru" ? "Оплата за 3 месяца + FonMusic Box" : "3 oy + FonMusic Box"}</option>
+                    <option value="prepaid_box">{lang === "ru" ? `Оплата за ${selectedPlan.boxMonths} мес. + FonMusic Box` : `${selectedPlan.boxMonths} oy + FonMusic Box`}</option>
                   </select>
                 </label>
 
