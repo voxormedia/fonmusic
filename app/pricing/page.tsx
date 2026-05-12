@@ -278,8 +278,10 @@ export default function PricingPage() {
               {plan.box && (
                 <div style={{ background: "rgba(201,168,76,0.06)", border: "1px solid rgba(201,168,76,0.15)", borderRadius: 12, padding: "12px 14px", marginBottom: 16 }}>
                   <div style={{ fontSize: 11, color: "#C9A84C", fontWeight: 700, marginBottom: 4 }}>{t.box_label}</div>
-                  <div style={{ fontSize: 12, color: "#8BA7BE", lineHeight: 1.5 }}>
-                    {t.box_price_text}
+                  <div style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: 12, lineHeight: 1.45 }}>
+                    <div style={{ color: "#8BA7BE" }}>{lang === "ru" ? "750 000 сум отдельно" : "750 000 so'm alohida"}</div>
+                    <div style={{ color: "#8BA7BE" }}>{lang === "ru" ? "500 000 сум при оплате за 3 месяца" : "3 oy to'lovda 500 000 so'm"}</div>
+                    <div style={{ color: "#22C55E", fontWeight: 700 }}>{lang === "ru" ? `0 сум при оплате за ${plan.boxFreeMonths} месяцев` : `${plan.boxFreeMonths} oy to'lovda 0 so'm`}</div>
                   </div>
                 </div>
               )}
