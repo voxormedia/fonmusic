@@ -51,7 +51,7 @@ const T = {
     step: "Шаг",
     demo_label: "ДЕМО", demo_h: "Услышьте атмосферу вашего заведения", demo_p: "Реальная музыка из нашего каталога",
     demo_player_title: "Послушайте музыку для вашего бизнеса", demo_player_p: "Выберите тип заведения и нажмите Play",
-    demo_loading: "Загрузка...", demo_play_hint: "Нажмите Play для воспроизведения",
+    demo_loading: "Загрузка...", demo_play_hint: "Нажмите Play для воспроизведения", demo_next: "Следующий",
     biz_label: "ДЛЯ КАКИХ БИЗНЕСОВ", biz_h: "Музыка для каждого заведения",
     pricing_label: "СТАРТОВЫЕ ТАРИФЫ", pricing_h: "Специальные цены для первых подключений",
     plans: [
@@ -121,7 +121,7 @@ const T = {
     step: "Qadam",
     demo_label: "DEMO", demo_h: "Muassasangiz atmosferasini eshiting", demo_p: "Katalogimizdan haqiqiy musiqa",
     demo_player_title: "Biznesingiz uchun musiqa tinglang", demo_player_p: "Muassasa turini tanlang va Play bosing",
-    demo_loading: "Yuklanmoqda...", demo_play_hint: "Ijro etish uchun Play bosing",
+    demo_loading: "Yuklanmoqda...", demo_play_hint: "Ijro etish uchun Play bosing", demo_next: "Keyingisi",
     biz_label: "QAYSI BIZNESLAR UCHUN", biz_h: "Har bir muassasa uchun musiqa",
     pricing_label: "START TARIFLAR", pricing_h: "Birinchi ulanishlar uchun maxsus narxlar",
     plans: [
@@ -175,23 +175,74 @@ function DemoPlayer({ lang }: { lang: "ru" | "uz" }) {
   const [isLoading, setIsLoading] = useState(false);
   const [currentTrack, setCurrentTrack] = useState("");
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const playlistRef = useRef<string[]>([]);
+  const recentTracksRef = useRef<string[]>([]);
+  const selectedBusinessRef = useRef(selectedBusiness);
+
+  const getTrackTitle = (track: string) => track.replace(".mp3", "").split("-").slice(1).join(" ").trim();
+  const getTrackSignature = (track: string) => getTrackTitle(track).toLowerCase().split(/\s+/).slice(0, 2).join(" ");
+
+  const pickSmartTrack = (tracks: string[]) => {
+    if (!tracks.length) return "";
+    const recent = recentTracksRef.current;
+    const recentSet = new Set(recent);
+    const recentSignatures = new Set(recent.map(getTrackSignature));
+    const lastTrack = recent[recent.length - 1];
+    const lastSection = lastTrack ? Math.floor((tracks.indexOf(lastTrack) / Math.max(1, tracks.length)) * 5) : -1;
+    const candidates = tracks
+      .map((track, index) => ({ track, index, section: Math.floor((index / Math.max(1, tracks.length)) * 5) }))
+      .filter(item => !recentSet.has(item.track))
+      .filter(item => item.section !== lastSection)
+      .filter(item => !recentSignatures.has(getTrackSignature(item.track)));
+    const pool = candidates.length ? candidates : tracks.map((track, index) => ({ track, index, section: index }));
+    return pool[Math.floor(Math.random() * pool.length)].track;
+  };
+
+  const playTrack = (business: typeof BUSINESS_TYPES[0], track: string) => {
+    if (audioRef.current) { audioRef.current.pause(); audioRef.current.src = ""; }
+    setSelectedBusiness(business); selectedBusinessRef.current = business; setIsPlaying(false); setIsLoading(true);
+    const url = `${BASE_URL}/${business.folder.replace(/ /g, "%20")}/${encodeURIComponent(track)}`;
+    const audio = new Audio(url);
+    audioRef.current = audio;
+    audio.volume = 0.7;
+    audio.oncanplay = () => {
+      setIsLoading(false);
+      setCurrentTrack(getTrackTitle(track));
+      recentTracksRef.current = [...recentTracksRef.current, track].slice(-8);
+      audio.play();
+      setIsPlaying(true);
+    };
+    audio.onerror = () => { setIsLoading(false); setIsPlaying(false); };
+    audio.onended = () => playNext();
+  };
 
   const playStation = async (business: typeof BUSINESS_TYPES[0]) => {
-    if (audioRef.current) { audioRef.current.pause(); audioRef.current.src = ""; }
-    setSelectedBusiness(business); setIsPlaying(false); setIsLoading(true); setCurrentTrack("");
+    setSelectedBusiness(business); selectedBusinessRef.current = business; setIsPlaying(false); setIsLoading(true); setCurrentTrack("");
+    recentTracksRef.current = [];
     try {
       const res = await fetch(`${BASE_URL}/${business.folder.replace(/ /g, "%20")}/playlist.json`);
       const data = await res.json();
       const tracks = data.map((t: any) => typeof t === "string" ? t : t.f).filter(Boolean);
-      const track = tracks[Math.floor(Math.random() * Math.min(20, tracks.length))];
-      const url = `${BASE_URL}/${business.folder.replace(/ /g, "%20")}/${encodeURIComponent(track)}`;
-      const audio = new Audio(url);
-      audioRef.current = audio;
-      audio.volume = 0.7;
-      audio.oncanplay = () => { setIsLoading(false); setCurrentTrack(track.replace(".mp3", "").split("-").slice(1).join(" ").trim()); audio.play(); setIsPlaying(true); };
-      audio.onerror = () => { setIsLoading(false); setIsPlaying(false); };
-      audio.onended = () => setIsPlaying(false);
+      playlistRef.current = tracks;
+      const track = pickSmartTrack(tracks);
+      if (track) playTrack(business, track);
     } catch { setIsLoading(false); }
+  };
+
+  const playNext = async () => {
+    const business = selectedBusinessRef.current;
+    let tracks = playlistRef.current;
+    if (!tracks.length) {
+      setIsLoading(true);
+      try {
+        const res = await fetch(`${BASE_URL}/${business.folder.replace(/ /g, "%20")}/playlist.json`);
+        const data = await res.json();
+        tracks = data.map((t: any) => typeof t === "string" ? t : t.f).filter(Boolean);
+        playlistRef.current = tracks;
+      } catch { setIsLoading(false); return; }
+    }
+    const track = pickSmartTrack(tracks);
+    if (track) playTrack(business, track);
   };
 
   const togglePlay = () => {
@@ -225,7 +276,9 @@ function DemoPlayer({ lang }: { lang: "ru" | "uz" }) {
             {isLoading ? t.demo_loading : currentTrack || t.demo_play_hint}
           </div>
         </div>
-        <div style={{ fontSize: 11, color: "#4a5a6a", flexShrink: 0 }}>Jamendo</div>
+        <button onClick={playNext} disabled={isLoading} style={{ padding: "9px 12px", background: "rgba(201,168,76,0.12)", border: "1px solid rgba(201,168,76,0.35)", borderRadius: 10, color: "#C9A84C", fontSize: 12, fontWeight: 700, cursor: isLoading ? "wait" : "pointer", fontFamily: "Georgia, serif", flexShrink: 0 }}>
+          {t.demo_next} →
+        </button>
       </div>
     </div>
   );
