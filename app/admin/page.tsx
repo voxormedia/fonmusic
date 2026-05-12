@@ -144,6 +144,26 @@ export default function AdminPage() {
     return matchSearch && matchPlan;
   });
 
+  const getClientGroup = (client: any) => {
+    const requestedPlan = getRequestedPlan(client.notes);
+    if (requestedPlan && client.plan !== requestedPlan) return "requests";
+    if (client.subscription_status === "expired") return "expired";
+    if (client.plan === "trial" || client.subscription_status === "demo") return "trial";
+    if (client.subscription_status === "active" && ["basic", "standard", "premium"].includes(client.plan)) return "paid";
+    return "other";
+  };
+
+  const clientGroups = [
+    { key: "requests", title: "Заявки на подключение", hint: "Клиенты, которые выбрали тариф и ждут активации", color: "#C9A84C" },
+    { key: "expired", title: "Истёкшие / заблокированные", hint: "Нужно продлить или восстановить доступ", color: "#EF4444" },
+    { key: "trial", title: "Демо-период", hint: "Новые клиенты на тестовом доступе", color: "#C9A84C" },
+    { key: "paid", title: "Платные клиенты", hint: "Активные подписки", color: "#22C55E" },
+    { key: "other", title: "Прочие", hint: "Клиенты без явного статуса", color: "#8BA7BE" },
+  ].map(group => ({
+    ...group,
+    clients: filtered.filter(client => getClientGroup(client) === group.key),
+  }));
+
   const adminLogin = async () => {
     setAuthError("");
     const res = await fetch("/api/admin/login", {
@@ -257,7 +277,22 @@ export default function AdminPage() {
           <div style={{ textAlign: "center", padding: 40, color: "#8BA7BE" }}>⏳ Загрузка...</div>
         ) : (
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            {filtered.map(c => {
+            {clientGroups.filter(group => group.clients.length > 0).map(group => (
+              <section key={group.key} style={{ marginBottom: 18 }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, margin: "4px 0 10px", padding: "0 2px" }}>
+                  <div>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <span style={{ width: 8, height: 8, borderRadius: "50%", background: group.color, boxShadow: `0 0 14px ${group.color}55` }} />
+                      <h2 style={{ fontSize: 14, fontWeight: 800, color: "#fff", margin: 0 }}>{group.title}</h2>
+                      <span style={{ fontSize: 11, color: group.color, background: `${group.color}18`, border: `1px solid ${group.color}30`, borderRadius: 100, padding: "2px 8px", fontWeight: 800 }}>
+                        {group.clients.length}
+                      </span>
+                    </div>
+                    <div style={{ fontSize: 11, color: "#4a5a6a", marginTop: 3 }}>{group.hint}</div>
+                  </div>
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {group.clients.map(c => {
               const plan = PLAN_LABELS[c.plan] || { label: c.plan || "—", color: "#8BA7BE" };
               const daysLeft = c.demo_expires_at ? getDaysLeft(c.demo_expires_at) : null;
               const isExpired = c.subscription_status === "expired";
@@ -400,6 +435,9 @@ export default function AdminPage() {
                 </div>
               );
             })}
+                </div>
+              </section>
+            ))}
 
             {filtered.length === 0 && (
               <div style={{ textAlign: "center", padding: 40, color: "#8BA7BE" }}>Клиентов не найдено</div>
