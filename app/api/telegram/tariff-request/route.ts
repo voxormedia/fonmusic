@@ -10,10 +10,11 @@ const PLAN_LABELS: Record<string, string> = {
   premium: "Премиум",
 };
 
-const BOX_PREPAY_MONTHS: Record<string, number> = {
-  basic: 5,
-  standard: 4,
-  premium: 3,
+const PAYMENT_LABELS: Record<string, string> = {
+  monthly: "Помесячно / банковский перевод",
+  box_full_price: "FonMusic Box отдельно — 750 000 сум",
+  three_months_box_discount: "Предоплата 3 мес. + FonMusic Box за 500 000 сум",
+  annual_box_free: "Предоплата 12 мес. + FonMusic Box бесплатно",
 };
 
 async function sendTelegram(text: string) {
@@ -57,9 +58,7 @@ export async function POST(req: NextRequest) {
     const paymentMethod = String(body.paymentMethod || "bank_transfer");
     const comment = String(body.comment || "").trim();
     const planLabel = PLAN_LABELS[plan];
-    const paymentLabel = paymentMethod === "prepaid_box"
-      ? `Предоплата ${BOX_PREPAY_MONTHS[plan]} мес. + FonMusic Box`
-      : "Помесячно / банковский перевод";
+    const paymentLabel = PAYMENT_LABELS[paymentMethod] || "Помесячно / банковский перевод";
 
     const text = [
       "💳 Заявка на тариф FonMusic",

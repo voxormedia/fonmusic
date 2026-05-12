@@ -66,7 +66,7 @@ const T = {
     box_label: "FONMUSIC BOX", box_h: "📦 Автоматическая музыка 24/7",
     box_p: "Небольшая приставка, которая подключается к интернету и вашей аудиосистеме. Музыка запускается автоматически и не зависит от браузера или компьютера.",
     box_features: ["Автозапуск", "Работает 24/7", "Без компьютера", "Стабильно"],
-    box_price: "единоразовая покупка", box_btn: "Заказать Box →",
+    box_price: "500 000 сум при оплате за 3 месяца · 0 сум при оплате за 12 месяцев", box_btn: "Заказать Box →",
     license_h: "Лицензированная музыка для бизнеса",
     license_p: "FonMusic использует лицензированный каталог Jamendo, предназначенный для коммерческого воспроизведения. Каждый клиент получает официальный сертификат.",
     license_list: ["✓ Кафе и кофейни", "✓ Рестораны", "✓ Магазины", "✓ Фитнес-клубы", "✓ Салоны красоты", "✓ Отели"],
@@ -139,7 +139,7 @@ const T = {
     box_label: "FONMUSIC BOX", box_h: "📦 Avtomatik musiqa 24/7",
     box_p: "Internet va audio tizimingizga ulangan kichik pristavka. Musiqa avtomatik ishga tushadi va brauzer yoki kompyuterga bog'liq emas.",
     box_features: ["Avtoyoqish", "24/7 ishlaydi", "Kompyutersiz", "Barqaror"],
-    box_price: "bir martalik to'lov", box_btn: "Box buyurtma qilish →",
+    box_price: "3 oy to'lovda 500 000 so'm · 12 oy to'lovda 0 so'm", box_btn: "Box buyurtma qilish →",
     license_h: "Biznes uchun litsenziyalangan musiqa",
     license_p: "FonMusic tijoriy ijro uchun mo'ljallangan Jamendo litsenziyalangan katalogidan foydalanadi. Har bir mijoz rasmiy sertifikat oladi.",
     license_list: ["✓ Kafe va qahvaxonalar", "✓ Restoranlar", "✓ Do'konlar", "✓ Fitnes-klublar", "✓ Go'zallik salonlari", "✓ Mehmonxonalar"],
@@ -526,7 +526,7 @@ export default function Home() {
             </div>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
               <div>
-                <div style={{ fontSize: 28, fontWeight: 700, color: "#fff" }}>$70</div>
+                <div style={{ fontSize: 28, fontWeight: 700, color: "#fff" }}>750 000 сум</div>
                 <div style={{ fontSize: 12, color: "#8BA7BE" }}>{t.box_price}</div>
               </div>
               <a href="https://t.me/fonmusic2026" target="_blank" style={{ padding: "13px 24px", background: "#C9A84C", color: "#0A1628", borderRadius: 10, fontSize: 14, fontWeight: 700, textDecoration: "none" }}>{t.box_btn}</a>

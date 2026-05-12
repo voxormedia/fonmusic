@@ -812,7 +812,7 @@ const station = effectiveData.station_key || "best_of_radio";
       </div>
 
       <div style={{ fontSize: 11, color: "#4a5a6a", marginBottom: 14, textAlign: "center" }}>
-        Подходит для кафе, магазинов, салонов и фитнес-клубов
+        750 000 сум · 500 000 сум при оплате за 3 месяца · 0 сум при оплате за 12 месяцев
       </div>
 
       <a href="https://t.me/fonmusic2026" target="_blank" style={{ display: "block", textAlign: "center", padding: "13px", background: "#C9A84C", color: "#070B14", borderRadius: 10, fontSize: 13, fontWeight: 700, textDecoration: "none" }}>
