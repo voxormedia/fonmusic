@@ -32,6 +32,12 @@ function formatDate(dateStr: string): string {
   return new Date(dateStr).toLocaleDateString("ru-RU");
 }
 
+function addMonths(date: Date, months: number): Date {
+  const next = new Date(date);
+  next.setMonth(next.getMonth() + months);
+  return next;
+}
+
 const PLAN_LABELS: Record<string, { label: string, color: string }> = {
   trial:    { label: "Демо",     color: "#C9A84C" },
   basic:    { label: "Базовый",  color: "#8BA7BE" },
@@ -85,6 +91,24 @@ export default function AdminPage() {
     setSaving(null);
     setSuccess("Тариф обновлён");
     setTimeout(() => setSuccess(""), 2000);
+  };
+
+  const activateSubscription = async (client: any, plan: string, months: number) => {
+    setSaving(client.id);
+    const currentExpiry = client.demo_expires_at ? new Date(client.demo_expires_at) : null;
+    const baseDate = currentExpiry && currentExpiry > new Date() ? currentExpiry : new Date();
+    const paidUntil = addMonths(baseDate, months);
+    const extra = {
+      plan,
+      subscription_status: "active",
+      demo_expires_at: paidUntil.toISOString(),
+      trial_until: null,
+    };
+    await sb(`clients?id=eq.${client.id}`, { method: "PATCH", body: JSON.stringify(extra) });
+    setClients(prev => prev.map(c => c.id === client.id ? { ...c, ...extra } : c));
+    setSaving(null);
+    setSuccess(`Подписка активна на ${months} мес. до ${formatDate(paidUntil.toISOString())}`);
+    setTimeout(() => setSuccess(""), 2500);
   };
 
   const extendDemo = async (clientId: string, days: number) => {
@@ -237,6 +261,7 @@ export default function AdminPage() {
               const plan = PLAN_LABELS[c.plan] || { label: c.plan || "—", color: "#8BA7BE" };
               const daysLeft = c.demo_expires_at ? getDaysLeft(c.demo_expires_at) : null;
               const isExpired = c.subscription_status === "expired";
+              const isPaid = c.subscription_status === "active" && ["basic", "standard", "premium"].includes(c.plan);
               const requestedPlan = getRequestedPlan(c.notes);
               const requestedPlanInfo = requestedPlan ? PLAN_LABELS[requestedPlan] : null;
 
@@ -263,6 +288,11 @@ export default function AdminPage() {
                       {c.plan === "trial" && daysLeft !== null && (
                         <div style={{ fontSize: 11, color: daysLeft <= 2 ? "#EF4444" : "#C9A84C" }}>
                           ⏱ Осталось: {daysLeft} дн. (до {formatDate(c.demo_expires_at)})
+                        </div>
+                      )}
+                      {isPaid && c.demo_expires_at && (
+                        <div style={{ fontSize: 11, color: daysLeft !== null && daysLeft <= 7 ? "#F59E0B" : "#22C55E" }}>
+                          ✅ Активен до: {formatDate(c.demo_expires_at)}{daysLeft !== null ? ` · ${daysLeft} дн.` : ""}
                         </div>
                       )}
                       <div style={{ fontSize: 11, color: "#4a5a6a", marginTop: 4 }}>
@@ -298,13 +328,41 @@ export default function AdminPage() {
                       </div>
 
                       {requestedPlanInfo && c.plan !== requestedPlan && (
-                        <button
-                          onClick={() => requestedPlan && updatePlan(c.id, requestedPlan)}
-                          disabled={saving === c.id}
-                          style={{ padding: "7px 10px", borderRadius: 8, cursor: "pointer", fontFamily: "Georgia, serif", fontSize: 11, fontWeight: 800, marginTop: 2, background: `${requestedPlanInfo.color}22`, border: `1px solid ${requestedPlanInfo.color}55`, color: requestedPlanInfo.color }}
-                        >
-                          Активировать {requestedPlanInfo.label}
-                        </button>
+                        <>
+                          <div style={{ fontSize: 11, color: requestedPlanInfo.color, marginTop: 4, fontWeight: 700 }}>
+                            Активировать заявку:
+                          </div>
+                          <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
+                            {[1, 3, 6, 9, 12].map(months => (
+                              <button
+                                key={months}
+                                onClick={() => requestedPlan && activateSubscription(c, requestedPlan, months)}
+                                disabled={saving === c.id}
+                                style={{ padding: "5px 8px", borderRadius: 6, cursor: "pointer", fontFamily: "Georgia, serif", fontSize: 10, fontWeight: 800, background: `${requestedPlanInfo.color}22`, border: `1px solid ${requestedPlanInfo.color}55`, color: requestedPlanInfo.color }}
+                              >
+                                {months} мес.
+                              </button>
+                            ))}
+                          </div>
+                        </>
+                      )}
+
+                      {["basic", "standard", "premium"].includes(c.plan) && (
+                        <>
+                          <div style={{ fontSize: 11, color: "#4a5a6a", marginTop: 4 }}>Оплаченная подписка:</div>
+                          <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
+                            {[3, 6, 9, 12].map(months => (
+                              <button
+                                key={months}
+                                onClick={() => activateSubscription(c, c.plan, months)}
+                                disabled={saving === c.id}
+                                style={{ padding: "4px 8px", borderRadius: 6, cursor: "pointer", fontFamily: "Georgia, serif", fontSize: 10, background: "rgba(34,197,94,0.1)", border: "1px solid rgba(34,197,94,0.3)", color: "#22C55E" }}
+                              >
+                                +{months} мес.
+                              </button>
+                            ))}
+                          </div>
+                        </>
                       )}
 
                       {(c.plan === "trial" || isExpired) && (

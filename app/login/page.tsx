@@ -80,7 +80,7 @@ export default function LoginPage() {
       return;
     }
 
-    if (client.subscription_status === "demo" && client.demo_expires_at) {
+    if (["demo", "active"].includes(client.subscription_status) && client.demo_expires_at) {
       const days = getDaysLeft(client.demo_expires_at);
       if (days <= 0) {
         await sb(`clients?id=eq.${client.id}`, {
