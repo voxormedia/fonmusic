@@ -52,6 +52,9 @@ const T = {
     demo_label: "ДЕМО", demo_h: "Услышьте атмосферу вашего заведения", demo_p: "Реальная музыка из нашего каталога",
     demo_player_title: "Послушайте музыку для вашего бизнеса", demo_player_p: "Выберите тип заведения и нажмите Play",
     demo_loading: "Загрузка...", demo_play_hint: "Нажмите Play для воспроизведения", demo_next: "Следующий",
+    demo_limit_h: "Демо-прослушивание завершено",
+    demo_limit_p: "Чтобы слушать без ограничений и запустить музыку в заведении, начните 7 дней бесплатно.",
+    demo_limit_btn: "Начать бесплатно →",
     biz_label: "ДЛЯ КАКИХ БИЗНЕСОВ", biz_h: "Музыка для каждого заведения",
     pricing_label: "СТАРТОВЫЕ ТАРИФЫ", pricing_h: "Специальные цены для первых подключений",
     plans: [
@@ -122,6 +125,9 @@ const T = {
     demo_label: "DEMO", demo_h: "Muassasangiz atmosferasini eshiting", demo_p: "Katalogimizdan haqiqiy musiqa",
     demo_player_title: "Biznesingiz uchun musiqa tinglang", demo_player_p: "Muassasa turini tanlang va Play bosing",
     demo_loading: "Yuklanmoqda...", demo_play_hint: "Ijro etish uchun Play bosing", demo_next: "Keyingisi",
+    demo_limit_h: "Demo tinglash yakunlandi",
+    demo_limit_p: "Cheklovsiz tinglash va muassasada musiqani ishga tushirish uchun 7 kun bepul boshlang.",
+    demo_limit_btn: "Bepul boshlash →",
     biz_label: "QAYSI BIZNESLAR UCHUN", biz_h: "Har bir muassasa uchun musiqa",
     pricing_label: "START TARIFLAR", pricing_h: "Birinchi ulanishlar uchun maxsus narxlar",
     plans: [
@@ -170,14 +176,18 @@ const T = {
 
 function DemoPlayer({ lang }: { lang: "ru" | "uz" }) {
   const t = T[lang];
+  const DEMO_TRACK_LIMIT = 7;
   const [selectedBusiness, setSelectedBusiness] = useState(BUSINESS_TYPES[0]);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [currentTrack, setCurrentTrack] = useState("");
+  const [playedCount, setPlayedCount] = useState(0);
+  const [isDemoLimited, setIsDemoLimited] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const playlistRef = useRef<string[]>([]);
   const recentTracksRef = useRef<string[]>([]);
   const selectedBusinessRef = useRef(selectedBusiness);
+  const playedCountRef = useRef(0);
 
   const getTrackTitle = (track: string) => track.replace(".mp3", "").split("-").slice(1).join(" ").trim();
   const getTrackSignature = (track: string) => getTrackTitle(track).toLowerCase().split(/\s+/).slice(0, 2).join(" ");
@@ -198,7 +208,18 @@ function DemoPlayer({ lang }: { lang: "ru" | "uz" }) {
     return pool[Math.floor(Math.random() * pool.length)].track;
   };
 
+  const stopForDemoLimit = () => {
+    if (audioRef.current) { audioRef.current.pause(); audioRef.current.src = ""; }
+    setIsPlaying(false);
+    setIsLoading(false);
+    setIsDemoLimited(true);
+  };
+
   const playTrack = (business: typeof BUSINESS_TYPES[0], track: string) => {
+    if (playedCountRef.current >= DEMO_TRACK_LIMIT) {
+      stopForDemoLimit();
+      return;
+    }
     if (audioRef.current) { audioRef.current.pause(); audioRef.current.src = ""; }
     setSelectedBusiness(business); selectedBusinessRef.current = business; setIsPlaying(false); setIsLoading(true);
     const url = `${BASE_URL}/${business.folder.replace(/ /g, "%20")}/${encodeURIComponent(track)}`;
@@ -206,9 +227,14 @@ function DemoPlayer({ lang }: { lang: "ru" | "uz" }) {
     audioRef.current = audio;
     audio.volume = 0.7;
     audio.oncanplay = () => {
+      audio.oncanplay = null;
+      if (audioRef.current !== audio) return;
+      const nextCount = playedCountRef.current + 1;
+      playedCountRef.current = nextCount;
       setIsLoading(false);
       setCurrentTrack(getTrackTitle(track));
       recentTracksRef.current = [...recentTracksRef.current, track].slice(-8);
+      setPlayedCount(nextCount);
       audio.play();
       setIsPlaying(true);
     };
@@ -217,6 +243,7 @@ function DemoPlayer({ lang }: { lang: "ru" | "uz" }) {
   };
 
   const playStation = async (business: typeof BUSINESS_TYPES[0]) => {
+    if (isDemoLimited) return;
     setSelectedBusiness(business); selectedBusinessRef.current = business; setIsPlaying(false); setIsLoading(true); setCurrentTrack("");
     recentTracksRef.current = [];
     try {
@@ -230,6 +257,10 @@ function DemoPlayer({ lang }: { lang: "ru" | "uz" }) {
   };
 
   const playNext = async () => {
+    if (playedCountRef.current >= DEMO_TRACK_LIMIT) {
+      stopForDemoLimit();
+      return;
+    }
     const business = selectedBusinessRef.current;
     let tracks = playlistRef.current;
     if (!tracks.length) {
@@ -246,6 +277,7 @@ function DemoPlayer({ lang }: { lang: "ru" | "uz" }) {
   };
 
   const togglePlay = () => {
+    if (isDemoLimited) return;
     if (!audioRef.current) { playStation(selectedBusiness); return; }
     if (isPlaying) { audioRef.current.pause(); setIsPlaying(false); }
     else { audioRef.current.play(); setIsPlaying(true); }
@@ -258,28 +290,40 @@ function DemoPlayer({ lang }: { lang: "ru" | "uz" }) {
       <div style={{ fontSize: 11, color: "#C9A84C", letterSpacing: "0.15em", marginBottom: 8 }}>{t.demo_label}</div>
       <h3 style={{ fontSize: 20, fontWeight: 700, color: "#fff", marginBottom: 6 }}>{t.demo_player_title}</h3>
       <p style={{ fontSize: 13, color: "#8BA7BE", marginBottom: 20 }}>{t.demo_player_p}</p>
+      {isDemoLimited && (
+        <div style={{ padding: "18px", background: "rgba(201,168,76,0.1)", border: "1px solid rgba(201,168,76,0.28)", borderRadius: 14, marginBottom: 18, textAlign: "center" }}>
+          <div style={{ fontSize: 15, color: "#fff", fontWeight: 800, marginBottom: 6 }}>{t.demo_limit_h}</div>
+          <div style={{ fontSize: 12, color: "#8BA7BE", lineHeight: 1.6, marginBottom: 14 }}>{t.demo_limit_p}</div>
+          <a href="/signup" style={{ display: "inline-block", padding: "11px 18px", background: "#C9A84C", color: "#0A1628", borderRadius: 10, fontSize: 13, fontWeight: 800, textDecoration: "none" }}>{t.demo_limit_btn}</a>
+        </div>
+      )}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 8, marginBottom: 20 }}>
         {BUSINESS_TYPES.map(b => (
-          <button key={b.key} onClick={() => playStation(b)} style={{ padding: "10px 6px", borderRadius: 10, cursor: "pointer", fontFamily: "Georgia, serif", textAlign: "center", background: selectedBusiness.key === b.key ? `${b.color}25` : "rgba(255,255,255,0.03)", border: `1px solid ${selectedBusiness.key === b.key ? b.color : "rgba(255,255,255,0.06)"}` }}>
+          <button key={b.key} onClick={() => playStation(b)} disabled={isDemoLimited} style={{ padding: "10px 6px", borderRadius: 10, cursor: isDemoLimited ? "not-allowed" : "pointer", fontFamily: "Georgia, serif", textAlign: "center", background: selectedBusiness.key === b.key ? `${b.color}25` : "rgba(255,255,255,0.03)", border: `1px solid ${selectedBusiness.key === b.key ? b.color : "rgba(255,255,255,0.06)"}`, opacity: isDemoLimited ? 0.55 : 1 }}>
             <div style={{ fontSize: 20, marginBottom: 4 }}>{b.icon}</div>
             <div style={{ fontSize: 10, color: selectedBusiness.key === b.key ? "#fff" : "#8BA7BE", fontWeight: selectedBusiness.key === b.key ? 700 : 400 }}>{b.name[lang]}</div>
           </button>
         ))}
       </div>
       <div style={{ background: "rgba(255,255,255,0.03)", borderRadius: 14, padding: "16px 20px", display: "flex", alignItems: "center", gap: 16 }}>
-        <button onClick={togglePlay} style={{ width: 52, height: 52, borderRadius: "50%", background: selectedBusiness.color, border: "none", cursor: "pointer", fontSize: 20, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", color: "#fff" }}>
+        <button onClick={togglePlay} disabled={isDemoLimited} style={{ width: 52, height: 52, borderRadius: "50%", background: selectedBusiness.color, border: "none", cursor: isDemoLimited ? "not-allowed" : "pointer", fontSize: 20, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", opacity: isDemoLimited ? 0.55 : 1 }}>
           {isLoading ? "⏳" : isPlaying ? "⏸" : "▶"}
         </button>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontSize: 13, fontWeight: 700, color: "#fff", marginBottom: 2 }}>{selectedBusiness.icon} {selectedBusiness.station}</div>
           <div style={{ fontSize: 11, color: "#8BA7BE", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-            {isLoading ? t.demo_loading : currentTrack || t.demo_play_hint}
+            {isDemoLimited ? t.demo_limit_h : isLoading ? t.demo_loading : currentTrack || t.demo_play_hint}
           </div>
         </div>
-        <button onClick={playNext} disabled={isLoading} style={{ padding: "9px 12px", background: "rgba(201,168,76,0.12)", border: "1px solid rgba(201,168,76,0.35)", borderRadius: 10, color: "#C9A84C", fontSize: 12, fontWeight: 700, cursor: isLoading ? "wait" : "pointer", fontFamily: "Georgia, serif", flexShrink: 0 }}>
+        <button onClick={playNext} disabled={isLoading || isDemoLimited} style={{ padding: "9px 12px", background: "rgba(201,168,76,0.12)", border: "1px solid rgba(201,168,76,0.35)", borderRadius: 10, color: "#C9A84C", fontSize: 12, fontWeight: 700, cursor: isLoading ? "wait" : isDemoLimited ? "not-allowed" : "pointer", fontFamily: "Georgia, serif", flexShrink: 0, opacity: isDemoLimited ? 0.55 : 1 }}>
           {t.demo_next} →
         </button>
       </div>
+      {!isDemoLimited && playedCount > 0 && (
+        <div style={{ marginTop: 10, fontSize: 11, color: "#4a5a6a", textAlign: "center" }}>
+          {playedCount}/{DEMO_TRACK_LIMIT}
+        </div>
+      )}
     </div>
   );
 }
