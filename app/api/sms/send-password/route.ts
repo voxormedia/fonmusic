@@ -4,6 +4,8 @@ import { supabaseServerFetch } from "@/lib/supabaseServer";
 const ESKIZ_EMAIL = process.env.ESKIZ_EMAIL || "";
 const ESKIZ_PASSWORD = process.env.ESKIZ_PASSWORD || "";
 const ESKIZ_FROM = process.env.ESKIZ_FROM || "4546";
+const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || "";
+const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID || "";
 
 function normalizePhone(phone: string) {
   return phone.replace(/[^\d]/g, "");
@@ -18,6 +20,19 @@ async function getEskizToken(): Promise<string | null> {
   });
   const data = await res.json();
   return data?.data?.token || null;
+}
+
+async function notifyTelegram(text: string) {
+  if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_ID) return;
+  try {
+    await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ chat_id: TELEGRAM_CHAT_ID, text }),
+    });
+  } catch {
+    // Восстановление пароля не должно зависеть от Telegram-уведомления.
+  }
 }
 
 export async function POST(req: NextRequest) {
@@ -35,11 +50,24 @@ export async function POST(req: NextRequest) {
     const client = clients?.[0];
 
     if (!client?.password) {
+      await notifyTelegram([
+        "🔑 Восстановление пароля",
+        "",
+        `Телефон: ${normalizedPhone}`,
+        "Статус: клиент не найден",
+      ].join("\n"));
       return NextResponse.json({ error: "client not found" }, { status: 404 });
     }
 
     const token = await getEskizToken();
     if (!token) {
+      await notifyTelegram([
+        "🔑 Восстановление пароля",
+        "",
+        `Клиент: ${client.name || "-"}`,
+        `Телефон: ${client.phone || normalizedPhone}`,
+        "Статус: Eskiz auth failed",
+      ].join("\n"));
       return NextResponse.json({ error: "Eskiz auth failed" }, { status: 500 });
     }
 
@@ -51,18 +79,38 @@ export async function POST(req: NextRequest) {
       },
       body: JSON.stringify({
         mobile_phone: cleanPhone,
-        message: `FonMusic: parol ${client.password}. Kabinet: fonmusic.uz/login`,
+        message: `FonMusic: kod tasdiqlash uchun ${client.password}`,
         from: ESKIZ_FROM,
       }),
     });
 
     const smsData = await smsRes.json();
     if (smsData.status === "waiting" || smsData.id) {
+      await notifyTelegram([
+        "🔑 Восстановление пароля",
+        "",
+        `Клиент: ${client.name || "-"}`,
+        `Телефон: ${client.phone || normalizedPhone}`,
+        "Статус: SMS отправлено",
+      ].join("\n"));
       return NextResponse.json({ success: true });
     }
 
+    await notifyTelegram([
+      "🔑 Восстановление пароля",
+      "",
+      `Клиент: ${client.name || "-"}`,
+      `Телефон: ${client.phone || normalizedPhone}`,
+      "Статус: SMS не отправлено",
+      `Eskiz: ${JSON.stringify(smsData)}`,
+    ].join("\n"));
     return NextResponse.json({ error: "SMS send failed" }, { status: 500 });
   } catch {
+    await notifyTelegram([
+      "🔑 Восстановление пароля",
+      "",
+      "Статус: server error",
+    ].join("\n"));
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }
