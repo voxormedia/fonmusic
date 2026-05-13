@@ -79,7 +79,7 @@ export async function POST(req: NextRequest) {
       },
       body: JSON.stringify({
         mobile_phone: cleanPhone,
-        message: `FonMusic: kod tasdiqlash uchun ${client.password}`,
+        message: `FonMusic.uz: Vash parol dlya vhoda: ${client.password}. Kabinet: fonmusic.uz/login`,
         from: ESKIZ_FROM,
       }),
     });
