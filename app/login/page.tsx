@@ -34,6 +34,8 @@ export default function LoginPage() {
   const [showForgot, setShowForgot] = useState(false);
   const [forgotPhone, setForgotPhone] = useState("");
   const [forgotSent, setForgotSent] = useState(false);
+  const [forgotLoading, setForgotLoading] = useState(false);
+  const [forgotError, setForgotError] = useState("");
 
   const inputStyle = {
     padding: "14px 16px",
@@ -95,23 +97,24 @@ export default function LoginPage() {
     window.location.href = "/dashboard";
   };
 
-  const sendForgotRequest = async () => {
-  if (!forgotPhone) return;
-  
-  // Ищем клиента и берём пароль
-  const data = await sb(`clients?phone=eq.${encodeURIComponent(forgotPhone)}&select=name,phone,password`);
-  
-  const text = data && data.length > 0
-    ? `🔑 Забыл пароль!\n\n🏢 ${data[0].name}\n📞 ${data[0].phone}\n🔑 Пароль: ${data[0].password}`
-    : `🔑 Забыл пароль — номер не найден: ${forgotPhone}`;
+  const sendForgotPassword = async () => {
+    if (!forgotPhone) return;
+    setForgotLoading(true);
+    setForgotError("");
 
-  await fetch("/api/telegram", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ type: "forgot-password", phone: forgotPhone, message: text }),
-  });
-  setForgotSent(true);
-};
+    const res = await fetch("/api/sms/send-password", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ phone: forgotPhone }),
+    });
+
+    setForgotLoading(false);
+    if (!res.ok) {
+      setForgotError(res.status === 404 ? "Клиент с таким номером не найден" : "Не удалось отправить SMS. Попробуйте ещё раз.");
+      return;
+    }
+    setForgotSent(true);
+  };
 
   return (
     <main
@@ -249,7 +252,7 @@ export default function LoginPage() {
               {!forgotSent ? (
                 <>
                   <p style={{ fontSize: 13, color: "#8BA7BE", marginBottom: 20 }}>
-                    Введите ваш номер телефона — администратор свяжется с вами
+                    Введите номер телефона — мы сразу отправим пароль по SMS
                   </p>
                   <input
                     value={forgotPhone}
@@ -257,8 +260,10 @@ export default function LoginPage() {
                     placeholder="99 410 09 10"
                     style={{ ...inputStyle, marginBottom: 12 }}
                   />
+                  {forgotError && <div style={{ fontSize: 13, color: "#EF4444", marginBottom: 12 }}>{forgotError}</div>}
                   <button
-                    onClick={sendForgotRequest}
+                    onClick={sendForgotPassword}
+                    disabled={forgotLoading || forgotPhone.length < 12}
                     style={{
                       width: "100%",
                       padding: "13px",
@@ -268,12 +273,13 @@ export default function LoginPage() {
                       color: "#0A1628",
                       fontSize: 14,
                       fontWeight: 700,
-                      cursor: "pointer",
+                      cursor: forgotLoading || forgotPhone.length < 12 ? "not-allowed" : "pointer",
                       fontFamily: "Georgia, serif",
                       marginBottom: 10,
+                      opacity: forgotLoading || forgotPhone.length < 12 ? 0.65 : 1,
                     }}
                   >
-                    Отправить запрос
+                    {forgotLoading ? "Отправляем..." : "Получить пароль по SMS"}
                   </button>
                   <button
                     onClick={() => setShowForgot(false)}
@@ -293,9 +299,9 @@ export default function LoginPage() {
               ) : (
                 <div style={{ textAlign: "center", paddingTop: 16 }}>
                   <div style={{ fontSize: 40, marginBottom: 12 }}>✅</div>
-                  <div style={{ fontSize: 15, color: "#fff", marginBottom: 8 }}>Запрос отправлен!</div>
+                  <div style={{ fontSize: 15, color: "#fff", marginBottom: 8 }}>Пароль отправлен!</div>
                   <div style={{ fontSize: 13, color: "#8BA7BE", marginBottom: 20 }}>
-                    Администратор свяжется с вами в ближайшее время
+                    Проверьте SMS и войдите в кабинет
                   </div>
                   <button
                     onClick={() => {

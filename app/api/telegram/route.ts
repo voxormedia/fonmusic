@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supabaseServerFetch } from "@/lib/supabaseServer";
 
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || "";
 const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID || "";
@@ -37,17 +36,6 @@ export async function POST(req: NextRequest) {
       await sendTelegram(text);
       return NextResponse.json({ success: true });
     }
-
-    if (type === "forgot-password") {
-  const phone = String(body.phone || "");
-  if (!phone) return NextResponse.json({ error: "phone required" }, { status: 400 });
-  const clients = await supabaseServerFetch(`clients?phone=eq.${encodeURIComponent(phone)}&select=name,phone,password`);
-  const text = clients?.length
-    ? `🔑 Забыл пароль!\n\nБизнес: ${clients[0].name}\nТелефон: ${clients[0].phone}\nПароль: ${clients[0].password}`
-    : `🔑 Запрос пароля — номер не найден: ${phone}`;
-  await sendTelegram(text);
-  return NextResponse.json({ success: true });
-}
 
     if (type === "demo-lead") {
       const text = [
