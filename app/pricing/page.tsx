@@ -1,25 +1,8 @@
 "use client";
+import Link from "next/link";
 import { useEffect, useState } from "react";
 
 const BOX_IMAGE = "https://pub-b2c1411547b247808cb42732bb122560.r2.dev/images/fonmusic-box-small.png";
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
-const SUPABASE_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
-
-async function sb(path: string, options?: RequestInit) {
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
-    ...options,
-    headers: {
-      "apikey": SUPABASE_KEY,
-      "Authorization": `Bearer ${SUPABASE_KEY}`,
-      "Content-Type": "application/json",
-      "Prefer": "return=representation",
-      ...(options?.headers || {}),
-    },
-  });
-  if (!res.ok) return null;
-  const text = await res.text();
-  return text ? JSON.parse(text) : null;
-}
 
 const T = {
   ru: {
@@ -41,6 +24,13 @@ const T = {
     extra_price: "599 000 сум / мес за каждое",
     extra_calc: ["2 точки — 1 498 000 сум", "3 точки — 2 097 000 сум", "5 точек — 3 295 000 сум"],
     compare_h: "Сравнение тарифов",
+    connect_h: "Два способа подключения",
+    connect_fast_h: "Быстрое подключение",
+    connect_fast_p: "Онлайн-оплата, мгновенный доступ, без бумажной волокиты. Подходит для кафе, бутиков, салонов, фитнес-клубов и небольших заведений.",
+    connect_fast_btn: "Оплатить онлайн",
+    connect_invoice_h: "Официальное подключение",
+    connect_invoice_p: "Договор, счёт, акты и документы для юридических лиц. Подходит для сетей, отелей, крупных компаний и корпоративных клиентов.",
+    connect_invoice_btn: "Получить счёт / договор",
     compare_feature: "Функция",
     which_h: "Какой тариф подойдёт вашему бизнесу?",
     which: [
@@ -66,7 +56,7 @@ const T = {
       { q: "Можно ли сначала попробовать?", a: "Да, демо-период — 7 дней. Все функции доступны без ограничений." },
       { q: "Один аккаунт для нескольких филиалов?", a: "Да, в тарифе Премиум можно добавлять дополнительные заведения по 599 000 сум/мес." },
     ],
-    footer_offer: "Оферта", footer_privacy: "Конфиденциальность",
+    footer_offer: "Оферта", footer_privacy: "Конфиденциальность", footer_license: "Лицензия",
     plans: [
       { key: "basic", name: "Базовый", price: "399 000", desc: "Для одного небольшого заведения", popular: false, features: ["1 точка", "Все музыкальные атмосферы", "Веб-плеер", "Ручное переключение музыки"], missing: ["Автоматическое расписание"], ctaHref: "/signup", accent: "#8BA7BE", box: true, boxFreeMonths: 12 },
       { key: "standard", name: "Стандарт", price: "599 000", desc: "Оптимальный тариф для кафе, магазинов, салонов и фитнес-клубов", popular: true, features: ["1 точка", "Все музыкальные атмосферы", "Веб-плеер", "Автоматическое расписание музыки", "Удалённое управление"], missing: [], ctaHref: "/signup?plan=standard", accent: "#C9A84C", box: true, boxFreeMonths: 9 },
@@ -102,6 +92,13 @@ const T = {
     extra_price: "599 000 so'm / oy har biri uchun",
     extra_calc: ["2 nuqta — 1 498 000 so'm", "3 nuqta — 2 097 000 so'm", "5 nuqta — 3 295 000 so'm"],
     compare_h: "Tariflarni solishtirish",
+    connect_h: "Ikki xil ulanish usuli",
+    connect_fast_h: "Tez ulanish",
+    connect_fast_p: "Onlayn to'lov, tezkor kirish va ortiqcha hujjatlarsiz. Kafe, butik, salon, fitnes-klub va kichik muassasalar uchun.",
+    connect_fast_btn: "Onlayn to'lash",
+    connect_invoice_h: "Rasmiy ulanish",
+    connect_invoice_p: "Yuridik shaxslar uchun shartnoma, hisob va yopuvchi hujjatlar. Tarmoqlar, mehmonxonalar va korporativ mijozlar uchun.",
+    connect_invoice_btn: "Hisob / shartnoma olish",
     compare_feature: "Xususiyat",
     which_h: "Biznesingizga qaysi tarif mos keladi?",
     which: [
@@ -127,7 +124,7 @@ const T = {
       { q: "Avval sinab ko'rsa bo'ladimi?", a: "Ha, demo davri — 7 kun. Barcha funksiyalar cheklovsiz mavjud." },
       { q: "Bir necha filial uchun bitta akkaunt?", a: "Ha, Premium tarifda har biri uchun oyiga 599 000 so'mdan qo'shimcha muassasalar qo'shish mumkin." },
     ],
-    footer_offer: "Oferta", footer_privacy: "Maxfiylik",
+    footer_offer: "Oferta", footer_privacy: "Maxfiylik", footer_license: "Litsenziya",
     plans: [
       { key: "basic", name: "Asosiy", price: "399 000", desc: "Bitta kichik muassasa uchun", popular: false, features: ["1 nuqta", "Barcha musiqa atmosferalari", "Veb-pleer", "Musiqani qo'lda almashtirish"], missing: ["Avtomatik jadval"], ctaHref: "/signup", accent: "#8BA7BE", box: true, boxFreeMonths: 12 },
       { key: "standard", name: "Standart", price: "599 000", desc: "Kafe, do'kon, salon va fitnes-klublar uchun optimal tarif", popular: true, features: ["1 nuqta", "Barcha musiqa atmosferalari", "Veb-pleer", "Avtomatik musiqa jadvali", "Masofaviy boshqaruv"], missing: [], ctaHref: "/signup?plan=standard", accent: "#C9A84C", box: true, boxFreeMonths: 9 },
@@ -146,20 +143,13 @@ const T = {
   },
 };
 
+type PricingPlan = (typeof T)["ru"]["plans"][number];
+
 export default function PricingPage() {
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const [lang, setLang] = useState<"ru" | "uz">("ru");
   const [hasSession, setHasSession] = useState(false);
-  const [client, setClient] = useState<any>(null);
-  const [selectedPlan, setSelectedPlan] = useState<any>(null);
-  const [requestName, setRequestName] = useState("");
-  const [requestPhone, setRequestPhone] = useState("");
-  const [requestLocation, setRequestLocation] = useState("");
-  const [paymentMethod, setPaymentMethod] = useState("monthly");
-  const [requestComment, setRequestComment] = useState("");
-  const [requestLoading, setRequestLoading] = useState(false);
-  const [requestSent, setRequestSent] = useState(false);
-  const [requestError, setRequestError] = useState("");
+  const [selectedPlan, setSelectedPlan] = useState<PricingPlan | null>(null);
   const t = T[lang];
 
   useEffect(() => {
@@ -167,16 +157,6 @@ export default function PricingPage() {
     const sessionExpiry = localStorage.getItem("fonmusic_session_expiry");
     const activeSession = Boolean(clientId && sessionExpiry && new Date(sessionExpiry) > new Date());
     setHasSession(activeSession);
-    if (!activeSession || !clientId) return;
-
-    sb(`clients?id=eq.${clientId}&select=*`).then(data => {
-      const c = data?.[0];
-      if (!c) return;
-      setClient(c);
-      setRequestName(c.name || "");
-      setRequestPhone(c.phone || "");
-      setRequestLocation(c.name || "");
-    });
   }, []);
 
   const planCta = hasSession
@@ -185,35 +165,8 @@ export default function PricingPage() {
   const planCtaSub = hasSession
     ? (lang === "ru" ? "После выбора мы свяжемся для подключения" : "Tanlovdan so'ng ulash uchun bog'lanamiz")
     : t.cta_sub;
-  const openTariffRequest = (plan: any) => {
+  const openTariffRequest = (plan: PricingPlan) => {
     setSelectedPlan(plan);
-    setRequestSent(false);
-    setRequestError("");
-  };
-
-  const sendTariffRequest = async () => {
-    if (!selectedPlan) return;
-    setRequestLoading(true);
-    setRequestError("");
-    const res = await fetch("/api/telegram/tariff-request", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        plan: selectedPlan.key,
-        clientId: client?.id || localStorage.getItem("fonmusic_client_id"),
-        name: requestName,
-        phone: requestPhone,
-        locationName: requestLocation,
-        paymentMethod,
-        comment: requestComment,
-      }),
-    });
-    setRequestLoading(false);
-    if (!res.ok) {
-      setRequestError(lang === "ru" ? "Не удалось отправить заявку. Напишите нам в Telegram." : "Arizani yuborib bo'lmadi. Telegram orqali yozing.");
-      return;
-    }
-    setRequestSent(true);
   };
 
   const LangSwitcher = () => (
@@ -229,7 +182,7 @@ export default function PricingPage() {
       <nav style={{ padding: "18px 28px", display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <div style={{ width: 4, height: 20, background: "#C9A84C", borderRadius: 2 }} />
-          <a href="/" style={{ fontSize: 18, fontWeight: 700, color: "#fff", textDecoration: "none" }}>FonMusic</a>
+          <Link href="/" style={{ fontSize: 18, fontWeight: 700, color: "#fff", textDecoration: "none" }}>FonMusic</Link>
         </div>
         <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
           <LangSwitcher />
@@ -298,6 +251,23 @@ export default function PricingPage() {
                 <a href={plan.ctaHref} style={{ display: "block", textAlign: "center", padding: "14px", borderRadius: 12, background: plan.popular ? plan.accent : "rgba(255,255,255,0.06)", border: plan.popular ? "none" : `1px solid ${plan.accent}40`, color: plan.popular ? "#0A1628" : plan.accent, fontSize: 14, fontWeight: 700, textDecoration: "none", marginBottom: 8 }}>{planCta}</a>
               )}
               <div style={{ textAlign: "center", fontSize: 11, color: "#4a5a6a" }}>{planCtaSub}</div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section style={{ padding: "0 20px 60px", maxWidth: 900, margin: "0 auto" }}>
+        <h2 style={{ fontSize: 28, fontWeight: 700, color: "#fff", textAlign: "center", marginBottom: 22 }}>{t.connect_h}</h2>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+          {[
+            { h: t.connect_fast_h, p: t.connect_fast_p, btn: t.connect_fast_btn, href: "/checkout?plan=standard", icon: "⚡", color: "#3B82F6" },
+            { h: t.connect_invoice_h, p: t.connect_invoice_p, btn: t.connect_invoice_btn, href: "/invoice-request?plan=standard", icon: "📄", color: "#C9A84C" },
+          ].map(item => (
+            <div key={item.h} style={{ background: "#0D1B2A", border: `1px solid ${item.color}33`, borderRadius: 16, padding: 22 }}>
+              <div style={{ fontSize: 28, marginBottom: 10 }}>{item.icon}</div>
+              <h3 style={{ fontSize: 20, color: "#fff", marginBottom: 8 }}>{item.h}</h3>
+              <p style={{ fontSize: 13, color: "#8BA7BE", lineHeight: 1.7, minHeight: 88, marginBottom: 18 }}>{item.p}</p>
+              <a href={item.href} style={{ display: "block", textAlign: "center", padding: "13px", borderRadius: 10, background: item.color, color: item.color === "#C9A84C" ? "#0A1628" : "#fff", textDecoration: "none", fontWeight: 800, fontSize: 14 }}>{item.btn}</a>
             </div>
           ))}
         </div>
@@ -402,67 +372,43 @@ export default function PricingPage() {
         <div style={{ display: "flex", gap: 16, alignItems: "center" }}>
           <a href="/offer" style={{ fontSize: 12, color: "#4a5a6a", textDecoration: "none" }}>{t.footer_offer}</a>
           <a href="/privacy" style={{ fontSize: 12, color: "#4a5a6a", textDecoration: "none" }}>{t.footer_privacy}</a>
+          <a href="/license" style={{ fontSize: 12, color: "#4a5a6a", textDecoration: "none" }}>{t.footer_license}</a>
           <LangSwitcher />
         </div>
       </footer>
 
       {selectedPlan && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.72)", zIndex: 50, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
-          <div style={{ width: "100%", maxWidth: 460, background: "#0D1B2A", border: `1px solid ${selectedPlan.accent}55`, borderRadius: 18, padding: 24, boxShadow: "0 24px 80px rgba(0,0,0,0.45)" }}>
-            {!requestSent ? (
-              <>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 16, marginBottom: 18 }}>
-                  <div>
-                    <div style={{ fontSize: 12, color: selectedPlan.accent, fontWeight: 800, marginBottom: 6 }}>{lang === "ru" ? "Заявка на тариф" : "Tarif arizasi"}</div>
-                    <div style={{ fontSize: 24, color: "#fff", fontWeight: 800 }}>{selectedPlan.name}</div>
-                    <div style={{ fontSize: 13, color: "#8BA7BE", marginTop: 4 }}>{selectedPlan.price} {lang === "ru" ? "сум / месяц" : "so'm / oy"}</div>
-                  </div>
-                  <button onClick={() => setSelectedPlan(null)} style={{ width: 34, height: 34, borderRadius: 10, border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.04)", color: "#8BA7BE", cursor: "pointer", fontSize: 18 }}>×</button>
-                </div>
-
-                {[
-                  { label: lang === "ru" ? "Имя / бизнес" : "Ism / biznes", value: requestName, set: setRequestName },
-                  { label: lang === "ru" ? "Телефон" : "Telefon", value: requestPhone, set: setRequestPhone },
-                  { label: lang === "ru" ? "Заведение" : "Muassasa", value: requestLocation, set: setRequestLocation },
-                ].map(field => (
-                  <label key={field.label} style={{ display: "block", marginBottom: 10 }}>
-                    <div style={{ fontSize: 12, color: "#8BA7BE", marginBottom: 6 }}>{field.label}</div>
-                    <input value={field.value} onChange={e => field.set(e.target.value)} style={{ width: "100%", padding: "12px 14px", background: "#101A28", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, color: "#fff", fontSize: 14, outline: "none", fontFamily: "Georgia, serif" }} />
-                  </label>
-                ))}
-
-                <label style={{ display: "block", marginBottom: 10 }}>
-                  <div style={{ fontSize: 12, color: "#8BA7BE", marginBottom: 6 }}>{lang === "ru" ? "Вариант подключения" : "Ulash varianti"}</div>
-                  <select value={paymentMethod} onChange={e => setPaymentMethod(e.target.value)} style={{ width: "100%", padding: "12px 14px", background: "#101A28", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, color: "#fff", fontSize: 14, outline: "none", fontFamily: "Georgia, serif" }}>
-                    <option value="monthly">{lang === "ru" ? "Оплата за месяц" : "Bir oy uchun to'lov"}</option>
-                    <option value="box_full_price">{lang === "ru" ? "FonMusic Box отдельно — 750 000 сум" : "FonMusic Box alohida — 750 000 so'm"}</option>
-                    <option value="three_months_box_discount">{lang === "ru" ? "Оплата за 3 мес. + Box за 500 000 сум" : "3 oy to'lov + Box 500 000 so'm"}</option>
-                    <option value="annual_box_free">{lang === "ru" ? `Оплата за ${selectedPlan.boxFreeMonths} мес. + Box бесплатно` : `${selectedPlan.boxFreeMonths} oy to'lov + Box bepul`}</option>
-                  </select>
-                </label>
-
-                <label style={{ display: "block", marginBottom: 14 }}>
-                  <div style={{ fontSize: 12, color: "#8BA7BE", marginBottom: 6 }}>{lang === "ru" ? "Комментарий" : "Izoh"}</div>
-                  <textarea value={requestComment} onChange={e => setRequestComment(e.target.value)} rows={3} placeholder={lang === "ru" ? "Например: хочу оплатить сегодня" : "Masalan: bugun to'lamoqchiman"} style={{ width: "100%", padding: "12px 14px", background: "#101A28", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, color: "#fff", fontSize: 14, outline: "none", resize: "vertical", fontFamily: "Georgia, serif" }} />
-                </label>
-
-                {requestError && <div style={{ color: "#EF4444", fontSize: 13, marginBottom: 12 }}>{requestError}</div>}
-                <button onClick={sendTariffRequest} disabled={requestLoading || !requestPhone || !requestName} style={{ width: "100%", padding: "15px", borderRadius: 12, background: selectedPlan.accent, border: "none", color: "#0A1628", fontSize: 15, fontWeight: 800, cursor: requestLoading ? "wait" : "pointer", fontFamily: "Georgia, serif", opacity: requestLoading || !requestPhone || !requestName ? 0.7 : 1 }}>
-                  {requestLoading ? (lang === "ru" ? "Отправляем..." : "Yuborilmoqda...") : (lang === "ru" ? "Отправить заявку" : "Ariza yuborish")}
-                </button>
-              </>
-            ) : (
-              <div style={{ textAlign: "center", padding: "18px 4px" }}>
-                <div style={{ fontSize: 42, marginBottom: 14 }}>✓</div>
-                <div style={{ fontSize: 24, color: "#fff", fontWeight: 800, marginBottom: 8 }}>{lang === "ru" ? "Заявка принята" : "Ariza qabul qilindi"}</div>
-                <div style={{ fontSize: 14, color: "#8BA7BE", lineHeight: 1.7, marginBottom: 22 }}>
-                  {lang === "ru" ? "Мы получили запрос и свяжемся для оплаты и подключения тарифа." : "So'rovni oldik. To'lov va ulash uchun bog'lanamiz."}
-                </div>
-                <button onClick={() => setSelectedPlan(null)} style={{ width: "100%", padding: "13px", borderRadius: 12, background: "#C9A84C", border: "none", color: "#0A1628", fontSize: 15, fontWeight: 800, cursor: "pointer", fontFamily: "Georgia, serif" }}>
-                  {lang === "ru" ? "Понятно" : "Tushunarli"}
-                </button>
+          <div style={{ width: "100%", maxWidth: 660, background: "#0D1B2A", border: `1px solid ${selectedPlan.accent}55`, borderRadius: 18, padding: 24, boxShadow: "0 24px 80px rgba(0,0,0,0.45)" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 16, marginBottom: 20 }}>
+              <div>
+                <div style={{ fontSize: 12, color: selectedPlan.accent, fontWeight: 800, marginBottom: 6 }}>{selectedPlan.name} · {selectedPlan.price} {lang === "ru" ? "сум / месяц" : "so'm / oy"}</div>
+                <div style={{ fontSize: 26, color: "#fff", fontWeight: 800 }}>{lang === "ru" ? "Как хотите подключиться?" : "Qanday ulanishni xohlaysiz?"}</div>
               </div>
-            )}
+              <button onClick={() => setSelectedPlan(null)} style={{ width: 34, height: 34, borderRadius: 10, border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.04)", color: "#8BA7BE", cursor: "pointer", fontSize: 18 }}>×</button>
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+              <div style={{ background: "rgba(59,130,246,0.08)", border: "1px solid rgba(59,130,246,0.22)", borderRadius: 14, padding: 18 }}>
+                <div style={{ fontSize: 26, marginBottom: 10 }}>⚡</div>
+                <h3 style={{ fontSize: 18, color: "#fff", marginBottom: 10 }}>{lang === "ru" ? "Онлайн-оплата" : "Onlayn to'lov"}</h3>
+                <div style={{ color: "#8BA7BE", fontSize: 13, lineHeight: 1.8, marginBottom: 18 }}>
+                  <div>Payme / Click / карта</div>
+                  <div>{lang === "ru" ? "доступ активируется автоматически" : "kirish avtomatik faollashadi"}</div>
+                  <div>{lang === "ru" ? "сертификат доступен в кабинете" : "sertifikat kabinetda mavjud"}</div>
+                </div>
+                <a href={`/checkout?plan=${selectedPlan.key}`} style={{ display: "block", textAlign: "center", padding: "13px", borderRadius: 10, background: "#3B82F6", color: "#fff", textDecoration: "none", fontWeight: 800, fontSize: 14 }}>{lang === "ru" ? "Перейти к онлайн-оплате" : "Onlayn to'lovga o'tish"}</a>
+              </div>
+              <div style={{ background: "rgba(201,168,76,0.08)", border: "1px solid rgba(201,168,76,0.24)", borderRadius: 14, padding: 18 }}>
+                <div style={{ fontSize: 26, marginBottom: 10 }}>📄</div>
+                <h3 style={{ fontSize: 18, color: "#fff", marginBottom: 10 }}>{lang === "ru" ? "Счёт и договор" : "Hisob va shartnoma"}</h3>
+                <div style={{ color: "#8BA7BE", fontSize: 13, lineHeight: 1.8, marginBottom: 18 }}>
+                  <div>{lang === "ru" ? "для юридических лиц" : "yuridik shaxslar uchun"}</div>
+                  <div>{lang === "ru" ? "счёт, договор и документы" : "hisob, shartnoma va hujjatlar"}</div>
+                  <div>{lang === "ru" ? "доступ после подтверждения оплаты" : "kirish to'lovdan keyin faollashadi"}</div>
+                </div>
+                <a href={`/invoice-request?plan=${selectedPlan.key}`} style={{ display: "block", textAlign: "center", padding: "13px", borderRadius: 10, background: "#C9A84C", color: "#0A1628", textDecoration: "none", fontWeight: 800, fontSize: 14 }}>{lang === "ru" ? "Запросить счёт" : "Hisob so'rash"}</a>
+              </div>
+            </div>
           </div>
         </div>
       )}

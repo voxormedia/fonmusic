@@ -85,6 +85,9 @@ const T = {
     demo_banner: "🕐 Тестовый период: осталось",
     demo_days_left: "дней",
     demo_connect: "Подключить →",
+    billing_trial_hint: "Вы можете подключить тариф онлайн или запросить официальный счёт для организации.",
+    pay_online: "Оплатить онлайн",
+    get_invoice: "Получить счёт / договор",
     locations_h: "🏢 Мои заведения",
     locations_count: "из",
     locations_points: "точек",
@@ -137,6 +140,9 @@ const T = {
     demo_banner: "🕐 Sinov davri: qoldi",
     demo_days_left: "kun",
     demo_connect: "Ulash →",
+    billing_trial_hint: "Tarifni onlayn ulashingiz yoki tashkilot uchun rasmiy hisob so'rashingiz mumkin.",
+    pay_online: "Onlayn to'lash",
+    get_invoice: "Hisob / shartnoma olish",
     locations_h: "🏢 Mening muassasalarim",
     locations_count: "dan",
     locations_points: "nuqta",
@@ -323,6 +329,9 @@ export default function DashboardPage() {
   const readySub = lang === "ru" ? "Работает сразу · без настроек" : "Darhol ishlaydi · sozlamalarsiz";
   const hasTariffRequest = /Заявка на тариф/.test(client?.notes || "");
   const isPaidActive = client?.subscription_status === "active" && ["basic", "standard", "premium"].includes(client?.plan);
+  const planForBilling = ["basic", "standard", "premium"].includes(client?.plan) ? client.plan : "standard";
+  const planLabel = client?.plan === "premium" ? t.plan_premium : client?.plan === "standard" ? t.plan_standard : client?.plan === "basic" ? t.plan_basic : t.plan_trial;
+  const paidUntil = client?.subscription_end_date || client?.subscription_end || client?.paid_until || client?.demo_expires_at;
 
   const LangSwitcher = () => (
     <div style={{ display: "flex", border: "1px solid rgba(255,255,255,0.15)", borderRadius: 8, overflow: "hidden" }}>
@@ -349,7 +358,8 @@ export default function DashboardPage() {
         <div style={{ fontSize: 64, marginBottom: 24 }}>⏰</div>
         <h1 style={{ fontSize: 28, fontWeight: 700, color: "#fff", marginBottom: 12 }}>{t.paywall_h}</h1>
         <p style={{ fontSize: 15, color: "#8BA7BE", lineHeight: 1.7, marginBottom: 32 }}>{t.paywall_p}</p>
-        <a href="/pricing" style={{ display: "block", padding: "18px", background: "#C9A84C", color: "#0A1628", borderRadius: 14, fontSize: 16, fontWeight: 700, textDecoration: "none", marginBottom: 16 }}>{t.paywall_btn}</a>
+        <a href="/checkout?plan=standard" style={{ display: "block", padding: "18px", background: "#3B82F6", color: "#fff", borderRadius: 14, fontSize: 16, fontWeight: 700, textDecoration: "none", marginBottom: 10 }}>{t.pay_online}</a>
+        <a href="/invoice-request?plan=standard" style={{ display: "block", padding: "16px", background: "#C9A84C", color: "#0A1628", borderRadius: 14, fontSize: 15, fontWeight: 700, textDecoration: "none", marginBottom: 16 }}>{t.get_invoice}</a>
         <a href="tel:+998994100910" style={{ display: "block", padding: "14px", background: "transparent", border: "1px solid rgba(255,255,255,0.1)", color: "#8BA7BE", borderRadius: 12, fontSize: 14, textDecoration: "none" }}>+998 99 410 09 10</a>
       </div>
     </main>
@@ -527,18 +537,23 @@ export default function DashboardPage() {
           <div>
             <div style={{ fontSize: 14, color: "#C9A84C", fontWeight: 800 }}>
               {isPaidActive
-                ? `✅ ${lang === "ru" ? "Подписка активна" : "Obuna faol"}: ${daysLeft ?? 0} ${t.demo_days}`
+                ? `✅ ${planLabel}: ${lang === "ru" ? "активен" : "faol"}`
                 : `${hasTariffRequest ? "💳" : "⏳"} ${hasTariffRequest ? (lang === "ru" ? "Заявка на тариф отправлена" : "Tarif arizasi yuborildi") : `${lang === "ru" ? "Бесплатный период" : "Bepul davr"}: ${daysLeft ?? 0} ${t.demo_days}`}`}
             </div>
             <div style={{ fontSize: 12, color: "#8BA7BE", marginTop: 3 }}>
               {isPaidActive
-                ? (lang === "ru" ? "Доступ действует до оплаченной даты" : "Kirish to'langan sanagacha amal qiladi")
-                : (hasTariffRequest ? (lang === "ru" ? "Мы свяжемся для оплаты и подключения" : "To'lov va ulash uchun bog'lanamiz") : (lang === "ru" ? "Все функции доступны бесплатно" : "Barcha funksiyalar bepul"))}
+                ? `${lang === "ru" ? "Подписка действует до" : "Obuna muddati"} ${paidUntil ? new Date(paidUntil).toLocaleDateString("ru-RU") : "—"}`
+                : (hasTariffRequest ? (lang === "ru" ? "Мы свяжемся для оплаты и подключения" : "To'lov va ulash uchun bog'lanamiz") : t.billing_trial_hint)}
             </div>
           </div>
-          <a href="/pricing" style={{ fontSize: 13, color: "#0A1628", background: "#C9A84C", padding: "9px 16px", borderRadius: 9, textDecoration: "none", fontWeight: 800 }}>
-            {hasTariffRequest ? (lang === "ru" ? "Изменить заявку" : "Arizani o'zgartirish") : (lang === "ru" ? "Подключить тариф" : "Tarifni ulash")}
-          </a>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            <a href={`/checkout?plan=${planForBilling}`} style={{ fontSize: 13, color: "#fff", background: "#3B82F6", padding: "9px 14px", borderRadius: 9, textDecoration: "none", fontWeight: 800 }}>
+              {t.pay_online}
+            </a>
+            <a href={`/invoice-request?plan=${planForBilling}`} style={{ fontSize: 13, color: "#0A1628", background: "#C9A84C", padding: "9px 14px", borderRadius: 9, textDecoration: "none", fontWeight: 800 }}>
+              {t.get_invoice}
+            </a>
+          </div>
         </section>
 
         <button onClick={() => setShowMore(!showMore)} style={{ width: "100%", padding: "13px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 12, color: "#8BA7BE", fontSize: 13, cursor: "pointer", fontFamily: "Georgia, serif", marginBottom: showMore ? 16 : 0 }}>
