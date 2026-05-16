@@ -45,6 +45,18 @@ const PLAN_LABELS: Record<string, { label: string, color: string }> = {
   premium:  { label: "Премиум",  color: "#A78BFA" },
 };
 
+const BUSINESS_TYPES = [
+  { label: "Кафе / кофейня", template: "cafe_standard", station: "cozy_coffee" },
+  { label: "Ресторан", template: "restaurant_standard", station: "cocktail_dinner" },
+  { label: "Бар / lounge bar", template: "bar_evening", station: "on_the_rocks" },
+  { label: "Магазин / бутик", template: "retail_standard", station: "shopping_vibes" },
+  { label: "Супермаркет", template: "market_standard", station: "best_of_radio" },
+  { label: "SPA / салон", template: "spa_standard", station: "spa_garden" },
+  { label: "Салон красоты", template: "beauty_standard", station: "cool_calm" },
+  { label: "Фитнес / спортзал", template: "fitness_standard", station: "workout" },
+  { label: "Отель / лобби", template: "hotel_standard", station: "lounge" },
+];
+
 function getRequestedPlan(notes?: string) {
   const match = notes?.match(/Тариф:\s*(basic|standard|premium)/);
   return match?.[1] || null;
@@ -54,12 +66,23 @@ export default function AdminPage() {
   const [authed, setAuthed] = useState(false);
   const [password, setPassword] = useState("");
   const [clients, setClients] = useState<any[]>([]);
+  const [venues, setVenues] = useState<any[]>([]);
+  const [zones, setZones] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState("");
   const [filterPlan, setFilterPlan] = useState("all");
   const [saving, setSaving] = useState<string | null>(null);
   const [success, setSuccess] = useState("");
   const [authError, setAuthError] = useState("");
+  const [showZoneModal, setShowZoneModal] = useState(false);
+  const [zoneMode, setZoneMode] = useState<"venue" | "zone">("zone");
+  const [zoneClient, setZoneClient] = useState<any>(null);
+  const [zoneName, setZoneName] = useState("");
+  const [venueName, setVenueName] = useState("");
+  const [zoneVenueId, setZoneVenueId] = useState("");
+  const [zoneBusinessType, setZoneBusinessType] = useState(0);
+  const [zoneDeviceType, setZoneDeviceType] = useState("web");
+  const [zoneSaving, setZoneSaving] = useState(false);
 
   useEffect(() => {
     if (authed) loadClients();
@@ -67,9 +90,83 @@ export default function AdminPage() {
 
   const loadClients = async () => {
     setLoading(true);
-    const data = await sb("clients?select=*&order=created_at.desc");
+    const [data, venueData, zoneData, legacyLocations] = await Promise.all([
+      sb("clients?select=*&order=created_at.desc"),
+      sb("venues?select=*&order=created_at.asc"),
+      sb("zones?select=*&order=created_at.asc"),
+      sb("locations?select=*&order=created_at.asc"),
+    ]);
     if (data) setClients(data);
+    setVenues(venueData || []);
+    if (zoneData) {
+      setZones(zoneData.map((zone: any) => ({ ...zone, _kind: "zone" })));
+    } else {
+      setZones((legacyLocations || []).map((loc: any) => ({ ...loc, _kind: "location", venue_id: null })));
+    }
     setLoading(false);
+  };
+
+  const openZoneModal = (client: any, mode: "venue" | "zone") => {
+    const clientVenues = venues.filter(v => v.client_id === client.id);
+    setZoneClient(client);
+    setZoneMode(mode);
+    setVenueName(mode === "venue" ? `${client.name} — филиал` : clientVenues[0]?.name || client.name);
+    setZoneName(mode === "venue" ? "Основная зона" : "");
+    setZoneVenueId(clientVenues[0]?.id || "");
+    setZoneBusinessType(0);
+    setZoneDeviceType("web");
+    setShowZoneModal(true);
+  };
+
+  const createVenueOrZone = async () => {
+    if (!zoneClient || !zoneName.trim()) return;
+    setZoneSaving(true);
+    const bt = BUSINESS_TYPES[zoneBusinessType];
+    let venueId = zoneMode === "zone" ? zoneVenueId : "";
+    let newVenue: any = null;
+
+    if (!venueId) {
+      const venue = await sb("venues", {
+        method: "POST",
+        body: JSON.stringify({
+          client_id: zoneClient.id,
+          name: venueName.trim() || zoneClient.name,
+          is_active: true,
+        }),
+      });
+      newVenue = venue?.[0] || null;
+      venueId = newVenue?.id || "";
+    }
+
+    const createdZone = venueId ? await sb("zones", {
+      method: "POST",
+      body: JSON.stringify({
+        client_id: zoneClient.id,
+        venue_id: venueId,
+        name: zoneName.trim(),
+        zone_type: bt.label,
+        device_type: zoneDeviceType,
+        station_key: bt.station,
+        template_key: bt.template,
+        default_template_key: bt.template,
+        music_mode: "automatic",
+        price_monthly: getClientZones(zoneClient.id).length === 0 ? 0 : 399000,
+        is_primary: getClientZones(zoneClient.id).length === 0,
+        is_active: true,
+      }),
+    }) : null;
+
+    if (createdZone?.[0]) {
+      if (newVenue) setVenues(prev => [...prev, newVenue]);
+      setZones(prev => [...prev, { ...createdZone[0], _kind: "zone" }]);
+      setSuccess(zoneMode === "venue" ? "Объект и зона добавлены" : "Зона добавлена");
+      setShowZoneModal(false);
+      setTimeout(() => setSuccess(""), 2000);
+    } else {
+      setSuccess("Не удалось добавить. Проверьте, применена ли миграция venues/zones.");
+      setTimeout(() => setSuccess(""), 3000);
+    }
+    setZoneSaving(false);
   };
 
   const updatePlan = async (clientId: string, plan: string) => {
@@ -143,6 +240,26 @@ export default function AdminPage() {
     const matchPlan = filterPlan === "all" || c.plan === filterPlan;
     return matchSearch && matchPlan;
   });
+
+  const getClientVenues = (clientId: string) => venues.filter(v => v.client_id === clientId);
+  const getClientZones = (clientId: string) => zones.filter(z => z.client_id === clientId && z.is_active !== false);
+  const getGroupedZones = (client: any) => {
+    const clientZones = getClientZones(client.id);
+    const clientVenues = getClientVenues(client.id);
+    const legacyVenue = { id: "legacy", name: client.name || "Основной объект", address: "" };
+    const sourceVenues = clientVenues.length > 0 ? clientVenues : [legacyVenue];
+
+    return sourceVenues.map(venue => ({
+      ...venue,
+      zones: clientZones.filter(z => clientVenues.length > 0 ? z.venue_id === venue.id : true),
+    })).filter(venue => venue.zones.length > 0 || clientVenues.length > 0);
+  };
+
+  const getClientMonthlyTotal = (client: any) => {
+    const base = client.plan === "premium" ? 799000 : client.plan === "standard" ? 599000 : client.plan === "basic" ? 399000 : 0;
+    const extraZones = getClientZones(client.id).filter(z => !z.is_primary).reduce((sum, z) => sum + Number(z.price_monthly || 399000), 0);
+    return base + extraZones;
+  };
 
   const getClientGroup = (client: any) => {
     const requestedPlan = getRequestedPlan(client.notes);
@@ -230,6 +347,72 @@ export default function AdminPage() {
 
       <div style={{ maxWidth: 1100, margin: "0 auto", padding: "24px 20px" }}>
 
+        {showZoneModal && zoneClient && (
+          <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.78)", zIndex: 100, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+            <div style={{ width: "100%", maxWidth: 480, background: "#0D1B2A", border: "1px solid rgba(201,168,76,0.22)", borderRadius: 18, padding: 24 }}>
+              <h2 style={{ fontSize: 18, color: "#fff", marginBottom: 6 }}>
+                {zoneMode === "venue" ? "Добавить объект / филиал" : "Добавить зону"}
+              </h2>
+              <div style={{ fontSize: 12, color: "#8BA7BE", marginBottom: 18 }}>{zoneClient.name}</div>
+
+              <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                {zoneMode === "venue" ? (
+                  <div>
+                    <div style={{ fontSize: 12, color: "#8BA7BE", marginBottom: 6 }}>Название объекта / филиала</div>
+                    <input value={venueName} onChange={e => setVenueName(e.target.value)} placeholder="Fitness Yunusabad" style={{ width: "100%", boxSizing: "border-box", padding: "12px 14px", background: "#162435", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, color: "#fff", outline: "none" }} />
+                  </div>
+                ) : (
+                  <div>
+                    <div style={{ fontSize: 12, color: "#8BA7BE", marginBottom: 6 }}>Объект / филиал</div>
+                    <select value={zoneVenueId} onChange={e => setZoneVenueId(e.target.value)} style={{ width: "100%", boxSizing: "border-box", padding: "12px 14px", background: "#162435", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, color: "#fff", outline: "none" }}>
+                      {getClientVenues(zoneClient.id).map(venue => (
+                        <option key={venue.id} value={venue.id}>{venue.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
+                <div>
+                  <div style={{ fontSize: 12, color: "#8BA7BE", marginBottom: 6 }}>Название зоны</div>
+                  <input value={zoneName} onChange={e => setZoneName(e.target.value)} placeholder="Ресепшн / SPA / Бассейн" style={{ width: "100%", boxSizing: "border-box", padding: "12px 14px", background: "#162435", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, color: "#fff", outline: "none" }} />
+                </div>
+
+                <div>
+                  <div style={{ fontSize: 12, color: "#8BA7BE", marginBottom: 6 }}>Тип зоны</div>
+                  <select value={zoneBusinessType} onChange={e => setZoneBusinessType(Number(e.target.value))} style={{ width: "100%", boxSizing: "border-box", padding: "12px 14px", background: "#162435", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, color: "#fff", outline: "none" }}>
+                    {BUSINESS_TYPES.map((type, index) => (
+                      <option key={type.label} value={index}>{type.label}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <div style={{ fontSize: 12, color: "#8BA7BE", marginBottom: 8 }}>Устройство</div>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+                    {[
+                      { key: "web", label: "Веб-плеер", color: "#3B82F6" },
+                      { key: "box", label: "FonMusic Box", color: "#C9A84C" },
+                    ].map(item => (
+                      <button key={item.key} onClick={() => setZoneDeviceType(item.key)} style={{ padding: "12px", borderRadius: 10, background: zoneDeviceType === item.key ? `${item.color}20` : "rgba(255,255,255,0.04)", border: `1px solid ${zoneDeviceType === item.key ? `${item.color}60` : "rgba(255,255,255,0.1)"}`, color: zoneDeviceType === item.key ? item.color : "#8BA7BE", cursor: "pointer", fontFamily: "Georgia, serif", fontWeight: 800 }}>
+                        {item.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ display: "flex", gap: 8, marginTop: 18 }}>
+                <button onClick={createVenueOrZone} disabled={zoneSaving || !zoneName.trim()} style={{ flex: 1, padding: "13px", background: "#C9A84C", border: "none", borderRadius: 10, color: "#0A1628", fontSize: 14, fontWeight: 800, cursor: "pointer", fontFamily: "Georgia, serif" }}>
+                  {zoneSaving ? "Сохраняем..." : "Добавить"}
+                </button>
+                <button onClick={() => setShowZoneModal(false)} style={{ padding: "13px 18px", background: "transparent", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, color: "#8BA7BE", fontSize: 14, cursor: "pointer", fontFamily: "Georgia, serif" }}>
+                  Отмена
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {success && (
           <div style={{ padding: "10px 16px", background: "rgba(34,197,94,0.1)", border: "1px solid rgba(34,197,94,0.3)", borderRadius: 8, fontSize: 13, color: "#22C55E", marginBottom: 16 }}>
             ✓ {success}
@@ -299,6 +482,8 @@ export default function AdminPage() {
               const isPaid = c.subscription_status === "active" && ["basic", "standard", "premium"].includes(c.plan);
               const requestedPlan = getRequestedPlan(c.notes);
               const requestedPlanInfo = requestedPlan ? PLAN_LABELS[requestedPlan] : null;
+              const groupedZones = getGroupedZones(c);
+              const monthlyTotal = getClientMonthlyTotal(c);
 
               return (
                 <div key={c.id} style={{ background: "#0D1B2A", border: `1px solid ${isExpired ? "rgba(239,68,68,0.2)" : "rgba(255,255,255,0.06)"}`, borderRadius: 14, padding: "16px 20px" }}>
@@ -336,6 +521,64 @@ export default function AdminPage() {
                       {requestedPlanInfo && c.plan !== requestedPlan && (
                         <div style={{ fontSize: 11, color: requestedPlanInfo.color, marginTop: 6, fontWeight: 700 }}>
                           💳 Заявка: {requestedPlanInfo.label}
+                        </div>
+                      )}
+                      {monthlyTotal > 0 && (
+                        <div style={{ fontSize: 11, color: "#C9A84C", marginTop: 6, fontWeight: 800 }}>
+                          ≈ {monthlyTotal.toLocaleString("ru-RU")} сум / мес.
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Объекты и зоны */}
+                    <div style={{ flex: 1.35, minWidth: 280 }}>
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, marginBottom: 8 }}>
+                        <div style={{ fontSize: 11, color: "#4a5a6a", fontWeight: 800 }}>Объекты и зоны</div>
+                        <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                          <button onClick={() => openZoneModal(c, "venue")} style={{ padding: "5px 8px", background: "rgba(201,168,76,0.1)", border: "1px solid rgba(201,168,76,0.25)", borderRadius: 7, color: "#C9A84C", fontSize: 10, fontWeight: 800, cursor: "pointer", fontFamily: "Georgia, serif" }}>
+                            + объект
+                          </button>
+                          <button onClick={() => openZoneModal(c, "zone")} style={{ padding: "5px 8px", background: "rgba(59,130,246,0.1)", border: "1px solid rgba(59,130,246,0.25)", borderRadius: 7, color: "#60A5FA", fontSize: 10, fontWeight: 800, cursor: "pointer", fontFamily: "Georgia, serif" }}>
+                            + зона
+                          </button>
+                        </div>
+                      </div>
+                      {groupedZones.length > 0 ? (
+                        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                          {groupedZones.map(venue => (
+                            <div key={venue.id} style={{ padding: "10px 12px", background: "rgba(255,255,255,0.035)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 10 }}>
+                              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, marginBottom: 7 }}>
+                                <div style={{ fontSize: 12, color: "#fff", fontWeight: 800 }}>🏢 {venue.name}</div>
+                                <div style={{ fontSize: 10, color: "#4a5a6a" }}>{venue.zones.length} зон</div>
+                              </div>
+                              <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
+                                {venue.zones.map((zone: any) => (
+                                  <div key={zone.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, padding: "7px 8px", background: "#0A1628", borderRadius: 8 }}>
+                                    <div style={{ minWidth: 0 }}>
+                                      <div style={{ fontSize: 12, color: "#E8EFF5", fontWeight: 700, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                                        {zone.is_primary ? "★ " : ""}{zone.name}
+                                      </div>
+                                      <div style={{ fontSize: 10, color: "#8BA7BE" }}>
+                                        {zone.device_type === "box" ? "📦 Box" : "🌐 Web"} · {zone.station_key || "—"} · {Number(zone.price_monthly || 0).toLocaleString("ru-RU")} сум
+                                      </div>
+                                    </div>
+                                    <div style={{ display: "flex", gap: 5, flexShrink: 0 }}>
+                                      <a href={zone._kind === "zone" ? `/player?zone_id=${zone.id}` : `/player?location_id=${zone.id}`} target="_blank" style={{ fontSize: 10, color: "#3B82F6", textDecoration: "none", border: "1px solid rgba(59,130,246,0.25)", borderRadius: 6, padding: "4px 7px" }}>
+                                        Плеер
+                                      </a>
+                                      <a href={zone._kind === "zone" ? `/preview?zone_id=${zone.id}` : `/preview?location_id=${zone.id}`} target="_blank" style={{ fontSize: 10, color: "#8BA7BE", textDecoration: "none", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 6, padding: "4px 7px" }}>
+                                        Preview
+                                      </a>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div style={{ padding: "12px", border: "1px dashed rgba(255,255,255,0.12)", borderRadius: 10, color: "#8BA7BE", fontSize: 12 }}>
+                          Зоны ещё не созданы
                         </div>
                       )}
                     </div>
