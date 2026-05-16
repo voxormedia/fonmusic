@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import BrowserCompatibility from "@/components/BrowserCompatibility";
+import HomeBackButton from "@/components/HomeBackButton";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -19,6 +20,7 @@ export default function RootLayout({
       </head>
       <body style={{ margin: 0, padding: 0 }}>
         <BrowserCompatibility />
+        <HomeBackButton />
         {children}
       </body>
     </html>
