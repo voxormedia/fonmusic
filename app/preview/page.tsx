@@ -470,8 +470,9 @@ const station = effectiveData.station_key || "best_of_radio";
     await loadPlaylist(currentStationRef.current);
     return;
   }
-  audioRef.current.play().catch(() => {});
-  setIsPlaying(true);
+  audioRef.current.play()
+    .then(() => setIsPlaying(true))
+    .catch(() => setIsPlaying(false));
 };
 
   const nextTrack = () => playTrack((trackIndex + 1) % playlist.length);

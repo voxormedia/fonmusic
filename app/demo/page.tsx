@@ -248,10 +248,11 @@ function DemoPlayer() {
       audioRef.current.pause();
       audioRef.current.src = url;
       audioRef.current.load();
-      audioRef.current.play().catch(() => {});
+      audioRef.current.play()
+        .then(() => setIsPlaying(true))
+        .catch(() => setIsPlaying(false));
     }
     setCurrentTrack(track);
-    setIsPlaying(true);
     setTrackIndex(index % list.length);
   };
 
@@ -264,8 +265,9 @@ function DemoPlayer() {
       if (!currentTrack) {
         playTrack(0);
       } else {
-        audioRef.current.play().catch(() => {});
-        setIsPlaying(true);
+        audioRef.current.play()
+          .then(() => setIsPlaying(true))
+          .catch(() => setIsPlaying(false));
       }
     }
   };

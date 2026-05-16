@@ -235,8 +235,9 @@ function DemoPlayer({ lang }: { lang: "ru" | "uz" }) {
       setCurrentTrack(getTrackTitle(track));
       recentTracksRef.current = [...recentTracksRef.current, track].slice(-8);
       setPlayedCount(nextCount);
-      audio.play();
-      setIsPlaying(true);
+      audio.play()
+        .then(() => setIsPlaying(true))
+        .catch(() => setIsPlaying(false));
     };
     audio.onerror = () => { setIsLoading(false); setIsPlaying(false); };
     audio.onended = () => playNext();
@@ -280,7 +281,11 @@ function DemoPlayer({ lang }: { lang: "ru" | "uz" }) {
     if (isDemoLimited) return;
     if (!audioRef.current) { playStation(selectedBusiness); return; }
     if (isPlaying) { audioRef.current.pause(); setIsPlaying(false); }
-    else { audioRef.current.play(); setIsPlaying(true); }
+    else {
+      audioRef.current.play()
+        .then(() => setIsPlaying(true))
+        .catch(() => setIsPlaying(false));
+    }
   };
 
   useEffect(() => { return () => { if (audioRef.current) { audioRef.current.pause(); audioRef.current.src = ""; } }; }, []);
