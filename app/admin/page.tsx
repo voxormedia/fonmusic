@@ -235,6 +235,33 @@ export default function AdminPage() {
     setTimeout(() => setSuccess(""), 2000);
   };
 
+  const purgeClient = async (client: any) => {
+    const first = window.confirm(`Полностью удалить клиента "${client.name}"?\n\nБудут удалены аккаунт, зоны, объекты, старые точки, устройства и заявки. После этого клиент сможет зарегистрироваться заново с этим телефоном.`);
+    if (!first) return;
+    const typed = window.prompt(`Для подтверждения введите номер клиента:\n${client.phone}`);
+    if (typed !== client.phone) {
+      setSuccess("Удаление отменено: номер не совпал");
+      setTimeout(() => setSuccess(""), 2500);
+      return;
+    }
+
+    setSaving(client.id);
+    await sb(`player_devices?client_id=eq.${client.id}`, { method: "DELETE" });
+    await sb(`invoice_requests?client_id=eq.${client.id}`, { method: "DELETE" });
+    await sb(`zones?client_id=eq.${client.id}`, { method: "DELETE" });
+    await sb(`venues?client_id=eq.${client.id}`, { method: "DELETE" });
+    await sb(`locations?client_id=eq.${client.id}`, { method: "DELETE" });
+    await sb(`sms_codes?phone=eq.${encodeURIComponent(client.phone || "")}`, { method: "DELETE" });
+    await sb(`clients?id=eq.${client.id}`, { method: "DELETE" });
+
+    setClients(prev => prev.filter(c => c.id !== client.id));
+    setZones(prev => prev.filter(z => z.client_id !== client.id));
+    setVenues(prev => prev.filter(v => v.client_id !== client.id));
+    setSaving(null);
+    setSuccess("Клиент полностью удалён. Можно регистрировать заново.");
+    setTimeout(() => setSuccess(""), 3000);
+  };
+
   const filtered = clients.filter(c => {
     const matchSearch = !search || c.name?.toLowerCase().includes(search.toLowerCase()) || c.phone?.includes(search);
     const matchPlan = filterPlan === "all" || c.plan === filterPlan;
@@ -672,6 +699,18 @@ export default function AdminPage() {
                         }}
                       >
                         {isExpired ? "✓ Восстановить доступ" : "✗ Заблокировать"}
+                      </button>
+                      <button
+                        onClick={() => purgeClient(c)}
+                        disabled={saving === c.id}
+                        style={{
+                          padding: "5px 10px", borderRadius: 6, cursor: "pointer", fontFamily: "Georgia, serif", fontSize: 11, marginTop: 2,
+                          background: "rgba(239,68,68,0.16)",
+                          border: "1px solid rgba(239,68,68,0.42)",
+                          color: "#F87171",
+                        }}
+                      >
+                        🗑 Удалить полностью
                       </button>
                     </div>
                   </div>
