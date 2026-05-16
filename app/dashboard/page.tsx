@@ -63,9 +63,9 @@ const T = {
     paywall_h: "Тестовый период завершён",
     paywall_p: "Подключите подписку чтобы продолжить",
     paywall_btn: "Выбрать тариф →",
-    add_modal_h: "➕ Добавить заведение",
+    add_modal_h: "➕ Добавить зону",
     add_name: "Название *",
-    add_name_ph: "Кафе Уют — Чиланзар",
+    add_name_ph: "Ресепшн / SPA / Фитнес-зал",
     add_address: "Адрес",
     add_address_ph: "ул. Навои, 12",
     add_biz_type: "Тип заведения",
@@ -88,11 +88,11 @@ const T = {
     billing_trial_hint: "Вы можете подключить тариф онлайн или запросить официальный счёт для организации.",
     pay_online: "Оплатить онлайн",
     get_invoice: "Получить счёт / договор",
-    locations_h: "🏢 Мои заведения",
+    locations_h: "🏢 Музыкальные зоны",
     locations_count: "из",
-    locations_points: "точек",
-    add_location_btn: "➕ Добавить заведение",
-    add_location_premium: "✨ Добавить точки (Премиум)",
+    locations_points: "зон",
+    add_location_btn: "➕ Добавить зону",
+    add_location_premium: "✨ Добавить зоны (Премиум)",
     web_player: "🎧 Веб-плеер",
     box_device: "📦 FonMusic Box",
     auto_mode: "🔄 Авто",
@@ -100,8 +100,8 @@ const T = {
     open_player: "▶ Открыть плеер",
     preview: "👁 Посмотреть без влияния",
     manage: "🎛️ Управлять",
-    no_locations: "Нет заведений",
-    no_locations_sub: "Добавьте первое заведение",
+    no_locations: "Нет зон",
+    no_locations_sub: "Добавьте первую музыкальную зону",
     support_h: "💬 Поддержка",
     password_h: "🔑 Пароль",
     password_change: "Изменить",
@@ -118,9 +118,9 @@ const T = {
     paywall_h: "Sinov davri tugadi",
     paywall_p: "Davom etish uchun obunani ulang",
     paywall_btn: "Tarifni tanlash →",
-    add_modal_h: "➕ Muassasa qo'shish",
+    add_modal_h: "➕ Zona qo'shish",
     add_name: "Nomi *",
-    add_name_ph: "Kafe Uyut — Chilonzor",
+    add_name_ph: "Resepshn / SPA / Fitnes zal",
     add_address: "Manzil",
     add_address_ph: "Navoiy ko'chasi, 12",
     add_biz_type: "Muassasa turi",
@@ -143,11 +143,11 @@ const T = {
     billing_trial_hint: "Tarifni onlayn ulashingiz yoki tashkilot uchun rasmiy hisob so'rashingiz mumkin.",
     pay_online: "Onlayn to'lash",
     get_invoice: "Hisob / shartnoma olish",
-    locations_h: "🏢 Mening muassasalarim",
+    locations_h: "🏢 Musiqa zonalari",
     locations_count: "dan",
-    locations_points: "nuqta",
-    add_location_btn: "➕ Muassasa qo'shish",
-    add_location_premium: "✨ Nuqtalar qo'shish (Premium)",
+    locations_points: "zona",
+    add_location_btn: "➕ Zona qo'shish",
+    add_location_premium: "✨ Zonalar qo'shish (Premium)",
     web_player: "🎧 Veb-pleer",
     box_device: "📦 FonMusic Box",
     auto_mode: "🔄 Avto",
@@ -155,8 +155,8 @@ const T = {
     open_player: "▶ Pleerni ochish",
     preview: "👁 Ta'sir qilmasdan ko'rish",
     manage: "🎛️ Boshqarish",
-    no_locations: "Muassasalar yo'q",
-    no_locations_sub: "Birinchi muassasani qo'shing",
+    no_locations: "Zonalar yo'q",
+    no_locations_sub: "Birinchi musiqa zonasini qo'shing",
     support_h: "💬 Yordam",
     password_h: "🔑 Parol",
     password_change: "O'zgartirish",
@@ -252,27 +252,70 @@ export default function DashboardPage() {
   };
 
   const loadLocations = async (clientId: string) => {
+    const zones = await sb(`zones?client_id=eq.${clientId}&is_active=eq.true&select=*,venues(name,address)&order=created_at`);
+    if (zones && zones.length > 0) {
+      setLocations(zones.map((zone: any) => ({ ...zone, _kind: "zone" })));
+      return;
+    }
     const data = await sb(`locations?client_id=eq.${clientId}&is_active=eq.true&select=*&order=created_at`);
-    if (data) setLocations(data);
+    if (data) setLocations(data.map((loc: any) => ({ ...loc, _kind: "location" })));
   };
 
   const openLocation = (loc: any) => {
     if (loc.device_type === "box") {
-      window.location.href = `/dashboard/location?id=${loc.id}`;
+      window.location.href = loc._kind === "zone" ? `/dashboard/location?zone_id=${loc.id}` : `/dashboard/location?id=${loc.id}`;
     } else {
-      window.location.href = `/player?location_id=${loc.id}`;
+      window.location.href = loc._kind === "zone" ? `/player?zone_id=${loc.id}` : `/player?location_id=${loc.id}`;
     }
   };
 
   const openPreview = (loc: any) => {
-    window.location.href = `/preview?location_id=${loc.id}`;
+    window.location.href = loc._kind === "zone" ? `/preview?zone_id=${loc.id}` : `/preview?location_id=${loc.id}`;
   };
 
   const addLocation = async () => {
     if (!modalName) return;
     setModalSaving(true);
     const bt = BUSINESS_TYPES[modalBusinessType];
-    const loc = await sb("locations", {
+    let venueId = locations.find((loc: any) => loc.venue_id)?.venue_id || null;
+    if (!venueId) {
+      const venues = await sb(`venues?client_id=eq.${client.id}&is_active=eq.true&select=*&order=created_at&limit=1`);
+      if (venues && venues.length > 0) {
+        venueId = venues[0].id;
+      } else {
+        const venue = await sb("venues", {
+          method: "POST",
+          body: JSON.stringify({
+            client_id: client.id,
+            name: client.name || modalName,
+            address: modalAddress,
+            is_active: true,
+          }),
+        });
+        venueId = venue?.[0]?.id || null;
+      }
+    }
+
+    const loc = venueId ? await sb("zones", {
+      method: "POST",
+      body: JSON.stringify({
+        client_id: client.id,
+        venue_id: venueId,
+        name: modalName,
+        zone_type: bt.label,
+        address: modalAddress,
+        device_type: modalDeviceType,
+        station_key: bt.station,
+        template_key: bt.template,
+        default_template_key: bt.template,
+        music_mode: "automatic",
+        price_monthly: locations.length === 0 ? 0 : 399000,
+        is_primary: locations.length === 0,
+        is_active: true,
+      }),
+    }) : null;
+
+    const legacyLoc = loc && loc.length > 0 ? null : await sb("locations", {
       method: "POST",
       body: JSON.stringify({
         client_id: client.id,
@@ -287,8 +330,9 @@ export default function DashboardPage() {
       }),
     });
     setModalSaving(false);
-    if (loc && loc.length > 0) {
-      setLocations(prev => [...prev, loc[0]]);
+    const created = loc?.[0] ? { ...loc[0], _kind: "zone" } : legacyLoc?.[0] ? { ...legacyLoc[0], _kind: "location" } : null;
+    if (created) {
+      setLocations(prev => [...prev, created]);
       setShowAddModal(false);
       setModalName(""); setModalAddress(""); setModalBusinessType(0); setModalDeviceType("web");
     }

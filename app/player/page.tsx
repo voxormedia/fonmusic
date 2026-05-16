@@ -216,7 +216,7 @@ function ScheduleEditor({ client, scheduleItems, accent, onSave, onCancel }: any
         "Prefer": "return=representation",
       };
 
-      const customKey = client._locationId ? `custom_${client.id}_${client._locationId}` : `custom_${client.id}`;
+      const customKey = client._zoneId ? `custom_${client.id}_${client._zoneId}` : client._locationId ? `custom_${client.id}_${client._locationId}` : `custom_${client.id}`;
       let templateId: number;
 
       const existing = await fetch(`${SUPABASE_URL}/rest/v1/schedule_templates?template_key=eq.${customKey}&select=id`, { headers });
@@ -236,7 +236,7 @@ function ScheduleEditor({ client, scheduleItems, accent, onSave, onCancel }: any
         });
         const tmplData = await tmplRes.json();
         templateId = tmplData[0].id;
-        const ownerPath = client._locationId ? `locations?id=eq.${client._locationId}` : `clients?id=eq.${client.id}`;
+        const ownerPath = client._zoneId ? `zones?id=eq.${client._zoneId}` : client._locationId ? `locations?id=eq.${client._locationId}` : `clients?id=eq.${client.id}`;
         await fetch(`${SUPABASE_URL}/rest/v1/${ownerPath}`, {
           method: "PATCH", headers,
           body: JSON.stringify({ template_key: customKey }),
@@ -331,7 +331,7 @@ function ScheduleEditor({ client, scheduleItems, accent, onSave, onCancel }: any
         </button>
       </div>
       <div style={{ fontSize: 11, color: "#4a5a6a", marginTop: 8, textAlign: "center" }}>
-        Применится к этой точке
+        Применится к этой зоне
       </div>
       <button onClick={async () => {
         if (!confirm("Вернуться к стандартному расписанию для вашего типа заведения?")) return;
@@ -342,7 +342,7 @@ function ScheduleEditor({ client, scheduleItems, accent, onSave, onCancel }: any
           "Prefer": "return=representation",
         };
         const defaultKey = client.default_template_key || "cafe_standard";
-        const ownerPath = client._locationId ? `locations?id=eq.${client._locationId}` : `clients?id=eq.${client.id}`;
+        const ownerPath = client._zoneId ? `zones?id=eq.${client._zoneId}` : client._locationId ? `locations?id=eq.${client._locationId}` : `clients?id=eq.${client.id}`;
         await fetch(`${SUPABASE_URL}/rest/v1/${ownerPath}`, {
           method: "PATCH", headers,
           body: JSON.stringify({ template_key: defaultKey, music_mode: "automatic" }),
@@ -360,7 +360,7 @@ function ScheduleEditor({ client, scheduleItems, accent, onSave, onCancel }: any
 export default function PlayerPage() {
   const [client, setClient] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [screen, setScreen] = useState<"player" | "device_limit" | "session_taken">("player");
+  const [screen, setScreen] = useState<"player" | "device_limit" | "session_taken" | "choose_zone">("player");
   const [isClosingOtherSessions, setIsClosingOtherSessions] = useState(false);
   const [playlist, setPlaylist] = useState<PlaylistTrack[]>([]);
   const [currentTrack, setCurrentTrack] = useState<PlaylistTrack | null>(null);
@@ -410,8 +410,9 @@ export default function PlayerPage() {
   const clientId = localStorage.getItem("fonmusic_client_id");
   if (!clientId) { window.location.href = "/login"; return; }
   const params = new URLSearchParams(window.location.search);
+  const zoneId = params.get("zone_id");
   const locationId = params.get("location_id");
-  initClient(clientId, locationId || undefined);
+  initClient(clientId, zoneId || undefined, locationId || undefined);
   return () => {
     if (heartbeatRef.current) clearInterval(heartbeatRef.current);
   };
@@ -425,21 +426,35 @@ export default function PlayerPage() {
     return () => clearInterval(interval);
   }, []);
 
-  const initClient = async (clientId: string, locationId?: string) => {
+  const initClient = async (clientId: string, zoneId?: string, locationId?: string) => {
   const data = await sb(`clients?id=eq.${clientId}&select=*`);
   if (!data || data.length === 0) { window.location.href = "/login"; return; }
   const c = data[0];
   if (c.subscription_status === "expired") { window.location.href = "/dashboard"; return; }
 
-  // Загружаем данные точки если есть location_id
+  // Рабочий плеер должен быть привязан к конкретной зоне.
+  let zoneData = null;
   let locationData = null;
-  if (locationId) {
+  if (zoneId) {
+    const zone = await sb(`zones?id=eq.${zoneId}&client_id=eq.${c.id}&select=*`);
+    if (zone && zone.length > 0) zoneData = zone[0];
+  }
+  if (!zoneData && locationId) {
+    const zone = await sb(`zones?legacy_location_id=eq.${locationId}&client_id=eq.${c.id}&select=*`);
+    if (zone && zone.length > 0) zoneData = zone[0];
+  }
+  if (!zoneData && locationId) {
     const loc = await sb(`locations?id=eq.${locationId}&client_id=eq.${c.id}&select=*`);
     if (loc && loc.length > 0) locationData = loc[0];
   }
+  if (!zoneData && !locationData) {
+    setLoading(false);
+    setScreen("choose_zone");
+    return;
+  }
 
-  // Используем настройки точки, но сохраняем id аккаунта клиента.
-  const effectiveData = locationData || c;
+  // Используем настройки зоны, но сохраняем id аккаунта клиента.
+  const effectiveData = zoneData || locationData || c;
   const mergedClient = {
     ...c,
     ...effectiveData,
@@ -448,8 +463,9 @@ export default function PlayerPage() {
     subscription_status: effectiveData.subscription_status || c.subscription_status,
     demo_expires_at: effectiveData.demo_expires_at || c.demo_expires_at,
     trial_until: effectiveData.trial_until || c.trial_until,
-    _locationId: locationData?.id || null,
-    location_name: locationData?.name,
+    _zoneId: zoneData?.id || null,
+    _locationId: zoneData?.legacy_location_id || locationData?.id || null,
+    location_name: effectiveData?.name,
   };
   setClient(mergedClient);
   clientRef.current = mergedClient;
@@ -465,10 +481,10 @@ if (!playerId) {
 const cutoff = new Date(Date.now() - 15 * 60 * 1000).toISOString();
 await sb(`player_devices?client_id=eq.${c.id}&last_seen=lt.${cutoff}`, { method: "DELETE" });
 
-// Проверяем активные устройства
-const deviceScope = locationData?.id ? `location_id=eq.${locationData.id}` : `client_id=eq.${c.id}`;
+// Проверяем активные устройства. Лимит теперь считается по зоне, не по аккаунту.
+const deviceScope = zoneData?.id ? `zone_id=eq.${zoneData.id}&mode=eq.work` : locationData?.id ? `location_id=eq.${locationData.id}` : `client_id=eq.${c.id}`;
 const devices = await sb(`player_devices?${deviceScope}&select=*`);
-const maxDevices = c.max_devices ?? 1;
+const maxDevices = zoneData || locationData ? 1 : c.max_devices ?? 1;
 const existingDevice = devices?.find((d: any) => d.player_id === playerId);
 
 if (!existingDevice) {
@@ -481,7 +497,9 @@ if (!existingDevice) {
     method: "POST",
     body: JSON.stringify({
 	      client_id: c.id,
-	      location_id: locationData?.id || null,
+	      zone_id: zoneData?.id || null,
+	      location_id: zoneData?.legacy_location_id || locationData?.id || null,
+	      mode: "work",
 	      player_id: playerId,
       device_name: "Веб-плеер",
       last_seen: new Date().toISOString(),
@@ -500,8 +518,8 @@ heartbeatRef.current = setInterval(async () => {
   const pid = localStorage.getItem("fonmusic_player_id");
   const cid = localStorage.getItem("fonmusic_client_id");
   if (pid && cid) {
-    const locationFilter = clientRef.current?._locationId ? `&location_id=eq.${clientRef.current._locationId}` : "";
-    const activeDevice = await sb(`player_devices?player_id=eq.${pid}&client_id=eq.${cid}${locationFilter}&select=id`);
+    const scopeFilter = clientRef.current?._zoneId ? `&zone_id=eq.${clientRef.current._zoneId}&mode=eq.work` : clientRef.current?._locationId ? `&location_id=eq.${clientRef.current._locationId}` : "";
+    const activeDevice = await sb(`player_devices?player_id=eq.${pid}&client_id=eq.${cid}${scopeFilter}&select=id`);
     if (!activeDevice || activeDevice.length === 0) {
       audioRef.current?.pause();
       setIsPlaying(false);
@@ -509,7 +527,7 @@ heartbeatRef.current = setInterval(async () => {
       if (heartbeatRef.current) clearInterval(heartbeatRef.current);
       return;
     }
-    await sb(`player_devices?player_id=eq.${pid}&client_id=eq.${cid}${locationFilter}`, {
+    await sb(`player_devices?player_id=eq.${pid}&client_id=eq.${cid}${scopeFilter}`, {
       method: "PATCH",
       body: JSON.stringify({ last_seen: new Date().toISOString() }),
     });
@@ -638,7 +656,7 @@ const station = effectiveData.station_key || "best_of_radio";
     setIsPlaying(false); setIsLoadingTrack(true);
     setProgress(0); setCurrentTime(0); lastScheduleStation.current = stationKey;
     if (clientRef.current) clientRef.current.music_mode = "manual";
-    const ownerPath = client._locationId ? `locations?id=eq.${client._locationId}` : `clients?id=eq.${client.id}`;
+    const ownerPath = client._zoneId ? `zones?id=eq.${client._zoneId}` : client._locationId ? `locations?id=eq.${client._locationId}` : `clients?id=eq.${client.id}`;
     await sb(ownerPath, { method: "PATCH", body: JSON.stringify({ station_key: stationKey, music_mode: "manual" }) });
     setClient((prev: any) => ({ ...prev, music_mode: "manual", station_key: stationKey }));
     const folder = STATION_FOLDERS[stationKey] || "Best Of Radio";
@@ -682,8 +700,8 @@ const station = effectiveData.station_key || "best_of_radio";
       return;
     }
 
-    const locationFilter = clientRef.current?._locationId ? `&location_id=eq.${clientRef.current._locationId}` : "";
-    await sb(`player_devices?client_id=eq.${clientId}${locationFilter}&player_id=neq.${playerId}`, { method: "DELETE" });
+    const scopeFilter = clientRef.current?._zoneId ? `&zone_id=eq.${clientRef.current._zoneId}&mode=eq.work` : clientRef.current?._locationId ? `&location_id=eq.${clientRef.current._locationId}` : "";
+    await sb(`player_devices?client_id=eq.${clientId}${scopeFilter}&player_id=neq.${playerId}`, { method: "DELETE" });
     window.location.reload();
   };
 
@@ -691,6 +709,23 @@ const station = effectiveData.station_key || "best_of_radio";
   const nextSlotSt = nextSlot ? STATIONS.find(s => s.key === nextSlot.stations?.station_key) : null;
   const minLeft = getMinLeft(scheduleItems);
   const currentSlot = getCurrentSlot(scheduleItems);
+
+  if (screen === "choose_zone") return (
+    <main style={{ minHeight: "100vh", background: "#0A1628", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "Georgia, serif", padding: 20 }}>
+      <div style={{ width: "100%", maxWidth: 420, textAlign: "center", background: "rgba(13,27,42,0.86)", border: "1px solid rgba(201,168,76,0.24)", borderRadius: 20, padding: "32px 24px", boxShadow: "0 24px 70px rgba(0,0,0,0.35)" }}>
+        <div style={{ fontSize: 48, marginBottom: 16 }}>🎛️</div>
+        <h1 style={{ fontSize: 22, fontWeight: 700, color: "#fff", marginBottom: 12, lineHeight: 1.25 }}>
+          Выберите музыкальную зону
+        </h1>
+        <p style={{ fontSize: 14, color: "#8BA7BE", lineHeight: 1.7, marginBottom: 24 }}>
+          Рабочий плеер запускается отдельно для каждой зоны: зал, ресепшн, SPA или бассейн.
+        </p>
+        <a href="/dashboard" style={{ display: "block", width: "100%", boxSizing: "border-box", padding: "16px", background: "#C9A84C", border: "none", borderRadius: 12, color: "#0A1628", fontSize: 15, fontWeight: 700, textDecoration: "none" }}>
+          Открыть кабинет
+        </a>
+      </div>
+    </main>
+  );
 
   if (screen === "device_limit") return (
     <main style={{ minHeight: "100vh", background: "#0A1628", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "Georgia, serif", padding: 20 }}>
@@ -700,7 +735,7 @@ const station = effectiveData.station_key || "best_of_radio";
           Музыка уже играет на другом устройстве
         </h1>
         <p style={{ fontSize: 14, color: "#8BA7BE", lineHeight: 1.7, marginBottom: 14 }}>
-          Плеер этой точки уже открыт в другом браузере или на другом устройстве.
+          Плеер этой зоны уже открыт в другом браузере или на другом устройстве.
         </p>
         <div style={{ fontSize: 13, color: "#C9A84C", lineHeight: 1.6, background: "rgba(201,168,76,0.1)", border: "1px solid rgba(201,168,76,0.24)", borderRadius: 12, padding: "12px 14px", marginBottom: 20 }}>
           Если запустить музыку здесь, воспроизведение в заведении может остановиться на предыдущем устройстве.
@@ -729,7 +764,7 @@ const station = effectiveData.station_key || "best_of_radio";
           Воспроизведение перенесено
         </h1>
         <p style={{ fontSize: 14, color: "#8BA7BE", lineHeight: 1.7, marginBottom: 24 }}>
-          Музыку этой точки запустили на другом устройстве. На этом устройстве плеер остановлен, чтобы не играть одновременно в двух местах.
+          Музыку этой зоны запустили на другом устройстве. На этом устройстве плеер остановлен, чтобы не играть одновременно в двух местах.
         </p>
         <button onClick={() => window.location.reload()} style={{ width: "100%", padding: "16px", background: "#C9A84C", border: "none", borderRadius: 12, color: "#0A1628", fontSize: 15, fontWeight: 700, cursor: "pointer", fontFamily: "Georgia, serif", marginBottom: 14 }}>
           🔄 Проверить снова
@@ -821,7 +856,7 @@ const station = effectiveData.station_key || "best_of_radio";
     </div>
     <button onClick={async () => {
       if (clientRef.current) clientRef.current.music_mode = "automatic";
-      const ownerPath = client._locationId ? `locations?id=eq.${client._locationId}` : `clients?id=eq.${client.id}`;
+      const ownerPath = client._zoneId ? `zones?id=eq.${client._zoneId}` : client._locationId ? `locations?id=eq.${client._locationId}` : `clients?id=eq.${client.id}`;
       await sb(ownerPath, { method: "PATCH", body: JSON.stringify({ music_mode: "automatic" }) });
       setClient((prev: any) => ({ ...prev, music_mode: "automatic" }));
       checkSchedule();

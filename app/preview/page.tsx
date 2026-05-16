@@ -319,8 +319,9 @@ export default function PlayerPage() {
   const clientId = localStorage.getItem("fonmusic_client_id");
   if (!clientId) { window.location.href = "/login"; return; }
   const params = new URLSearchParams(window.location.search);
+  const zoneId = params.get("zone_id");
   const locationId = params.get("location_id");
-  initClient(clientId, locationId || undefined);
+  initClient(clientId, zoneId || undefined, locationId || undefined);
 }, []);
 
   useEffect(() => {
@@ -331,21 +332,30 @@ export default function PlayerPage() {
     return () => clearInterval(interval);
   }, []);
 
-  const initClient = async (clientId: string, locationId?: string) => {
+  const initClient = async (clientId: string, zoneId?: string, locationId?: string) => {
   const data = await sb(`clients?id=eq.${clientId}&select=*`);
   if (!data || data.length === 0) { window.location.href = "/login"; return; }
   const c = data[0];
   if (c.subscription_status === "expired") { window.location.href = "/dashboard"; return; }
 
-  // Загружаем данные точки если есть location_id
+  // Загружаем данные зоны, fallback на старую locations-схему.
+  let zoneData = null;
   let locationData = null;
-  if (locationId) {
+  if (zoneId) {
+    const zone = await sb(`zones?id=eq.${zoneId}&client_id=eq.${c.id}&select=*`);
+    if (zone && zone.length > 0) zoneData = zone[0];
+  }
+  if (!zoneData && locationId) {
+    const zone = await sb(`zones?legacy_location_id=eq.${locationId}&client_id=eq.${c.id}&select=*`);
+    if (zone && zone.length > 0) zoneData = zone[0];
+  }
+  if (!zoneData && locationId) {
     const loc = await sb(`locations?id=eq.${locationId}&client_id=eq.${c.id}&select=*`);
     if (loc && loc.length > 0) locationData = loc[0];
   }
 
-  // Используем настройки точки, но сохраняем id аккаунта клиента.
-  const effectiveData = locationData || c;
+  // Используем настройки зоны, но сохраняем id аккаунта клиента.
+  const effectiveData = zoneData || locationData || c;
   const mergedClient = {
     ...c,
     ...effectiveData,
@@ -354,8 +364,9 @@ export default function PlayerPage() {
     subscription_status: effectiveData.subscription_status || c.subscription_status,
     demo_expires_at: effectiveData.demo_expires_at || c.demo_expires_at,
     trial_until: effectiveData.trial_until || c.trial_until,
-    _locationId: locationData?.id || null,
-    location_name: locationData?.name,
+    _zoneId: zoneData?.id || null,
+    _locationId: zoneData?.legacy_location_id || locationData?.id || null,
+    location_name: effectiveData?.name,
   };
   setClient(mergedClient);
   clientRef.current = mergedClient;

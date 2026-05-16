@@ -126,8 +126,37 @@ export default function SignupPage() {
       return;
     }
 
-    // Создаём первую точку
-    await sb("locations", {
+    // Создаём первый объект и основную музыкальную зону. Если новая схема ещё
+    // не применена в Supabase, оставляем старую locations-совместимость.
+    const venue = await sb("venues", {
+      method: "POST",
+      body: JSON.stringify({
+        client_id: client[0].id,
+        name,
+        is_active: true,
+      }),
+    });
+
+    const zone = venue && venue.length > 0 ? await sb("zones", {
+      method: "POST",
+      body: JSON.stringify({
+        client_id: client[0].id,
+        venue_id: venue[0].id,
+        name,
+        zone_type: businessType.label,
+        device_type: "web",
+        station_key: businessType.station,
+        template_key: businessType.template,
+        default_template_key: businessType.template,
+        music_mode: "automatic",
+        price_monthly: 0,
+        is_primary: true,
+        is_active: true,
+      }),
+    }) : null;
+
+    if (!zone || zone.length === 0) {
+      await sb("locations", {
       method: "POST",
       body: JSON.stringify({
         client_id: client[0].id,
@@ -138,7 +167,8 @@ export default function SignupPage() {
         default_template_key: businessType.template,
         music_mode: "automatic",
       }),
-    });
+      });
+    }
 
     await fetch("/api/telegram", {
       method: "POST",

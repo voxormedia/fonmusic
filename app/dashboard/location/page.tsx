@@ -50,17 +50,28 @@ export default function LocationPage() {
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
+    const zoneId = params.get("zone_id");
     const id = params.get("id");
-    if (!id) { window.location.href = "/dashboard"; return; }
+    if (!zoneId && !id) { window.location.href = "/dashboard"; return; }
 
     const clientId = localStorage.getItem("fonmusic_client_id");
     if (!clientId) { window.location.href = "/login"; return; }
 
-    loadLocation(id, clientId);
+    loadLocation(zoneId || "", id || "", clientId);
   }, []);
 
-  const loadLocation = async (id: string, clientId: string) => {
-    const data = await sb(`locations?id=eq.${id}&client_id=eq.${clientId}&select=*`);
+  const loadLocation = async (zoneId: string, id: string, clientId: string) => {
+    let data = zoneId ? await sb(`zones?id=eq.${zoneId}&client_id=eq.${clientId}&select=*`) : null;
+    if (data && data.length > 0) {
+      data = [{ ...data[0], _kind: "zone" }];
+    } else if (id) {
+      const zone = await sb(`zones?legacy_location_id=eq.${id}&client_id=eq.${clientId}&select=*`);
+      if (zone && zone.length > 0) data = [{ ...zone[0], _kind: "zone" }];
+    }
+    if (!data || data.length === 0) {
+      const legacy = id ? await sb(`locations?id=eq.${id}&client_id=eq.${clientId}&select=*`) : null;
+      if (legacy && legacy.length > 0) data = [{ ...legacy[0], _kind: "location" }];
+    }
     if (!data || data.length === 0) { window.location.href = "/dashboard"; return; }
     const loc = data[0];
     setLocation(loc);
@@ -105,7 +116,8 @@ export default function LocationPage() {
   const changeStation = async (stationKey: string) => {
     await cmd("change_station", { genre: stationKey }, stationKey);
     setLocation((prev: any) => ({ ...prev, station_key: stationKey }));
-    await sb(`locations?id=eq.${location.id}`, {
+    const ownerPath = location._kind === "zone" ? `zones?id=eq.${location.id}` : `locations?id=eq.${location.id}`;
+    await sb(ownerPath, {
       method: "PATCH",
       body: JSON.stringify({ station_key: stationKey }),
     });
@@ -272,7 +284,7 @@ export default function LocationPage() {
             <div style={{ fontSize: 12, color: "#8BA7BE", marginBottom: 16 }}>
               Введите Device ID с экрана бокса чтобы управлять им
             </div>
-            <DeviceBindForm locationId={location?.id} onBind={(deviceId) => setLocation((prev: any) => ({ ...prev, device_id: deviceId }))} />
+            <DeviceBindForm locationId={location?.id} resourceKind={location?._kind === "zone" ? "zone" : "location"} onBind={(deviceId) => setLocation((prev: any) => ({ ...prev, device_id: deviceId }))} />
           </div>
         )}
 
@@ -294,7 +306,7 @@ export default function LocationPage() {
   );
 }
 
-function DeviceBindForm({ locationId, onBind }: { locationId: string, onBind: (id: string) => void }) {
+function DeviceBindForm({ locationId, resourceKind, onBind }: { locationId: string, resourceKind: "zone" | "location", onBind: (id: string) => void }) {
   const [deviceId, setDeviceId] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -312,7 +324,7 @@ function DeviceBindForm({ locationId, onBind }: { locationId: string, onBind: (i
       setSaving(false);
       return;
     }
-    await fetch(`${SUPABASE_URL}/rest/v1/locations?id=eq.${locationId}`, {
+    await fetch(`${SUPABASE_URL}/rest/v1/${resourceKind === "zone" ? "zones" : "locations"}?id=eq.${locationId}`, {
       method: "PATCH",
       headers: {
         "apikey": SUPABASE_KEY, "Authorization": `Bearer ${SUPABASE_KEY}`,
