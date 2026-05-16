@@ -7,7 +7,7 @@ import { useSearchParams } from "next/navigation";
 const PLANS: Record<string, { name: string; price: number; boxFreeMonths: number; accent: string }> = {
   basic: { name: "Базовый", price: 399000, boxFreeMonths: 12, accent: "#8BA7BE" },
   standard: { name: "Стандарт", price: 599000, boxFreeMonths: 9, accent: "#C9A84C" },
-  premium: { name: "Премиум", price: 899000, boxFreeMonths: 6, accent: "#A78BFA" },
+  premium: { name: "Премиум", price: 799000, boxFreeMonths: 6, accent: "#A78BFA" },
 };
 
 const PERIODS = [1, 3, 6, 9, 12];
@@ -25,9 +25,7 @@ function CheckoutContent() {
   const total = plan.price * months;
   const boxText = months >= plan.boxFreeMonths
     ? `FonMusic Box: 0 сум при оплате за ${plan.boxFreeMonths} мес.`
-    : months >= 3
-      ? "FonMusic Box: 500 000 сум при оплате за 3 месяца"
-      : "FonMusic Box: 750 000 сум отдельно";
+    : "FonMusic Box: 750 000 сум отдельно";
 
   return (
     <main style={{ minHeight: "100vh", background: "#0A1628", color: "#E8EFF5", fontFamily: "Georgia, serif", padding: 20 }}>

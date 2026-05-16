@@ -16,13 +16,9 @@ const T = {
     cta: "Попробовать бесплатно",
     cta_sub: "7 дней бесплатно · без обязательств",
     recommended: "⭐ Самый популярный",
-    box_label: "📦 FonMusic Box (по желанию)",
-    box_price_text: "750 000 сум отдельно · 500 000 сум при оплате за 3 месяца · 0 сум при предоплате: Базовый 12 мес. · Стандарт 9 мес. · Премиум 6 мес.",
-    box_free: "0 сум",
-    box_free_cond: "при предоплате: Базовый 12 мес. · Стандарт 9 мес. · Премиум 6 мес.",
-    extra_label: "Дополнительные заведения",
-    extra_price: "599 000 сум / мес за каждое",
-    extra_calc: ["2 точки — 1 498 000 сум", "3 точки — 2 097 000 сум", "5 точек — 3 295 000 сум"],
+    extra_label: "Дополнительные зоны",
+    extra_price: "от 399 000 сум / месяц",
+    extra_calc: ["Например: ресепшн, зал, бассейн, SPA-зона.", "Дополнительные филиалы / отдельные адреса — индивидуально."],
     compare_h: "Сравнение тарифов",
     connect_h: "Два способа подключения",
     connect_fast_h: "Быстрое подключение",
@@ -36,13 +32,13 @@ const T = {
     which: [
       { icon: "☕", plan: "Базовый", color: "#8BA7BE", desc: "Если у вас одно небольшое заведение и музыка включается вручную" },
       { icon: "🎵", plan: "Стандарт", color: "#C9A84C", desc: "Если хотите, чтобы музыка автоматически менялась в течение дня" },
-      { icon: "🏢", plan: "Премиум", color: "#A78BFA", desc: "Если у вас несколько точек и нужен единый контроль из одного кабинета" },
+      { icon: "🏢", plan: "Премиум", color: "#A78BFA", desc: "Если у вас несколько зон в заведении или сеть филиалов" },
     ],
     box_h2: "Музыка 24/7 без компьютера и браузера",
     box_desc: "FonMusic Box — маленькое устройство, которое подключается к аудиосистеме заведения и автоматически запускает музыку.",
     box_features: ["Работает круглосуточно без перерывов", "Автоматически запускает музыку после включения", "Управляется через кабинет FonMusic"],
     box_price: "750 000 сум",
-    box_free2: "500 000 сум при оплате за 3 месяца · бесплатно при предоплате: Базовый 12 мес. · Стандарт 9 мес. · Премиум 6 мес.",
+    box_free2: "Бесплатно при долгосрочном подключении: Базовый — 12 месяцев · Стандарт — 9 месяцев · Премиум — 6 месяцев",
     box_note: "FonMusic Box является опцией. Можно использовать сервис через веб-плеер без покупки устройства.",
     box_btn: "Подключить FonMusic Box →",
     demo_h: "Попробуйте FonMusic", demo_accent: "бесплатно 7 дней",
@@ -54,21 +50,22 @@ const T = {
       { q: "Можно ли использовать без FonMusic Box?", a: "Да, музыка работает через веб-плеер на любом устройстве — компьютере, планшете или телефоне." },
       { q: "Нужно ли покупать устройство сразу?", a: "Нет, FonMusic Box подключается по желанию в любой момент. Начните с веб-плеера." },
       { q: "Можно ли сначала попробовать?", a: "Да, демо-период — 7 дней. Все функции доступны без ограничений." },
-      { q: "Один аккаунт для нескольких филиалов?", a: "Да, в тарифе Премиум можно добавлять дополнительные заведения по 599 000 сум/мес." },
+      { q: "Один аккаунт для нескольких зон или филиалов?", a: "Да, в тарифе Премиум можно подключать дополнительные зоны в одном заведении от 399 000 сум/мес. Филиалы и отдельные адреса рассчитываются индивидуально." },
     ],
     footer_offer: "Оферта", footer_privacy: "Конфиденциальность", footer_license: "Лицензия",
     plans: [
-      { key: "basic", name: "Базовый", price: "399 000", desc: "Для одного небольшого заведения", popular: false, features: ["1 точка", "Все музыкальные атмосферы", "Веб-плеер", "Ручное переключение музыки"], missing: ["Автоматическое расписание"], ctaHref: "/signup", accent: "#8BA7BE", box: true, boxFreeMonths: 12 },
-      { key: "standard", name: "Стандарт", price: "599 000", desc: "Оптимальный тариф для кафе, магазинов, салонов и фитнес-клубов", popular: true, features: ["1 точка", "Все музыкальные атмосферы", "Веб-плеер", "Автоматическое расписание музыки", "Удалённое управление"], missing: [], ctaHref: "/signup?plan=standard", accent: "#C9A84C", box: true, boxFreeMonths: 9 },
-      { key: "premium", name: "Премиум", price: "899 000", desc: "Для сетей кафе, ресторанов, магазинов, фитнес-клубов и салонов красоты", popular: false, features: ["1 точка включена", "Все функции тарифа Стандарт", "Централизованное управление сетью", "Приоритетная поддержка"], missing: [], ctaHref: "/signup?plan=premium", accent: "#A78BFA", box: true, boxFreeMonths: 6 },
+      { key: "basic", name: "Базовый", price: "399 000", desc: "Для одного небольшого заведения", popular: false, features: ["1 точка / 1 музыкальная зона", "Все музыкальные атмосферы", "Веб-плеер", "Ручное переключение музыки"], missing: ["Автоматическое расписание"], ctaHref: "/signup", accent: "#8BA7BE" },
+      { key: "standard", name: "Стандарт", price: "599 000", desc: "Оптимальный тариф для кафе, магазинов, салонов и фитнес-клубов", popular: true, features: ["1 точка / 1 музыкальная зона", "Все музыкальные атмосферы", "Веб-плеер", "Автоматическое расписание музыки", "Удалённое управление"], missing: [], ctaHref: "/signup?plan=standard", accent: "#C9A84C" },
+      { key: "premium", name: "Премиум", price: "799 000", desc: "Для заведений с несколькими музыкальными зонами и для сетей", popular: false, features: ["1 точка / 1 музыкальная зона", "Все функции тарифа Стандарт", "Расширенное управление расписанием", "Приоритетная поддержка"], missing: [], ctaHref: "/signup?plan=premium", accent: "#A78BFA" },
     ],
     compare: [
-      { label: "Количество точек", basic: "1", standard: "1", premium: "∞" },
+      { label: "Точки / музыкальные зоны", basic: "1", standard: "1", premium: "1 + зоны" },
       { label: "Все атмосферы", basic: true, standard: true, premium: true },
       { label: "Веб-плеер", basic: true, standard: true, premium: true },
       { label: "Автоматическое расписание", basic: false, standard: true, premium: true },
       { label: "Удалённое управление", basic: false, standard: true, premium: true },
-      { label: "Управление сетью", basic: false, standard: false, premium: true },
+      { label: "Расширенное расписание", basic: false, standard: false, premium: true },
+      { label: "Дополнительные зоны", basic: false, standard: false, premium: "от 399 000" },
       { label: "Приоритетная поддержка", basic: false, standard: false, premium: true },
     ],
     compare_cols: ["Базовый", "Стандарт", "Премиум"],
@@ -84,13 +81,9 @@ const T = {
     cta: "Bepul sinab ko'ring",
     cta_sub: "7 kun bepul · majburiyatsiz",
     recommended: "⭐ Eng mashhur",
-    box_label: "📦 FonMusic Box (ixtiyoriy)",
-    box_price_text: "750 000 so'm alohida · 3 oy to'lovda 500 000 so'm · bepul: Asosiy 12 oy · Standart 9 oy · Premium 6 oy",
-    box_free: "0 so'm",
-    box_free_cond: "oldindan to'lovda: Asosiy 12 oy · Standart 9 oy · Premium 6 oy",
-    extra_label: "Qo'shimcha muassasalar",
-    extra_price: "599 000 so'm / oy har biri uchun",
-    extra_calc: ["2 nuqta — 1 498 000 so'm", "3 nuqta — 2 097 000 so'm", "5 nuqta — 3 295 000 so'm"],
+    extra_label: "Qo'shimcha zonalar",
+    extra_price: "oyiga 399 000 so'mdan",
+    extra_calc: ["Masalan: resepshn, zal, basseyn, SPA-zona.", "Qo'shimcha filiallar / alohida manzillar individual hisoblanadi."],
     compare_h: "Tariflarni solishtirish",
     connect_h: "Ikki xil ulanish usuli",
     connect_fast_h: "Tez ulanish",
@@ -104,13 +97,13 @@ const T = {
     which: [
       { icon: "☕", plan: "Asosiy", color: "#8BA7BE", desc: "Bitta kichik muassasangiz bo'lsa va musiqa qo'lda yoqilsa" },
       { icon: "🎵", plan: "Standart", color: "#C9A84C", desc: "Musiqa kun davomida avtomatik o'zgarishini istasangiz" },
-      { icon: "🏢", plan: "Premium", color: "#A78BFA", desc: "Bir necha nuqtangiz bo'lsa va bitta kabinetdan boshqarmoqchi bo'lsangiz" },
+      { icon: "🏢", plan: "Premium", color: "#A78BFA", desc: "Muassasada bir necha zona yoki filiallar bo'lsa" },
     ],
     box_h2: "Kompyuter va brauzersiz 24/7 musiqa",
     box_desc: "FonMusic Box — muassasaning audio tizimiga ulanadigan va musiqani avtomatik ishga tushuradigan kichik qurilma.",
     box_features: ["Uzluksiz sutka bo'yi ishlaydi", "Yoqilgandan so'ng musiqani avtomatik ishga tushiradi", "FonMusic kabineti orqali boshqariladi"],
     box_price: "750 000 so'm",
-    box_free2: "3 oy to'lovda 500 000 so'm · bepul: Asosiy 12 oy · Standart 9 oy · Premium 6 oy",
+    box_free2: "Uzoq muddatli ulanishda bepul: Asosiy — 12 oy · Standart — 9 oy · Premium — 6 oy",
     box_note: "FonMusic Box ixtiyoriy. Qurilma sotib olmay veb-pleer orqali foydalanish mumkin.",
     box_btn: "FonMusic Box ulash →",
     demo_h: "FonMusic'ni sinab ko'ring", demo_accent: "7 kun bepul",
@@ -122,21 +115,22 @@ const T = {
       { q: "FonMusic Box siz ishlatish mumkinmi?", a: "Ha, musiqa istalgan qurilmada veb-pleer orqali ishlaydi — kompyuter, planshet yoki telefon." },
       { q: "Qurilmani darhol sotib olish kerakmi?", a: "Yo'q, FonMusic Box istalgan vaqtda ixtiyoriy ravishda ulanadi. Veb-pleerdan boshlang." },
       { q: "Avval sinab ko'rsa bo'ladimi?", a: "Ha, demo davri — 7 kun. Barcha funksiyalar cheklovsiz mavjud." },
-      { q: "Bir necha filial uchun bitta akkaunt?", a: "Ha, Premium tarifda har biri uchun oyiga 599 000 so'mdan qo'shimcha muassasalar qo'shish mumkin." },
+      { q: "Bir necha zona yoki filial uchun bitta akkaunt?", a: "Ha, Premium tarifda bitta muassasa ichidagi qo'shimcha zonalar oyiga 399 000 so'mdan ulanadi. Filiallar va alohida manzillar individual hisoblanadi." },
     ],
     footer_offer: "Oferta", footer_privacy: "Maxfiylik", footer_license: "Litsenziya",
     plans: [
-      { key: "basic", name: "Asosiy", price: "399 000", desc: "Bitta kichik muassasa uchun", popular: false, features: ["1 nuqta", "Barcha musiqa atmosferalari", "Veb-pleer", "Musiqani qo'lda almashtirish"], missing: ["Avtomatik jadval"], ctaHref: "/signup", accent: "#8BA7BE", box: true, boxFreeMonths: 12 },
-      { key: "standard", name: "Standart", price: "599 000", desc: "Kafe, do'kon, salon va fitnes-klublar uchun optimal tarif", popular: true, features: ["1 nuqta", "Barcha musiqa atmosferalari", "Veb-pleer", "Avtomatik musiqa jadvali", "Masofaviy boshqaruv"], missing: [], ctaHref: "/signup?plan=standard", accent: "#C9A84C", box: true, boxFreeMonths: 9 },
-      { key: "premium", name: "Premium", price: "899 000", desc: "Kafe, restoran, do'kon, fitnes-klub va salonlar tarmog'i uchun", popular: false, features: ["1 nuqta kiritilgan", "Standart tarifning barcha funksiyalari", "Tarmoqni markazlashgan boshqaruv", "Ustuvor yordam"], missing: [], ctaHref: "/signup?plan=premium", accent: "#A78BFA", box: true, boxFreeMonths: 6 },
+      { key: "basic", name: "Asosiy", price: "399 000", desc: "Bitta kichik muassasa uchun", popular: false, features: ["1 nuqta / 1 musiqa zonasi", "Barcha musiqa atmosferalari", "Veb-pleer", "Musiqani qo'lda almashtirish"], missing: ["Avtomatik jadval"], ctaHref: "/signup", accent: "#8BA7BE" },
+      { key: "standard", name: "Standart", price: "599 000", desc: "Kafe, do'kon, salon va fitnes-klublar uchun optimal tarif", popular: true, features: ["1 nuqta / 1 musiqa zonasi", "Barcha musiqa atmosferalari", "Veb-pleer", "Avtomatik musiqa jadvali", "Masofaviy boshqaruv"], missing: [], ctaHref: "/signup?plan=standard", accent: "#C9A84C" },
+      { key: "premium", name: "Premium", price: "799 000", desc: "Bir necha musiqa zonasi bor muassasalar va filiallar uchun", popular: false, features: ["1 nuqta / 1 musiqa zonasi", "Standart tarifning barcha funksiyalari", "Kengaytirilgan jadval boshqaruvi", "Ustuvor yordam"], missing: [], ctaHref: "/signup?plan=premium", accent: "#A78BFA" },
     ],
     compare: [
-      { label: "Nuqtalar soni", basic: "1", standard: "1", premium: "∞" },
+      { label: "Nuqta / musiqa zonasi", basic: "1", standard: "1", premium: "1 + zonalar" },
       { label: "Barcha atmosferalar", basic: true, standard: true, premium: true },
       { label: "Veb-pleer", basic: true, standard: true, premium: true },
       { label: "Avtomatik jadval", basic: false, standard: true, premium: true },
       { label: "Masofaviy boshqaruv", basic: false, standard: true, premium: true },
-      { label: "Tarmoq boshqaruvi", basic: false, standard: false, premium: true },
+      { label: "Kengaytirilgan jadval", basic: false, standard: false, premium: true },
+      { label: "Qo'shimcha zonalar", basic: false, standard: false, premium: "399 000 dan" },
       { label: "Ustuvor yordam", basic: false, standard: false, premium: true },
     ],
     compare_cols: ["Asosiy", "Standart", "Premium"],
@@ -228,16 +222,6 @@ export default function PricingPage() {
                   </div>
                 ))}
               </div>
-              {plan.box && (
-                <div style={{ background: "rgba(201,168,76,0.06)", border: "1px solid rgba(201,168,76,0.15)", borderRadius: 12, padding: "12px 14px", marginBottom: 16 }}>
-                  <div style={{ fontSize: 11, color: "#C9A84C", fontWeight: 700, marginBottom: 4 }}>{t.box_label}</div>
-                  <div style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: 12, lineHeight: 1.45 }}>
-                    <div style={{ color: "#8BA7BE" }}>{lang === "ru" ? "750 000 сум отдельно" : "750 000 so'm alohida"}</div>
-                    <div style={{ color: "#8BA7BE" }}>{lang === "ru" ? "500 000 сум при оплате за 3 месяца" : "3 oy to'lovda 500 000 so'm"}</div>
-                    <div style={{ color: "#22C55E", fontWeight: 700 }}>{lang === "ru" ? `0 сум при оплате за ${plan.boxFreeMonths} месяцев` : `${plan.boxFreeMonths} oy to'lovda 0 so'm`}</div>
-                  </div>
-                </div>
-              )}
               {plan.key === "premium" && (
                 <div style={{ background: "rgba(167,139,250,0.06)", border: "1px solid rgba(167,139,250,0.15)", borderRadius: 12, padding: "12px 14px", marginBottom: 16 }}>
                   <div style={{ fontSize: 11, color: "#A78BFA", fontWeight: 700, marginBottom: 6 }}>{t.extra_label}</div>
